@@ -1,6 +1,6 @@
 # Roadmap
 
-## Phase 1 — Foundation (Current)
+## Phase 1 — Foundation (Complete)
 
 - [x] Next.js + TypeScript + Tailwind scaffold
 - [x] shadcn/ui components
@@ -14,7 +14,7 @@
 - [x] AI engineering rules (AGENTS.md)
 - [x] Supabase migration directory structure
 
-## Phase 2 — Database & Tenancy (Current)
+## Phase 2 — Database & Tenancy (Complete)
 
 - [x] Supabase project connection (env + client utilities)
 - [x] Database schema migrations

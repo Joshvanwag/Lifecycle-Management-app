@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
-import { Filter, Search } from "lucide-react";
+import { ChevronLeft, ChevronRight, Filter, Search } from "lucide-react";
 import type { Space } from "@/lib/types";
 import { formatCurrency } from "@/lib/utils";
 import {
@@ -30,9 +30,16 @@ import {
 interface SpacesTableProps {
   spaces: Space[];
   totalCount?: number;
+  page?: number;
+  pageSize?: number;
 }
 
-export function SpacesTable({ spaces, totalCount }: SpacesTableProps) {
+export function SpacesTable({
+  spaces,
+  totalCount,
+  page = 1,
+  pageSize = 50,
+}: SpacesTableProps) {
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -87,6 +94,10 @@ export function SpacesTable({ spaces, totalCount }: SpacesTableProps) {
   }, [spaces, search, filters]);
 
   const activeFilterCount = Object.values(filters).reduce((sum, arr) => sum + arr.length, 0);
+  const total = totalCount ?? spaces.length;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const rangeStart = total === 0 ? 0 : (page - 1) * pageSize + 1;
+  const rangeEnd = Math.min(page * pageSize, total);
 
   return (
     <div className="space-y-4">
@@ -172,9 +183,46 @@ export function SpacesTable({ spaces, totalCount }: SpacesTableProps) {
         </Table>
       </div>
 
-      <p className="text-sm text-muted-foreground">
-        Showing {filteredSpaces.length} of {totalCount ?? spaces.length} Spaces
-      </p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-sm text-muted-foreground">
+          {search || activeFilterCount > 0
+            ? `Showing ${filteredSpaces.length} filtered on this page (${rangeStart}–${rangeEnd} of ${total} Spaces)`
+            : `Showing ${rangeStart}–${rangeEnd} of ${total} Spaces`}
+        </p>
+        {totalPages > 1 && (
+          <div className="flex items-center gap-2">
+            {page > 1 ? (
+              <Button variant="outline" size="sm" asChild>
+                <Link href={page === 2 ? "/spaces" : `/spaces?page=${page - 1}`}>
+                  <ChevronLeft className="h-4 w-4" />
+                  Previous
+                </Link>
+              </Button>
+            ) : (
+              <Button variant="outline" size="sm" disabled>
+                <ChevronLeft className="h-4 w-4" />
+                Previous
+              </Button>
+            )}
+            <span className="text-sm text-muted-foreground">
+              Page {page} of {totalPages}
+            </span>
+            {page < totalPages ? (
+              <Button variant="outline" size="sm" asChild>
+                <Link href={`/spaces?page=${page + 1}`}>
+                  Next
+                  <ChevronRight className="h-4 w-4" />
+                </Link>
+              </Button>
+            ) : (
+              <Button variant="outline" size="sm" disabled>
+                Next
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+        )}
+      </div>
 
       <SpaceFilters
         open={filtersOpen}

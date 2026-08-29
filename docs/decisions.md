@@ -119,7 +119,16 @@ Lifecycle status (`upcoming`, `due`, `overdue`) is derived at read time from `co
 
 **Rationale:** Simplest valid tenant security for MVP; documented in `/docs/security.md`.
 
-## ADR-014: Industry-Only Benchmark Cohorts
+## ADR-014: Add `@supabase/server` Alongside `@supabase/ssr`
+
+**Date:** Phase 2  
+**Status:** Accepted
+
+Install `@supabase/server` for header-based JWT verification and new API key resolution (`SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY`, `SUPABASE_JWKS_URL`). Keep `@supabase/ssr` as the cookie-session client for the Next.js App Router.
+
+**Rationale:** The packages are complementary, not replacements. Next.js dashboard auth stays cookie-based. `@supabase/server` is available for route handlers, Edge Functions, and other header-authenticated backends. Existing Next.js env helpers accept both the new names and the legacy `NEXT_PUBLIC_SUPABASE_ANON_KEY` / `SUPABASE_SERVICE_ROLE_KEY` aliases.
+
+## ADR-015: Industry-Only Benchmark Cohorts
 
 **Date:** Phase 2 (benchmarking addendum)  
 **Status:** Accepted
@@ -128,7 +137,7 @@ Organization benchmark cohorts are segmented by **industry type only** (`univers
 
 **Rationale:** Product requirement to compare lifecycle programs at a broad industry level without enabling re-identification via geographic, size, or subtype segmentation.
 
-## ADR-015: Reciprocal Benchmark Participation
+## ADR-016: Reciprocal Benchmark Participation
 
 **Date:** Phase 2 (benchmarking addendum)  
 **Status:** Accepted
@@ -137,7 +146,7 @@ Organization benchmark cohorts are segmented by **industry type only** (`univers
 
 **Rationale:** Product reciprocity rule; prevents free-riding on anonymized peer data.
 
-## ADR-016: Metric-Level Minimum Contributor Threshold
+## ADR-017: Metric-Level Minimum Contributor Threshold
 
 **Date:** Phase 2 (benchmarking addendum)  
 **Status:** Accepted
@@ -146,7 +155,7 @@ Each benchmark metric (including Space Type / Asset Category / period context) r
 
 **Rationale:** Prevent re-identification and misleading small-sample benchmarks.
 
-## ADR-017: Trusted Aggregation Boundary for Benchmarks
+## ADR-018: Trusted Aggregation Boundary for Benchmarks
 
 **Date:** Phase 2 (benchmarking addendum)  
 **Status:** Accepted

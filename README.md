@@ -47,9 +47,14 @@ Open [http://localhost:3000](http://localhost:3000).
 
 | Variable | Description |
 |----------|-------------|
-| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anonymous (public) key |
-| `SUPABASE_SERVICE_ROLE_KEY` | Server-only service role key — never expose to browser |
+| `SUPABASE_URL` | Project URL for `@supabase/server` |
+| `SUPABASE_PUBLISHABLE_KEY` | New publishable API key |
+| `SUPABASE_SECRET_KEY` | Server-only secret key — never expose to browser |
+| `SUPABASE_JWKS_URL` | JWKS endpoint for JWT verification |
+| `NEXT_PUBLIC_SUPABASE_URL` | Browser-safe project URL for Next.js clients |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Browser-safe publishable key |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Alias for the publishable (or legacy anon) key |
+| `SUPABASE_SERVICE_ROLE_KEY` | Legacy alias for `SUPABASE_SECRET_KEY` |
 
 ## Project Structure
 
