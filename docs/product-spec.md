@@ -78,3 +78,19 @@ Initial dashboards preserve concepts from the Zoho POC:
 - Read Only (if useful)
 
 Authorization should be designed for future granular permissions.
+
+## Industry Benchmarking
+
+Organizations may compare lifecycle performance against anonymized aggregates from peers in the same **industry type** (University, Government, Corporate, Other).
+
+Key product rules:
+
+- Benchmark participation defaults to **enabled**; admins may opt out
+- Opt-out is **reciprocal** — non-participants do not receive benchmark results
+- Industry type is the only organization cohort dimension initially
+- Space Type and Asset Category provide **within-cohort** metric context
+- Minimum **5 distinct organizations** per metric before display
+- Contributor counts are never shown to customers
+- No cross-tenant access to another organization's operational records
+
+Full specification: [`/docs/benchmarking-model.md`](./benchmarking-model.md)
