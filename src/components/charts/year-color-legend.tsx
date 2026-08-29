@@ -1,6 +1,7 @@
 "use client";
 
 import { useChartColors } from "@/lib/charts/chart-color-context";
+import type { LifecycleStatus } from "@/lib/types";
 
 interface YearColorLegendProps {
   years: number[];
@@ -71,6 +72,38 @@ export function DeploymentStatusLegend({ className }: DeploymentStatusLegendProp
             aria-hidden
           />
           <span className="capitalize">{status}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+const lifecycleLabels: Record<LifecycleStatus, string> = {
+  upcoming: "Upcoming",
+  due: "Due",
+  overdue: "Overdue",
+};
+
+interface LifecycleStatusLegendProps {
+  statuses: LifecycleStatus[];
+  className?: string;
+}
+
+export function LifecycleStatusLegend({ statuses, className }: LifecycleStatusLegendProps) {
+  const { getLifecycleStatusColor } = useChartColors();
+
+  if (statuses.length === 0) return null;
+
+  return (
+    <div className={`flex flex-wrap gap-3 ${className ?? ""}`}>
+      {statuses.map((status) => (
+        <div key={status} className="flex items-center gap-2 text-xs text-muted-foreground">
+          <span
+            className="h-2.5 w-2.5 rounded-sm"
+            style={{ backgroundColor: getLifecycleStatusColor(status) }}
+            aria-hidden
+          />
+          <span>{lifecycleLabels[status]}</span>
         </div>
       ))}
     </div>
