@@ -8,6 +8,8 @@ export interface ForecastYear {
 
 export interface Space {
   id: string;
+  organizationId: string;
+  organizationName: string;
   name: string;
   spaceType: string;
   campus: string;
@@ -29,6 +31,8 @@ export interface Space {
 
 export interface Asset {
   id: string;
+  organizationId: string;
+  organizationName: string;
   spaceId: string;
   manufacturer: string;
   modelNumber: string;

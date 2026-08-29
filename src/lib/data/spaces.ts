@@ -51,11 +51,15 @@ function mapSpaceRow(
   location: SpaceLocationRow["physical_locations"],
   assetCount: number,
   components: ForecastComponentRow[],
+  organizationId: string,
+  organizationName: string,
 ): Space {
   const campus = location?.buildings.campuses.name ?? "";
   const building = location?.buildings.name ?? "";
   const room = location?.location_type === "room" ? location.name : undefined;
-  const fallbackYear = deriveRecommendedRefreshYear(row.commissioned_date, row.refresh_cycle_years);
+  const fallbackYear =
+    row.planned_refresh_year ??
+    deriveRecommendedRefreshYear(row.commissioned_date, row.refresh_cycle_years);
   const forecast = summarizeForecast(
     components.map((component) => ({
       forecastAmount: Number(component.forecast_amount),
@@ -66,6 +70,8 @@ function mapSpaceRow(
 
   return {
     id: row.id,
+    organizationId,
+    organizationName,
     name: row.name,
     spaceType: row.space_type,
     campus,
@@ -245,6 +251,7 @@ export async function listSpaces(
   client: Client,
   organizationId: string,
   options: ListSpacesOptions = {},
+  organizationName = "",
 ): Promise<ListSpacesResult> {
   const page = Math.max(1, options.page ?? 1);
   const pageSize = Math.min(100, Math.max(1, options.pageSize ?? 50));
@@ -285,6 +292,8 @@ export async function listSpaces(
       locations.get(row.id) ?? null,
       assetCounts.get(row.id) ?? 0,
       forecastComponents.get(row.id) ?? [],
+      organizationId,
+      organizationName,
     ),
   );
 
@@ -296,12 +305,16 @@ export async function listSpaces(
   };
 }
 
-export async function getAllSpaces(client: Client, organizationId: string): Promise<Space[]> {
+export async function getAllSpaces(
+  client: Client,
+  organizationId: string,
+  organizationName = "",
+): Promise<Space[]> {
   const spaces: Space[] = [];
   let page = 1;
 
   while (true) {
-    const result = await listSpaces(client, organizationId, { page, pageSize: 100 });
+    const result = await listSpaces(client, organizationId, { page, pageSize: 100 }, organizationName);
     spaces.push(...result.spaces);
     if (spaces.length >= result.totalCount) {
       break;
@@ -312,7 +325,23 @@ export async function getAllSpaces(client: Client, organizationId: string): Prom
   return spaces;
 }
 
-function mapAssetRow(row: AssetRow): Asset {
+export async function getAllSpacesForOrganizations(
+  client: Client,
+  organizationIds: string[],
+  organizationNames: Map<string, string>,
+): Promise<Space[]> {
+  const spaces: Space[] = [];
+
+  for (const organizationId of organizationIds) {
+    const organizationName = organizationNames.get(organizationId) ?? "Unknown";
+    const orgSpaces = await getAllSpaces(client, organizationId, organizationName);
+    spaces.push(...orgSpaces);
+  }
+
+  return spaces;
+}
+
+function mapAssetRow(row: AssetRow, organizationId: string, organizationName: string): Asset {
   const recommendedRefreshYear = deriveRecommendedRefreshYear(
     row.install_date,
     row.refresh_cycle_years,
@@ -320,6 +349,8 @@ function mapAssetRow(row: AssetRow): Asset {
 
   return {
     id: row.id,
+    organizationId,
+    organizationName,
     spaceId: row.space_id,
     manufacturer: row.manufacturer,
     modelNumber: row.model_number,
@@ -336,7 +367,11 @@ function mapAssetRow(row: AssetRow): Asset {
   };
 }
 
-export async function getAllAssets(client: Client, organizationId: string): Promise<Asset[]> {
+export async function getAllAssets(
+  client: Client,
+  organizationId: string,
+  organizationName = "",
+): Promise<Asset[]> {
   const { data, error } = await client
     .from("assets")
     .select("*")
@@ -348,13 +383,32 @@ export async function getAllAssets(client: Client, organizationId: string): Prom
     throw new Error(`Failed to load assets: ${error.message}`);
   }
 
-  return ((data ?? []) as AssetRow[]).map(mapAssetRow);
+  return ((data ?? []) as AssetRow[]).map((row) =>
+    mapAssetRow(row, organizationId, organizationName),
+  );
+}
+
+export async function getAllAssetsForOrganizations(
+  client: Client,
+  organizationIds: string[],
+  organizationNames: Map<string, string>,
+): Promise<Asset[]> {
+  const assets: Asset[] = [];
+
+  for (const organizationId of organizationIds) {
+    const organizationName = organizationNames.get(organizationId) ?? "Unknown";
+    const orgAssets = await getAllAssets(client, organizationId, organizationName);
+    assets.push(...orgAssets);
+  }
+
+  return assets;
 }
 
 export async function getSpaceById(
   client: Client,
   organizationId: string,
   spaceId: string,
+  organizationName = "",
 ): Promise<Space | null> {
   const { data, error } = await client
     .from("spaces")
@@ -390,6 +444,8 @@ export async function getSpaceById(
     locations.get(row.id) ?? null,
     assetCounts.get(row.id) ?? 0,
     forecastComponents.get(row.id) ?? [],
+    organizationId,
+    organizationName,
   );
 }
 
@@ -397,6 +453,7 @@ export async function getAssetsBySpaceId(
   client: Client,
   organizationId: string,
   spaceId: string,
+  organizationName = "",
 ): Promise<Asset[]> {
   const { data, error } = await client
     .from("assets")
@@ -410,7 +467,9 @@ export async function getAssetsBySpaceId(
     throw new Error(`Failed to load assets: ${error.message}`);
   }
 
-  return ((data ?? []) as AssetRow[]).map(mapAssetRow);
+  return ((data ?? []) as AssetRow[]).map((row) =>
+    mapAssetRow(row, organizationId, organizationName),
+  );
 }
 
 export async function getRefreshHistoryBySpaceId(

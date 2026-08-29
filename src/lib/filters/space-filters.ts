@@ -1,6 +1,7 @@
 import type { LifecycleStatus, PlanningStatus, Space } from "@/lib/types";
 
 export interface SpaceFiltersState {
+  organizationIds: string[];
   campus: string[];
   building: string[];
   spaceType: string[];
@@ -10,6 +11,7 @@ export interface SpaceFiltersState {
 }
 
 export const emptySpaceFilters: SpaceFiltersState = {
+  organizationIds: [],
   campus: [],
   building: [],
   spaceType: [],
@@ -19,14 +21,19 @@ export const emptySpaceFilters: SpaceFiltersState = {
 };
 
 export interface SpaceFilterOptions {
+  organizations: { id: string; name: string }[];
   campuses: string[];
   buildings: string[];
   spaceTypes: string[];
   years: string[];
 }
 
-export function buildSpaceFilterOptions(spaces: Space[]): SpaceFilterOptions {
+export function buildSpaceFilterOptions(
+  spaces: Space[],
+  organizationOptions: { id: string; name: string }[] = [],
+): SpaceFilterOptions {
   return {
+    organizations: organizationOptions,
     campuses: [...new Set(spaces.map((space) => space.campus))].sort(),
     buildings: [...new Set(spaces.map((space) => space.building))].sort(),
     spaceTypes: [...new Set(spaces.map((space) => space.spaceType))].sort(),
@@ -53,6 +60,12 @@ export function matchesSpaceSearch(space: Space, query: string): boolean {
 }
 
 export function matchesSpaceFilters(space: Space, filters: SpaceFiltersState): boolean {
+  if (
+    filters.organizationIds.length > 0 &&
+    !filters.organizationIds.includes(space.organizationId)
+  ) {
+    return false;
+  }
   if (filters.campus.length > 0 && !filters.campus.includes(space.campus)) {
     return false;
   }
