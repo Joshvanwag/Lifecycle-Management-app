@@ -88,13 +88,23 @@ Forecast totals aggregatable by:
 - Lifecycle status
 - Planning status
 
-## Phase 1 Status
+## Phase 3 Status
 
-Forecasting engine not yet implemented. Overview dashboard uses static demo data to demonstrate intended presentation.
+The engine in `src/lib/lifecycle/engine.ts` computes:
 
-## Phase 2+ Implementation Notes
+```
+Future Value = Cost Basis × (1 + Inflation Rate) ^ Years
+```
 
-- Calculations should run server-side
-- Results may be cached/materialized for performance at scale
+Server actions persist `recommended_replacement_year` and `forecast_amount` on `forecast_cost_components`. Overview year bars and 5-year totals sum those rows by replacement year, so one Space can contribute to multiple years.
+
+Changing organization inflation updates stored `forecast_amount` only. Historical `cost_basis` is never rewritten.
+
+A Space is stored as either fully itemized asset rows, or remaining lump-sum plus independently priced replacements — never a full-space lump and all asset costs together.
+
+## Later implementation notes
+
+- Results may be cached/materialized further for performance at scale
 - Must handle millions of assets across organizations
 - Server-side pagination for large result sets
+- Forecast page drill-down is Phase 5

@@ -37,14 +37,14 @@
   - [x] Secure public RPC (`get_benchmark_metrics_public`)
   - [x] Benchmarking RLS (no cross-tenant operational access)
 
-## Phase 3 — Core Lifecycle
+## Phase 3 — Core Lifecycle (Complete)
 
-- [ ] Lifecycle calculation engine
-- [ ] Forecasting with compound inflation
-- [ ] Lump-sum cost normalization
-- [ ] Lifecycle status calculation
-- [ ] Planning status management
-- [ ] Refresh event recording
+- [x] Lifecycle calculation engine
+- [x] Forecasting with compound inflation
+- [x] Lump-sum cost normalization
+- [x] Lifecycle status calculation
+- [x] Planning status management
+- [x] Refresh event recording
 
 ## Phase 4 — Import Workflows
 

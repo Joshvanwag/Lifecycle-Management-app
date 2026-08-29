@@ -8,7 +8,7 @@ Unresolved items requiring product or technical decisions. Do not silently decid
 2. **Space types** — Should organizations define their own type list, or is there a suggested starter set?
 3. **Read Only role** — Is this needed in the first release with real auth?
 4. **Planned full refresh interaction** — Exact UX for overriding individual asset refresh years while preserving calculations?
-5. **Emergency / Individual Replacement** — Is this a distinct user-facing workflow or folded into Partial Refresh?
+5. **Emergency / Individual Replacement** — Phase 3 folds this into Partial Refresh. Selecting one asset writes `individual_replacement`. A separate menu item is still optional later.
 6. **Export formats priority** — Which export format is needed first: CSV, Excel, or PDF?
 7. **Multi-campus default structure** — How should organizations with a single campus be onboarded? Skip campus level?
 8. **Fiscal year vs calendar year** — Do organizations forecast by fiscal year? Configurable?

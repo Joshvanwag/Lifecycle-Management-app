@@ -30,7 +30,11 @@ One Space may contribute replacement costs to multiple future years.
 | Due | Recommended year is the current year |
 | Overdue | Recommended year is in the past |
 
+A Space's list/header status uses the **earliest recommended replacement year among its current cost rows**. After a partial refresh, later years still appear in forecasts and on individual assets.
+
 **Deferred is NOT a lifecycle status.** It is a planning status.
+
+Years are **calendar years** in Phase 3. Fiscal-year calendars remain an open question.
 
 ## Planning Status (Separate)
 
@@ -41,7 +45,7 @@ One Space may contribute replacement costs to multiple future years.
 | Deferred | Intentionally pushed to a later period |
 | Completed | Refresh has been completed |
 
-Example: Lifecycle Status = Overdue, Planning = Scheduled FY2030.
+Example: Lifecycle Status = Overdue, Planning = Scheduled 2030. Planning year does not change calculated replacement years.
 
 ## Default Refresh Cycle
 
@@ -61,7 +65,7 @@ Spaces preserve history. Do not archive and recreate Spaces after refreshes.
 | Initial Deployment | First equipment installation |
 | Full Refresh | All active assets replaced |
 | Partial Refresh | Selected assets replaced |
-| Emergency / Individual Replacement | Single asset replacement |
+| Emergency / Individual Replacement | Single asset replacement — recorded when Partial Refresh selects exactly one asset |
 
 History is never deleted.
 

@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { requireAuthContext } from "@/lib/auth/context";
 import { INDUSTRY_TYPE_CODES } from "@/lib/benchmark/constants";
 import type { Database } from "@/lib/database.types";
+import { recalculateOrganizationForecasts } from "@/lib/lifecycle/recompute";
 import { createClient } from "@/lib/supabase/server";
 
 type OrganizationUpdate = Database["public"]["Tables"]["organizations"]["Update"];
@@ -18,14 +19,28 @@ export async function updateOrganizationSettings(formData: FormData) {
 
   const industryType = String(formData.get("industryType") ?? "").trim();
   const benchmarkParticipation = formData.get("benchmarkParticipation") === "on";
+  const refreshCycleYears = Number(formData.get("defaultRefreshCycleYears"));
+  const inflationPercent = Number(formData.get("defaultInflationPercent"));
 
   if (!INDUSTRY_TYPE_CODES.includes(industryType as (typeof INDUSTRY_TYPE_CODES)[number])) {
     redirect("/settings?error=invalid-industry");
   }
 
+  if (!Number.isFinite(refreshCycleYears) || refreshCycleYears < 1 || refreshCycleYears > 50) {
+    redirect("/settings?error=invalid-lifecycle-defaults");
+  }
+
+  if (!Number.isFinite(inflationPercent) || inflationPercent < 0 || inflationPercent > 50) {
+    redirect("/settings?error=invalid-lifecycle-defaults");
+  }
+
+  const inflationRate = inflationPercent / 100;
+
   const payload: OrganizationUpdate = {
     industry_type: industryType,
     benchmark_participation: benchmarkParticipation,
+    default_refresh_cycle_years: Math.round(refreshCycleYears),
+    default_inflation_rate: inflationRate,
   };
 
   const supabase = await createClient();
@@ -40,6 +55,13 @@ export async function updateOrganizationSettings(formData: FormData) {
     redirect(`/settings?error=${encodeURIComponent(error.message)}`);
   }
 
+  const inflationChanged = inflationRate !== Number(auth.organization.default_inflation_rate);
+  if (inflationChanged) {
+    await recalculateOrganizationForecasts(supabase, auth.organization.id, inflationRate);
+  }
+
   revalidatePath("/settings");
+  revalidatePath("/");
+  revalidatePath("/spaces");
   redirect("/settings?saved=1");
 }

@@ -1,6 +1,11 @@
 export type LifecycleStatus = "upcoming" | "due" | "overdue";
 export type PlanningStatus = "unplanned" | "scheduled" | "deferred" | "completed";
 
+export interface ForecastYear {
+  year: number;
+  amount: number;
+}
+
 export interface Space {
   id: string;
   name: string;
@@ -18,6 +23,7 @@ export interface Space {
   plannedRefreshYear?: number;
   originalCost: number;
   forecastAmount: number;
+  forecastByYear: ForecastYear[];
   assetCount: number;
 }
 
@@ -45,11 +51,6 @@ export interface RefreshEvent {
   date: string;
   description: string;
   cost?: number;
-}
-
-export interface ForecastYear {
-  year: number;
-  amount: number;
 }
 
 export interface DashboardMetrics {
