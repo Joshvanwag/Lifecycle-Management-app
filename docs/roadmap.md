@@ -30,6 +30,12 @@
 - [x] Authentication flow (sign up, sign in, sign out)
 - [x] Organization context resolution
 - [x] Replace demo data with real queries (Overview, Spaces list, Space detail)
+- [x] Benchmarking foundation schema
+  - [x] Organization industry type and benchmark participation settings
+  - [x] Metric catalog and aggregate output model
+  - [x] Minimum contributor threshold (system setting)
+  - [x] Secure public RPC (`get_benchmark_metrics_public`)
+  - [x] Benchmarking RLS (no cross-tenant operational access)
 
 ## Phase 3 — Core Lifecycle
 

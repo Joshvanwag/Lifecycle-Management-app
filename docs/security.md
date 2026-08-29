@@ -72,6 +72,56 @@ Organization inserts are not exposed to authenticated clients; signup uses the `
 
 Migrations: `supabase/migrations/20250829180001_rls_policies.sql`
 
+## Benchmarking Security (Phase 2)
+
+Benchmarking must **not** weaken tenant isolation on operational tables.
+
+### Architecture
+
+```
+Tenant operational tables (RLS per organization)
+        ↓
+Service-role aggregation pipeline (trusted boundary)
+        ↓
+benchmark_aggregate_metrics (anonymous, internal)
+        ↓
+get_benchmark_metrics_public() (reciprocity + eligibility)
+        ↓
+Customer application
+```
+
+Tenants **never** receive SELECT access to another organization's Spaces, Assets, or other operational rows for benchmarking purposes.
+
+### Benchmark-specific tables
+
+| Table / Function | Client access |
+| --- | --- |
+| `industry_types` | SELECT active rows (signup/settings) |
+| `benchmark_metrics` | SELECT active catalog |
+| `benchmark_system_settings` | **No client access** (service role only) |
+| `organization_benchmark_values` | SELECT own organization only |
+| `benchmark_aggregate_metrics` | **No direct client access** |
+| `get_benchmark_metrics_public()` | SELECT eligible aggregates if participating |
+
+### Reciprocity
+
+`user_can_access_benchmarks(industry_type)` returns true only when the caller belongs to an organization where:
+
+- `benchmark_participation = true`
+- `industry_type` matches the requested benchmark cohort
+
+Organizations that opt out stop contributing **and** lose benchmark read access.
+
+### Threshold enforcement
+
+`benchmark_aggregate_metrics.contributor_count` is internal. Only rows with `is_eligible = true` (count ≥ `min_contributor_threshold`) are returned by the public RPC. Sub-threshold counts are never disclosed.
+
+### Prohibited benchmark disclosures
+
+Never expose in customer-facing benchmark output: organization names, location identifiers, space/asset names, network identifiers, serial numbers, user PII, individual tenant values, source organization UUIDs, or contributor counts.
+
+Migrations: `supabase/migrations/20250829190000_benchmarking_foundation.sql`, `supabase/migrations/20250829190001_benchmarking_rls.sql`
+
 ## Environment Variables
 
 | Variable | Exposure | Purpose |

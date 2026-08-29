@@ -26,6 +26,7 @@ export async function signUp(formData: FormData) {
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
   const organizationName = String(formData.get("organizationName") ?? "").trim();
+  const industryType = String(formData.get("industryType") ?? "other").trim();
 
   if (!email || !password || !organizationName) {
     redirect("/signup?error=missing-fields");
@@ -38,6 +39,7 @@ export async function signUp(formData: FormData) {
     options: {
       data: {
         organization_name: organizationName,
+        industry_type: industryType,
       },
     },
   });

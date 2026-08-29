@@ -16,6 +16,8 @@ export type Database = {
           default_refresh_cycle_years: number;
           default_inflation_rate: number;
           floors_enabled: boolean;
+          industry_type: string;
+          benchmark_participation: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -25,6 +27,8 @@ export type Database = {
           default_refresh_cycle_years?: number;
           default_inflation_rate?: number;
           floors_enabled?: boolean;
+          industry_type?: string;
+          benchmark_participation?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -34,6 +38,8 @@ export type Database = {
           default_refresh_cycle_years?: number;
           default_inflation_rate?: number;
           floors_enabled?: boolean;
+          industry_type?: string;
+          benchmark_participation?: boolean;
           created_at?: string;
           updated_at?: string;
         };
