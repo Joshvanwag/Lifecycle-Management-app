@@ -11,8 +11,10 @@ import {
   getRefreshHistoryBySpaceId,
   getSpaceById,
 } from "@/lib/data/spaces";
+import { canWriteOrganization } from "@/lib/lifecycle/access";
 import { createClient } from "@/lib/supabase/server";
 import { formatCurrency } from "@/lib/utils";
+import { PlanningStatusForm } from "@/components/lifecycle/planning-status-form";
 import { AuthenticatedDashboardShell } from "@/components/layout/authenticated-dashboard-shell";
 import {
   LifecycleStatusBadge,
@@ -38,7 +40,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { lifecycleActions } from "@/config/navigation";
+import { spaceLifecycleActions } from "@/config/navigation";
 
 const refreshTypeLabels = {
   initial_deployment: "Initial Deployment",
@@ -49,13 +51,18 @@ const refreshTypeLabels = {
 
 export default async function SpaceDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ saved?: string; error?: string }>;
 }) {
   const { id } = await params;
+  const query = await searchParams;
   const auth = await requireAuthContext();
   const supabase = await createClient();
   const organizationId = auth.organization.id;
+  const lifecycleActions = spaceLifecycleActions(id);
+  const canWrite = canWriteOrganization(auth.membership.role);
 
   const space = await getSpaceById(supabase, organizationId, id);
 
@@ -71,6 +78,15 @@ export default async function SpaceDetailPage({
   return (
     <AuthenticatedDashboardShell title={space.name} description={space.locationLabel}>
       <div className="space-y-6">
+        {query.saved === "planning" && (
+          <p className="text-sm text-green-700">Planning status saved.</p>
+        )}
+        {query.saved === "inventory" && (
+          <p className="text-sm text-green-700">Inventory corrections saved.</p>
+        )}
+        {query.error === "unauthorized" && (
+          <p className="text-sm text-destructive">You do not have permission to change this Space.</p>
+        )}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-3">
             <Button variant="ghost" size="sm" asChild className="-ml-2 w-fit">
@@ -174,6 +190,14 @@ export default async function SpaceDetailPage({
                     </dd>
                   </div>
                 </dl>
+                <div className="mt-6 border-t pt-4">
+                  <PlanningStatusForm
+                    spaceId={space.id}
+                    planningStatus={space.planningStatus}
+                    plannedRefreshYear={space.plannedRefreshYear}
+                    canWrite={canWrite}
+                  />
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
@@ -236,10 +260,10 @@ export default async function SpaceDetailPage({
                 <div className="space-y-4">
                   <div className="flex items-center justify-between rounded-lg border p-4">
                     <div>
-                      <p className="font-medium">Space-level recommendation</p>
+                      <p className="font-medium">Soonest replacement</p>
                       <p className="text-sm text-muted-foreground">
-                        Based on {space.commissionedYear} commissioning and{" "}
-                        {space.refreshCycleYears}-year cycle
+                        Earliest year among current Space costs. A Space can also have later
+                        replacement years after a partial refresh.
                       </p>
                     </div>
                     <div className="text-right">

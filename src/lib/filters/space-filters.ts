@@ -30,7 +30,14 @@ export function buildSpaceFilterOptions(spaces: Space[]): SpaceFilterOptions {
     campuses: [...new Set(spaces.map((space) => space.campus))].sort(),
     buildings: [...new Set(spaces.map((space) => space.building))].sort(),
     spaceTypes: [...new Set(spaces.map((space) => space.spaceType))].sort(),
-    years: [...new Set(spaces.map((space) => String(space.recommendedRefreshYear)))].sort(),
+    years: [
+      ...new Set(
+        spaces.flatMap((space) => [
+          String(space.recommendedRefreshYear),
+          ...space.forecastByYear.map((slice) => String(slice.year)),
+        ]),
+      ),
+    ].sort(),
   };
 }
 
@@ -67,11 +74,14 @@ export function matchesSpaceFilters(space: Space, filters: SpaceFiltersState): b
   ) {
     return false;
   }
-  if (
-    filters.year.length > 0 &&
-    !filters.year.includes(String(space.recommendedRefreshYear))
-  ) {
-    return false;
+  if (filters.year.length > 0) {
+    const years = new Set([
+      String(space.recommendedRefreshYear),
+      ...space.forecastByYear.map((slice) => String(slice.year)),
+    ]);
+    if (!filters.year.some((year) => years.has(year))) {
+      return false;
+    }
   }
 
   return true;

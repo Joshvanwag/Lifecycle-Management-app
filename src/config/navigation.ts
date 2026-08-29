@@ -98,22 +98,47 @@ export const mainNavigation: NavGroup[] = [
 export const lifecycleActions = [
   {
     title: "Add New Spaces",
-    description: "Import new Spaces and equipment for onboarding or new deployments.",
-    href: "/imports?action=add",
+    description: "Create a new Space and optional equipment without a CSV upload.",
+    href: "/spaces/new",
   },
   {
     title: "Full Refresh",
     description: "Replace all active equipment in a Space after a complete refresh.",
-    href: "/imports?action=full-refresh",
+    href: "/spaces",
   },
   {
     title: "Partial Refresh",
     description: "Select specific assets being replaced and add new equipment.",
-    href: "/imports?action=partial-refresh",
+    href: "/spaces",
   },
   {
     title: "Correct Inventory",
     description: "Fix data errors without triggering lifecycle events.",
-    href: "/imports?action=correct",
+    href: "/spaces",
   },
 ];
+
+export function spaceLifecycleActions(spaceId: string) {
+  return [
+    {
+      title: "Add New Spaces",
+      description: "Create a new Space and optional equipment without a CSV upload.",
+      href: "/spaces/new",
+    },
+    {
+      title: "Full Refresh",
+      description: "Replace all active equipment in a Space after a complete refresh.",
+      href: `/spaces/${spaceId}/full-refresh`,
+    },
+    {
+      title: "Partial Refresh",
+      description: "Select specific assets being replaced and add new equipment.",
+      href: `/spaces/${spaceId}/partial-refresh`,
+    },
+    {
+      title: "Correct Inventory",
+      description: "Fix data errors without triggering lifecycle events.",
+      href: `/spaces/${spaceId}/correct`,
+    },
+  ];
+}

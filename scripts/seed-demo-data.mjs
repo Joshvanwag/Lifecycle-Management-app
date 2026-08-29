@@ -328,20 +328,28 @@ async function main() {
       if (linkError) throw new Error(linkError.message);
     }
 
+    const spaceAssets = assets.filter((asset) => asset.spaceKey === space.key);
+    const pricedTotal = spaceAssets.reduce((sum, asset) => sum + (asset.cost > 0 ? asset.cost : 0), 0);
+    const remainder = Math.max(0, space.original_cost - pricedTotal);
+    const inflationRate = 0.034;
     const commissionedYear = new Date(space.commissioned_date).getFullYear();
-    const recommendedReplacementYear = commissionedYear + space.refresh_cycle_years;
-    const { error: forecastError } = await supabase.from("forecast_cost_components").insert({
-      organization_id: organizationId,
-      space_id: spaceRow.id,
-      asset_id: null,
-      cost_basis: space.original_cost,
-      cost_basis_date: space.commissioned_date,
-      refresh_cycle_years: space.refresh_cycle_years,
-      recommended_replacement_year: recommendedReplacementYear,
-      inflation_rate: 0.034,
-      forecast_amount: space.forecast_amount,
-    });
-    if (forecastError) throw new Error(forecastError.message);
+
+    if (remainder > 0) {
+      const recommendedReplacementYear = commissionedYear + space.refresh_cycle_years;
+      const years = recommendedReplacementYear - commissionedYear;
+      const { error: forecastError } = await supabase.from("forecast_cost_components").insert({
+        organization_id: organizationId,
+        space_id: spaceRow.id,
+        asset_id: null,
+        cost_basis: remainder,
+        cost_basis_date: space.commissioned_date,
+        refresh_cycle_years: space.refresh_cycle_years,
+        recommended_replacement_year: recommendedReplacementYear,
+        inflation_rate: inflationRate,
+        forecast_amount: Math.round(remainder * (1 + inflationRate) ** years * 100) / 100,
+      });
+      if (forecastError) throw new Error(forecastError.message);
+    }
   }
 
   for (const asset of assets) {
@@ -370,6 +378,9 @@ async function main() {
     if (assetError) throw new Error(assetError.message);
 
     if (asset.cost > 0) {
+      const recommendedReplacementYear = installYear + asset.refresh_cycle_years;
+      const years = recommendedReplacementYear - installYear;
+      const inflationRate = 0.034;
       const { error: assetForecastError } = await supabase.from("forecast_cost_components").insert({
         organization_id: organizationId,
         space_id: spaceId,
@@ -377,9 +388,9 @@ async function main() {
         cost_basis: asset.cost,
         cost_basis_date: asset.install_date,
         refresh_cycle_years: asset.refresh_cycle_years,
-        recommended_replacement_year: installYear + asset.refresh_cycle_years,
-        inflation_rate: 0.034,
-        forecast_amount: asset.cost,
+        recommended_replacement_year: recommendedReplacementYear,
+        inflation_rate: inflationRate,
+        forecast_amount: Math.round(asset.cost * (1 + inflationRate) ** years * 100) / 100,
       });
       if (assetForecastError) throw new Error(assetForecastError.message);
     }

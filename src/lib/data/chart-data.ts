@@ -114,6 +114,9 @@ export function uniqueYearsFromSpaces(spaces: Space[]): number[] {
   for (const space of spaces) {
     years.add(space.recommendedRefreshYear);
     years.add(space.commissionedYear);
+    for (const slice of space.forecastByYear) {
+      years.add(slice.year);
+    }
   }
   return [...years].sort((a, b) => a - b);
 }

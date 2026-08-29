@@ -8,8 +8,8 @@ export default function ImportsPage() {
       description="Import and update inventory data"
     >
       <p className="text-sm text-muted-foreground">
-        The import workflow will support CSV and Excel uploads with intelligent column mapping.
-        Four primary actions:
+        CSV and Excel upload is Phase 4. You can already record these actions from a Space
+        without a file:
       </p>
       <ul className="list-inside list-disc space-y-1 text-sm text-muted-foreground">
         {lifecycleActions.map((action) => (

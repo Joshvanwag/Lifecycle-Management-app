@@ -24,6 +24,7 @@ export const demoSpaces: Space[] = [
     plannedRefreshYear: 2031,
     originalCost: 87500,
     forecastAmount: 112400,
+    forecastByYear: [{ year: 2031, amount: 112400 }],
     assetCount: 24,
   },
   {
@@ -43,6 +44,7 @@ export const demoSpaces: Space[] = [
     plannedRefreshYear: 2026,
     originalCost: 142000,
     forecastAmount: 178600,
+    forecastByYear: [{ year: 2026, amount: 178600 }],
     assetCount: 31,
   },
   {
@@ -61,6 +63,7 @@ export const demoSpaces: Space[] = [
     plannedRefreshYear: 2028,
     originalCost: 485000,
     forecastAmount: 612000,
+    forecastByYear: [{ year: 2025, amount: 612000 }],
     assetCount: 86,
   },
   {
@@ -78,6 +81,7 @@ export const demoSpaces: Space[] = [
     planningStatus: "unplanned",
     originalCost: 96000,
     forecastAmount: 124800,
+    forecastByYear: [{ year: 2034, amount: 124800 }],
     assetCount: 18,
   },
   {
@@ -95,6 +99,7 @@ export const demoSpaces: Space[] = [
     planningStatus: "unplanned",
     originalCost: 198500,
     forecastAmount: 256200,
+    forecastByYear: [{ year: 2032, amount: 256200 }],
     assetCount: 42,
   },
   {
@@ -113,6 +118,7 @@ export const demoSpaces: Space[] = [
     plannedRefreshYear: 2027,
     originalCost: 320000,
     forecastAmount: 368000,
+    forecastByYear: [{ year: 2027, amount: 368000 }],
     assetCount: 120,
   },
   {
@@ -131,6 +137,7 @@ export const demoSpaces: Space[] = [
     planningStatus: "unplanned",
     originalCost: 28500,
     forecastAmount: 37200,
+    forecastByYear: [{ year: 2035, amount: 37200 }],
     assetCount: 12,
   },
   {
@@ -149,6 +156,7 @@ export const demoSpaces: Space[] = [
     planningStatus: "unplanned",
     originalCost: 54000,
     forecastAmount: 68200,
+    forecastByYear: [{ year: 2024, amount: 68200 }],
     assetCount: 19,
   },
 ];
