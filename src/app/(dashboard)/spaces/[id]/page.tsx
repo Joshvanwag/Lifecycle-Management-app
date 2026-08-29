@@ -1,0 +1,324 @@
+"use client";
+
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { use } from "react";
+import {
+  ArrowLeft,
+  ChevronDown,
+  RefreshCw,
+} from "lucide-react";
+import {
+  getAssetsBySpaceId,
+  getRefreshHistoryBySpaceId,
+  getSpaceById,
+} from "@/lib/demo-data";
+import { formatCurrency } from "@/lib/utils";
+import { DashboardShell } from "@/components/layout/dashboard-shell";
+import {
+  LifecycleStatusBadge,
+  PlanningStatusBadge,
+} from "@/components/spaces/status-badges";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { lifecycleActions } from "@/config/navigation";
+
+const refreshTypeLabels = {
+  initial_deployment: "Initial Deployment",
+  full_refresh: "Full Refresh",
+  partial_refresh: "Partial Refresh",
+  individual_replacement: "Individual Replacement",
+};
+
+export default function SpaceDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = use(params);
+  const space = getSpaceById(id);
+
+  if (!space) {
+    notFound();
+  }
+
+  const assets = getAssetsBySpaceId(id);
+  const history = getRefreshHistoryBySpaceId(id);
+
+  return (
+    <DashboardShell title={space.name} description={space.locationLabel}>
+      <div className="space-y-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="space-y-3">
+            <Button variant="ghost" size="sm" asChild className="-ml-2 w-fit">
+              <Link href="/spaces">
+                <ArrowLeft className="h-4 w-4" />
+                Back to Spaces
+              </Link>
+            </Button>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant="outline">{space.spaceType}</Badge>
+              <LifecycleStatusBadge status={space.lifecycleStatus} />
+              <PlanningStatusBadge status={space.planningStatus} />
+            </div>
+          </div>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button>
+                <RefreshCw className="h-4 w-4" />
+                Update Lifecycle
+                <ChevronDown className="h-4 w-4 opacity-60" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-72">
+              <DropdownMenuLabel>Lifecycle Actions</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {lifecycleActions.map((action) => (
+                <DropdownMenuItem key={action.title} asChild>
+                  <Link href={action.href} className="flex flex-col items-start gap-0.5 py-2">
+                    <span className="font-medium">{action.title}</span>
+                    <span className="text-xs font-normal text-muted-foreground">
+                      {action.description}
+                    </span>
+                  </Link>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardDescription>Original Cost</CardDescription>
+              <CardTitle className="text-2xl">{formatCurrency(space.originalCost)}</CardTitle>
+            </CardHeader>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardDescription>Forecast Amount</CardDescription>
+              <CardTitle className="text-2xl">{formatCurrency(space.forecastAmount)}</CardTitle>
+            </CardHeader>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardDescription>Recommended Refresh</CardDescription>
+              <CardTitle className="text-2xl">{space.recommendedRefreshYear}</CardTitle>
+            </CardHeader>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardDescription>Active Assets</CardDescription>
+              <CardTitle className="text-2xl">{space.assetCount}</CardTitle>
+            </CardHeader>
+          </Card>
+        </div>
+
+        <Tabs defaultValue="overview">
+          <TabsList>
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="assets">Assets</TabsTrigger>
+            <TabsTrigger value="lifecycle">Lifecycle</TabsTrigger>
+            <TabsTrigger value="history">History</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="overview" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Space Overview</CardTitle>
+                <CardDescription>Key lifecycle and location information</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <dl className="grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <dt className="text-sm text-muted-foreground">Location</dt>
+                    <dd className="font-medium">{space.locationLabel}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-sm text-muted-foreground">Commissioned</dt>
+                    <dd className="font-medium">{space.commissionedYear}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-sm text-muted-foreground">Refresh Cycle</dt>
+                    <dd className="font-medium">{space.refreshCycleYears} years</dd>
+                  </div>
+                  <div>
+                    <dt className="text-sm text-muted-foreground">Planned Refresh</dt>
+                    <dd className="font-medium">
+                      {space.plannedRefreshYear ?? "Not scheduled"}
+                    </dd>
+                  </div>
+                </dl>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="assets">
+            <Card>
+              <CardHeader>
+                <CardTitle>Assets</CardTitle>
+                <CardDescription>
+                  Active equipment in this Space. Lump-sum costs may show as $0 per asset.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-0">
+                {assets.length === 0 ? (
+                  <p className="p-6 text-sm text-muted-foreground">
+                    No sample assets loaded for this Space.
+                  </p>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Manufacturer</TableHead>
+                        <TableHead>Model</TableHead>
+                        <TableHead>Category</TableHead>
+                        <TableHead>Install Date</TableHead>
+                        <TableHead>Refresh Year</TableHead>
+                        <TableHead className="text-right">Cost</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {assets.map((asset) => (
+                        <TableRow key={asset.id}>
+                          <TableCell className="font-medium">{asset.manufacturer}</TableCell>
+                          <TableCell>{asset.modelNumber}</TableCell>
+                          <TableCell>{asset.category}</TableCell>
+                          <TableCell>{asset.installDate}</TableCell>
+                          <TableCell>{asset.recommendedRefreshYear}</TableCell>
+                          <TableCell className="text-right">
+                            {asset.cost > 0 ? formatCurrency(asset.cost) : "—"}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="lifecycle" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Lifecycle Schedule</CardTitle>
+                <CardDescription>
+                  Assets in this Space may have independent refresh years after partial
+                  replacements.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between rounded-lg border p-4">
+                    <div>
+                      <p className="font-medium">Space-level recommendation</p>
+                      <p className="text-sm text-muted-foreground">
+                        Based on {space.commissionedYear} commissioning and{" "}
+                        {space.refreshCycleYears}-year cycle
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-2xl font-bold">{space.recommendedRefreshYear}</p>
+                      <LifecycleStatusBadge status={space.lifecycleStatus} />
+                    </div>
+                  </div>
+                  {assets.length > 0 && (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Asset</TableHead>
+                          <TableHead>Install</TableHead>
+                          <TableHead>Cycle</TableHead>
+                          <TableHead>Next Refresh</TableHead>
+                          <TableHead>Status</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {assets.map((asset) => (
+                          <TableRow key={asset.id}>
+                            <TableCell>
+                              <p className="font-medium">
+                                {asset.manufacturer} {asset.modelNumber}
+                              </p>
+                              <p className="text-xs text-muted-foreground">{asset.category}</p>
+                            </TableCell>
+                            <TableCell>{asset.installDate}</TableCell>
+                            <TableCell>{asset.refreshCycleYears} yr</TableCell>
+                            <TableCell>{asset.recommendedRefreshYear}</TableCell>
+                            <TableCell>
+                              <LifecycleStatusBadge status={asset.lifecycleStatus} />
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="history">
+            <Card>
+              <CardHeader>
+                <CardTitle>Refresh History</CardTitle>
+                <CardDescription>
+                  Historical deployment and refresh events for this Space
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {history.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    No refresh history recorded yet.
+                  </p>
+                ) : (
+                  <div className="space-y-4">
+                    {history.map((event) => (
+                      <div
+                        key={event.id}
+                        className="flex items-start justify-between gap-4 rounded-lg border p-4"
+                      >
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline">
+                              {refreshTypeLabels[event.type]}
+                            </Badge>
+                            <span className="text-sm text-muted-foreground">{event.date}</span>
+                          </div>
+                          <p className="mt-2 font-medium">{event.description}</p>
+                        </div>
+                        {event.cost !== undefined && (
+                          <p className="shrink-0 font-medium">{formatCurrency(event.cost)}</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </DashboardShell>
+  );
+}
