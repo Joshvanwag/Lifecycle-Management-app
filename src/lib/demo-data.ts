@@ -1,8 +1,8 @@
 import type { Asset, DashboardMetrics, RefreshEvent, Space } from "@/lib/types";
 
 /**
- * Development/demo sample data only.
- * Replace with Supabase queries once the database is connected.
+ * Reference demo data used by scripts/seed-demo-data.mjs.
+ * Dashboard pages load live data from Supabase in Phase 2+.
  */
 export const DEMO_ORGANIZATION = "University of Example";
 

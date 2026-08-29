@@ -1,18 +1,17 @@
-"use client";
-
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { use } from "react";
 import {
   ArrowLeft,
   ChevronDown,
   RefreshCw,
 } from "lucide-react";
+import { requireAuthContext } from "@/lib/auth/context";
 import {
   getAssetsBySpaceId,
   getRefreshHistoryBySpaceId,
   getSpaceById,
-} from "@/lib/demo-data";
+} from "@/lib/data/spaces";
+import { createClient } from "@/lib/supabase/server";
 import { formatCurrency } from "@/lib/utils";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import {
@@ -48,23 +47,35 @@ const refreshTypeLabels = {
   individual_replacement: "Individual Replacement",
 };
 
-export default function SpaceDetailPage({
+export default async function SpaceDetailPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const { id } = use(params);
-  const space = getSpaceById(id);
+  const { id } = await params;
+  const auth = await requireAuthContext();
+  const supabase = await createClient();
+  const organizationId = auth.organization.id;
+
+  const space = await getSpaceById(supabase, organizationId, id);
 
   if (!space) {
     notFound();
   }
 
-  const assets = getAssetsBySpaceId(id);
-  const history = getRefreshHistoryBySpaceId(id);
+  const [assets, history] = await Promise.all([
+    getAssetsBySpaceId(supabase, organizationId, id),
+    getRefreshHistoryBySpaceId(supabase, organizationId, id),
+  ]);
 
   return (
-    <DashboardShell title={space.name} description={space.locationLabel}>
+    <DashboardShell
+      title={space.name}
+      description={space.locationLabel}
+      userDisplayName={auth.displayName}
+      userInitials={auth.initials}
+      organizationName={auth.organization.name}
+    >
       <div className="space-y-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-3">
@@ -152,7 +163,7 @@ export default function SpaceDetailPage({
                 <dl className="grid gap-4 sm:grid-cols-2">
                   <div>
                     <dt className="text-sm text-muted-foreground">Location</dt>
-                    <dd className="font-medium">{space.locationLabel}</dd>
+                    <dd className="font-medium">{space.locationLabel || "Not assigned"}</dd>
                   </div>
                   <div>
                     <dt className="text-sm text-muted-foreground">Commissioned</dt>
@@ -184,7 +195,7 @@ export default function SpaceDetailPage({
               <CardContent className="p-0">
                 {assets.length === 0 ? (
                   <p className="p-6 text-sm text-muted-foreground">
-                    No sample assets loaded for this Space.
+                    No assets recorded for this Space yet.
                   </p>
                 ) : (
                   <Table>

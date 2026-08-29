@@ -91,3 +91,30 @@ Target hosting platform is AWS Amplify. Not provisioned in Phase 1.
 No Playwright, Vitest, or other testing framework added in initial foundation.
 
 **Rationale:** Explicit product guidance to avoid premature tooling.
+
+## ADR-011: Auto-Create Organization on Signup
+
+**Date:** Phase 2  
+**Status:** Accepted
+
+When a user signs up, a security-definer trigger creates one organization and an `owner` membership. Organization name comes from signup form metadata.
+
+**Rationale:** MVP assumes one organization per signup; schema supports multi-org membership later without forcing org-creation UI in Phase 2.
+
+## ADR-012: Display-Only Lifecycle Status in Phase 2
+
+**Date:** Phase 2  
+**Status:** Accepted
+
+Lifecycle status (`upcoming`, `due`, `overdue`) is derived at read time from `commissioned_date + refresh_cycle_years` vs current year. The full lifecycle engine is deferred to Phase 3.
+
+**Rationale:** Phase 2 scope is schema + auth + live data wiring, not lifecycle calculation.
+
+## ADR-013: MVP RLS Write Matrix
+
+**Date:** Phase 2  
+**Status:** Accepted
+
+`read_only` members can SELECT only. `member`, `admin`, and `owner` can write tenant data. Only `admin` and `owner` can manage memberships and organization settings.
+
+**Rationale:** Simplest valid tenant security for MVP; documented in `/docs/security.md`.

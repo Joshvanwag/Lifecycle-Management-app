@@ -17,29 +17,60 @@ Supabase Auth provides:
 
 User's authenticated identity determines accessible organization(s).
 
+On signup, a database trigger (`handle_new_user`) creates:
+- One `organizations` row (name from signup metadata)
+- One `organization_memberships` row with role `owner`
+
+Dashboard routes are protected by Next.js middleware. Unauthenticated users are redirected to `/login`.
+
 ## Authorization
 
-Initial roles: Owner, Admin, Member, Read Only.
+Initial roles: `owner`, `admin`, `member`, `read_only`.
 
-Design permissions for future granularity:
-- View/modify assets
-- Import
-- Run refresh
-- Modify lifecycle assumptions
-- Manage planning
-- Export reports
-- Manage users
-- Manage organization settings
-- View audit logs
+### MVP role matrix (Phase 2)
+
+| Action | owner | admin | member | read_only |
+| --- | --- | --- | --- | --- |
+| Read organization data | Yes | Yes | Yes | Yes |
+| Insert/update/delete tenant data | Yes | Yes | Yes | No |
+| Update organization settings | Yes | Yes | No | No |
+| Manage memberships | Yes | Yes | No | No |
+
+Write restrictions are enforced in RLS via `can_write_organization()` and `can_manage_organization()` helper functions.
+
+Future granular permissions (imports, exports, lifecycle edits) are deferred to later phases.
 
 ## Row Level Security (Phase 2)
 
-Every customer-owned table must have RLS policies ensuring:
-- Users can only access data for organizations they belong to
-- Role-based write restrictions where applicable
-- No cross-tenant data leakage
+RLS is enabled on all tenant-owned tables:
 
-RLS policies will be defined in Supabase migrations and documented here as they are implemented.
+- `organizations`
+- `organization_memberships`
+- `campuses`, `buildings`, `floors`, `physical_locations`
+- `spaces`, `space_locations`
+- `assets`
+- `forecast_cost_components`
+- `refresh_events`
+
+### Helper functions
+
+| Function | Purpose |
+| --- | --- |
+| `user_organization_ids()` | Returns organization IDs for `auth.uid()` |
+| `can_read_organization(uuid)` | Membership exists |
+| `can_write_organization(uuid)` | Role is owner, admin, or member |
+| `can_manage_organization(uuid)` | Role is owner or admin |
+
+### Policy pattern
+
+- **SELECT:** `organization_id in (select user_organization_ids())`
+- **INSERT/UPDATE/DELETE (data tables):** `can_write_organization(organization_id)`
+- **Organization update:** `can_manage_organization(id)`
+- **Membership management:** `can_manage_organization(organization_id)`
+
+Organization inserts are not exposed to authenticated clients; signup uses the `handle_new_user` security-definer trigger.
+
+Migrations: `supabase/migrations/20250829180001_rls_policies.sql`
 
 ## Environment Variables
 
@@ -47,16 +78,14 @@ RLS policies will be defined in Supabase migrations and documented here as they 
 |----------|----------|---------|
 | `NEXT_PUBLIC_SUPABASE_URL` | Browser-safe | Supabase project URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Browser-safe | Public anon key (RLS enforced) |
-| `SUPABASE_SERVICE_ROLE_KEY` | Server-only | Admin operations, imports |
+| `SUPABASE_SERVICE_ROLE_KEY` | Server-only | Admin operations, seed script |
 
 ## Server-Side Operations
 
-Privileged operations use Next.js server components/actions with service role client:
-- Bulk imports
-- Lifecycle updates
-- Financial calculations
-- Admin functions
-- Exports
+Privileged operations use Next.js server components/actions with the authenticated user's session (RLS enforced) or, when required, the service role client:
+
+- Demo seed script (`npm run db:seed`) — service role only, never in browser
+- Future: bulk imports, admin functions, exports
 
 ## Audit Logging (Future)
 
@@ -68,10 +97,3 @@ Administrative audit events (separate from lifecycle history):
 - SSO settings changed
 
 Do not log every page view.
-
-## Phase 1 Status
-
-- Supabase client utilities created (`src/lib/supabase/`)
-- Environment variable template in `.env.example`
-- RLS policies not yet implemented (no database schema)
-- No authentication UI yet

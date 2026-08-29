@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { requireAuthContext } from "@/lib/auth/context";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,9 +10,17 @@ interface PlaceholderPageProps {
   children?: React.ReactNode;
 }
 
-export function PlaceholderPage({ title, description, children }: PlaceholderPageProps) {
+export async function PlaceholderPage({ title, description, children }: PlaceholderPageProps) {
+  const auth = await requireAuthContext();
+
   return (
-    <DashboardShell title={title} description={description}>
+    <DashboardShell
+      title={title}
+      description={description}
+      userDisplayName={auth.displayName}
+      userInitials={auth.initials}
+      organizationName={auth.organization.name}
+    >
       <Card className="max-w-2xl">
         <CardHeader>
           <CardTitle>Coming soon</CardTitle>

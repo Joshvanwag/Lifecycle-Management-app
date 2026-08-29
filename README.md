@@ -21,11 +21,27 @@ A multi-tenant SaaS platform for lifecycle management of technology and equipmen
 ```bash
 npm install
 cp .env.example .env.local
-# Add Supabase credentials when available
+# Add Supabase credentials (see Environment Variables below)
 npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
+
+### Supabase setup (Phase 2)
+
+1. Create a Supabase project at [supabase.com](https://supabase.com).
+2. Add credentials to `.env.local` (see table below).
+3. Apply migrations from `supabase/migrations/` using the Supabase SQL editor or CLI:
+   ```bash
+   npx supabase link --project-ref <your-project-ref>
+   npx supabase db push
+   ```
+4. Sign up at `/signup` to create your organization.
+5. Seed demo portfolio data (optional):
+   ```bash
+   ORGANIZATION_ID=<your-org-uuid> npm run db:seed
+   ```
+   Find your organization ID in the Supabase dashboard (`organizations` table) after signup.
 
 ### Environment Variables
 
@@ -49,9 +65,11 @@ supabase/           # Supabase config and migrations
 
 ## Development Status
 
-**Phase 1 (current):** Application foundation, UI shell, demo data, documentation.
+**Phase 1:** Application foundation, UI shell, demo data, documentation.
 
-**Phase 2 (next):** Supabase schema, tenant isolation, RLS, real data.
+**Phase 2 (current):** Supabase schema, tenant isolation, RLS, authentication, live data on Overview and Spaces pages.
+
+**Phase 3 (next):** Lifecycle calculation engine, forecasting with compound inflation.
 
 ## Documentation
 
