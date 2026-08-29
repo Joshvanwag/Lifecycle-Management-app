@@ -9,6 +9,7 @@ export interface Space {
   building: string;
   room?: string;
   locationLabel: string;
+  commissionedDate: string;
   commissionedYear: number;
   refreshCycleYears: number;
   recommendedRefreshYear: number;

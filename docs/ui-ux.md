@@ -56,11 +56,12 @@ Implemented globally in `src/app/globals.css`.
 
 ## Charts
 
-- Each forecast year uses a distinct color on bar and timeline charts
-- A legend shows the year-to-color mapping below chart titles
-- Users customize chart colors under Settings → Chart colors (saved per browser for the organization)
-- Lifecycle and planning status colors use the same preference system for future stacked/grouped charts
-- Charts link to color settings via "Customize colors"
+- Charts use a high-contrast 12-color palette so years and categories are easy to distinguish
+- Legend keys show the year number only (e.g. `2026`, not `FY2026`)
+- Customize colors from each chart's **⋮** options menu (not Settings)
+- Overview charts: lifecycle status, planned amount by year, deployment by month
+- Assets charts: manufacturer top 10, product type breakdown
+- All charts respect the same portfolio filters as the page they appear on
 
 ## Filtering
 

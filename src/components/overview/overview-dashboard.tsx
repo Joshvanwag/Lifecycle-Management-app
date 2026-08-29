@@ -21,7 +21,13 @@ import {
   PlanningStatusBadge,
 } from "@/components/spaces/status-badges";
 import { ForecastChart } from "@/components/overview/forecast-chart";
+import { DeploymentMonthChart } from "@/components/overview/deployment-month-chart";
+import { LifecycleStatusChart } from "@/components/overview/lifecycle-status-chart";
 import { computeDashboardMetrics } from "@/lib/data/dashboard-metrics";
+import {
+  computeDeploymentByMonth,
+  computeLifecycleStatusSlices,
+} from "@/lib/data/chart-data";
 import {
   buildSpaceFilterOptions,
   countActiveFilters,
@@ -106,6 +112,16 @@ export function OverviewDashboard({ spaces }: OverviewDashboardProps) {
     [filteredSpaces],
   );
 
+  const lifecycleSlices = useMemo(
+    () => computeLifecycleStatusSlices(filteredSpaces),
+    [filteredSpaces],
+  );
+
+  const deploymentByMonth = useMemo(
+    () => computeDeploymentByMonth(filteredSpaces),
+    [filteredSpaces],
+  );
+
   const activeFilterCount = countActiveFilters(filters);
 
   return (
@@ -160,9 +176,16 @@ export function OverviewDashboard({ spaces }: OverviewDashboardProps) {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
+        <LifecycleStatusChart data={lifecycleSlices} />
         <ForecastChart data={metrics.forecastByYear} />
+      </div>
 
-        <Card>
+      <DeploymentMonthChart
+        rows={deploymentByMonth.rows}
+        years={deploymentByMonth.years}
+      />
+
+      <Card>
           <CardHeader>
             <CardTitle>Upcoming Spaces</CardTitle>
             <CardDescription>
@@ -216,7 +239,6 @@ export function OverviewDashboard({ spaces }: OverviewDashboardProps) {
             )}
           </CardContent>
         </Card>
-      </div>
 
       <SpaceFilters
         open={filtersOpen}

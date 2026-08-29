@@ -11,6 +11,8 @@ import {
 } from "react";
 import {
   createDefaultChartColors,
+  getCategoryColor,
+  getDeploymentStatusColor,
   getLifecycleStatusColor,
   getPlanningStatusColor,
   getYearColor,
@@ -26,10 +28,14 @@ interface ChartColorContextValue {
   setYearColor: (year: number, color: string) => void;
   setLifecycleStatusColor: (status: LifecycleStatus, color: string) => void;
   setPlanningStatusColor: (status: PlanningStatus, color: string) => void;
+  setDeploymentStatusColor: (status: "active" | "planned", color: string) => void;
+  setCategoryColor: (category: string, color: string) => void;
   resetColors: () => void;
   getYearColor: (year: number) => string;
   getLifecycleStatusColor: (status: LifecycleStatus) => string;
   getPlanningStatusColor: (status: PlanningStatus) => string;
+  getDeploymentStatusColor: (status: "active" | "planned") => string;
+  getCategoryColor: (category: string, fallbackIndex?: number) => string;
 }
 
 const ChartColorContext = createContext<ChartColorContextValue | null>(null);
@@ -63,9 +69,7 @@ export function ChartColorProvider({
   organizationId: string;
   children: ReactNode;
 }) {
-  const [colors, setColors] = useState<ChartColorPreferences>(() =>
-    createDefaultChartColors(),
-  );
+  const [colors, setColors] = useState<ChartColorPreferences>(() => createDefaultChartColors());
 
   useEffect(() => {
     setColors(readStoredColors(organizationId));
@@ -109,6 +113,26 @@ export function ChartColorProvider({
     [colors, persist],
   );
 
+  const setDeploymentStatusColor = useCallback(
+    (status: "active" | "planned", color: string) => {
+      persist({
+        ...colors,
+        deploymentStatus: { ...colors.deploymentStatus, [status]: color },
+      });
+    },
+    [colors, persist],
+  );
+
+  const setCategoryColor = useCallback(
+    (category: string, color: string) => {
+      persist({
+        ...colors,
+        categories: { ...colors.categories, [category]: color },
+      });
+    },
+    [colors, persist],
+  );
+
   const resetColors = useCallback(() => {
     persist(createDefaultChartColors());
   }, [persist]);
@@ -119,12 +143,17 @@ export function ChartColorProvider({
       setYearColor,
       setLifecycleStatusColor,
       setPlanningStatusColor,
+      setDeploymentStatusColor,
+      setCategoryColor,
       resetColors,
       getYearColor: (year) => getYearColor(year, colors),
       getLifecycleStatusColor: (status) => getLifecycleStatusColor(status, colors),
       getPlanningStatusColor: (status) => getPlanningStatusColor(status, colors),
+      getDeploymentStatusColor: (status) => getDeploymentStatusColor(status, colors),
+      getCategoryColor: (category, fallbackIndex) =>
+        getCategoryColor(category, colors, fallbackIndex ?? 0),
     }),
-    [colors, resetColors, setLifecycleStatusColor, setPlanningStatusColor, setYearColor],
+    [colors, resetColors, setCategoryColor, setDeploymentStatusColor, setLifecycleStatusColor, setPlanningStatusColor, setYearColor],
   );
 
   return <ChartColorContext.Provider value={value}>{children}</ChartColorContext.Provider>;

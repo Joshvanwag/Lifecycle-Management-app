@@ -1,21 +1,15 @@
-import { DashboardShell } from "@/components/layout/dashboard-shell";
-import { ChartColorSettings } from "@/components/settings/chart-color-settings";
-import { requireAuthContext } from "@/lib/auth/context";
+import { PlaceholderPage } from "@/components/layout/placeholder-page";
 
-export default async function SettingsPage() {
-  const auth = await requireAuthContext();
-
+export default function SettingsPage() {
   return (
-    <DashboardShell
+    <PlaceholderPage
       title="Settings"
       description="Organization and application settings"
-      userDisplayName={auth.displayName}
-      userInitials={auth.initials}
-      organizationName={auth.organization.name}
     >
-      <div className="max-w-2xl space-y-6">
-        <ChartColorSettings />
-      </div>
-    </DashboardShell>
+      <p className="text-sm text-muted-foreground">
+        Organization defaults, user management, and SSO configuration will expand in later phases.
+        Chart colors are customized from each chart&apos;s options menu.
+      </p>
+    </PlaceholderPage>
   );
 }
