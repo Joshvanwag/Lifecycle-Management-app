@@ -37,6 +37,9 @@ export default async function SettingsPage({
           saved={params.saved === "1"}
           errorMessage={errorMessage}
         />
+        <p className="text-sm text-muted-foreground">
+          Chart colors are customized from each chart&apos;s options menu.
+        </p>
       </div>
     </DashboardShell>
   );

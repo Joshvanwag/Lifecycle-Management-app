@@ -16,6 +16,11 @@ import {
   emptySpaceFilters,
   type SpaceFiltersState,
 } from "@/components/spaces/space-filters";
+import {
+  buildSpaceFilterOptions,
+  countActiveFilters,
+  filterSpaces,
+} from "@/lib/filters/space-filters";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -45,55 +50,14 @@ export function SpacesTable({
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [filters, setFilters] = useState<SpaceFiltersState>(emptySpaceFilters);
 
-  const filterOptions = useMemo(
-    () => ({
-      campuses: [...new Set(spaces.map((s) => s.campus))].sort(),
-      buildings: [...new Set(spaces.map((s) => s.building))].sort(),
-      spaceTypes: [...new Set(spaces.map((s) => s.spaceType))].sort(),
-      years: [...new Set(spaces.map((s) => String(s.recommendedRefreshYear)))].sort(),
-    }),
-    [spaces],
+  const filterOptions = useMemo(() => buildSpaceFilterOptions(spaces), [spaces]);
+
+  const filteredSpaces = useMemo(
+    () => filterSpaces(spaces, search, filters),
+    [spaces, search, filters],
   );
 
-  const filteredSpaces = useMemo(() => {
-    const query = search.trim().toLowerCase();
-
-    return spaces.filter((space) => {
-      const matchesSearch =
-        !query ||
-        space.name.toLowerCase().includes(query) ||
-        space.locationLabel.toLowerCase().includes(query) ||
-        space.spaceType.toLowerCase().includes(query);
-
-      const matchesCampus =
-        filters.campus.length === 0 || filters.campus.includes(space.campus);
-      const matchesBuilding =
-        filters.building.length === 0 || filters.building.includes(space.building);
-      const matchesSpaceType =
-        filters.spaceType.length === 0 || filters.spaceType.includes(space.spaceType);
-      const matchesLifecycle =
-        filters.lifecycleStatus.length === 0 ||
-        filters.lifecycleStatus.includes(space.lifecycleStatus);
-      const matchesPlanning =
-        filters.planningStatus.length === 0 ||
-        filters.planningStatus.includes(space.planningStatus);
-      const matchesYear =
-        filters.year.length === 0 ||
-        filters.year.includes(String(space.recommendedRefreshYear));
-
-      return (
-        matchesSearch &&
-        matchesCampus &&
-        matchesBuilding &&
-        matchesSpaceType &&
-        matchesLifecycle &&
-        matchesPlanning &&
-        matchesYear
-      );
-    });
-  }, [spaces, search, filters]);
-
-  const activeFilterCount = Object.values(filters).reduce((sum, arr) => sum + arr.length, 0);
+  const activeFilterCount = countActiveFilters(filters);
   const total = totalCount ?? spaces.length;
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const rangeStart = total === 0 ? 0 : (page - 1) * pageSize + 1;

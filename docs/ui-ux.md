@@ -54,6 +54,15 @@ Should NOT feel like:
 
 Implemented globally in `src/app/globals.css`.
 
+## Charts
+
+- Charts use a high-contrast 12-color palette so years and categories are easy to distinguish
+- Legend keys show the year number only (e.g. `2026`, not `FY2026`)
+- Customize colors from each chart's **⋮** options menu (not Settings)
+- Overview charts: lifecycle status, planned amount by year, deployment by month
+- Assets charts: manufacturer top 10, product type breakdown
+- All charts respect the same portfolio filters as the page they appear on
+
 ## Filtering
 
 Do NOT use a filter bar with many dropdowns across the top.

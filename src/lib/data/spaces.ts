@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { computeDashboardMetrics } from "@/lib/data/dashboard-metrics";
 import {
   deriveLifecycleStatus,
   deriveRecommendedRefreshYear,
@@ -57,6 +58,7 @@ function mapSpaceRow(
     building,
     room,
     locationLabel: formatLocationLabel({ campus, building, room }),
+    commissionedDate: row.commissioned_date,
     commissionedYear: new Date(row.commissioned_date).getFullYear(),
     refreshCycleYears: row.refresh_cycle_years,
     recommendedRefreshYear,
@@ -213,8 +215,58 @@ export async function listSpaces(
 }
 
 export async function getAllSpaces(client: Client, organizationId: string): Promise<Space[]> {
-  const result = await listSpaces(client, organizationId, { page: 1, pageSize: 100 });
-  return result.spaces;
+  const spaces: Space[] = [];
+  let page = 1;
+
+  while (true) {
+    const result = await listSpaces(client, organizationId, { page, pageSize: 100 });
+    spaces.push(...result.spaces);
+    if (spaces.length >= result.totalCount) {
+      break;
+    }
+    page += 1;
+  }
+
+  return spaces;
+}
+
+function mapAssetRow(row: AssetRow): Asset {
+  const recommendedRefreshYear = deriveRecommendedRefreshYear(
+    row.install_date,
+    row.refresh_cycle_years,
+  );
+
+  return {
+    id: row.id,
+    spaceId: row.space_id,
+    manufacturer: row.manufacturer,
+    modelNumber: row.model_number,
+    category: row.category,
+    serialNumber: row.serial_number ?? undefined,
+    ipAddress: row.ip_address ?? undefined,
+    macAddress: row.mac_address ?? undefined,
+    installDate: row.install_date,
+    cost: Number(row.cost),
+    refreshCycleYears: row.refresh_cycle_years,
+    recommendedRefreshYear,
+    lifecycleStatus: deriveLifecycleStatus(recommendedRefreshYear),
+    status: row.status,
+  };
+}
+
+export async function getAllAssets(client: Client, organizationId: string): Promise<Asset[]> {
+  const { data, error } = await client
+    .from("assets")
+    .select("*")
+    .eq("organization_id", organizationId)
+    .eq("status", "active")
+    .order("manufacturer", { ascending: true });
+
+  if (error) {
+    throw new Error(`Failed to load assets: ${error.message}`);
+  }
+
+  return ((data ?? []) as AssetRow[]).map(mapAssetRow);
 }
 
 export async function getSpaceById(
@@ -270,29 +322,7 @@ export async function getAssetsBySpaceId(
     throw new Error(`Failed to load assets: ${error.message}`);
   }
 
-  return ((data ?? []) as AssetRow[]).map((row) => {
-    const recommendedRefreshYear = deriveRecommendedRefreshYear(
-      row.install_date,
-      row.refresh_cycle_years,
-    );
-
-    return {
-      id: row.id,
-      spaceId: row.space_id,
-      manufacturer: row.manufacturer,
-      modelNumber: row.model_number,
-      category: row.category,
-      serialNumber: row.serial_number ?? undefined,
-      ipAddress: row.ip_address ?? undefined,
-      macAddress: row.mac_address ?? undefined,
-      installDate: row.install_date,
-      cost: Number(row.cost),
-      refreshCycleYears: row.refresh_cycle_years,
-      recommendedRefreshYear,
-      lifecycleStatus: deriveLifecycleStatus(recommendedRefreshYear),
-      status: row.status,
-    };
-  });
+  return ((data ?? []) as AssetRow[]).map(mapAssetRow);
 }
 
 export async function getRefreshHistoryBySpaceId(
@@ -326,41 +356,5 @@ export async function getDashboardMetrics(
   organizationId: string,
 ): Promise<DashboardMetrics> {
   const spaces = await getAllSpaces(client, organizationId);
-  const currentYear = new Date().getFullYear();
-  const endYear = currentYear + 4;
-
-  const totalPortfolioValue = spaces.reduce((sum, space) => sum + space.originalCost, 0);
-  const fiveYearForecast = spaces
-    .filter(
-      (space) =>
-        space.recommendedRefreshYear >= currentYear &&
-        space.recommendedRefreshYear <= endYear,
-    )
-    .reduce((sum, space) => sum + space.forecastAmount, 0);
-  const dueThisYear = spaces
-    .filter((space) => space.lifecycleStatus === "due")
-    .reduce((sum, space) => sum + space.forecastAmount, 0);
-  const overdue = spaces
-    .filter((space) => space.lifecycleStatus === "overdue")
-    .reduce((sum, space) => sum + space.forecastAmount, 0);
-  const deferred = spaces
-    .filter((space) => space.planningStatus === "deferred")
-    .reduce((sum, space) => sum + space.forecastAmount, 0);
-
-  const forecastByYear = Array.from({ length: 5 }, (_, index) => {
-    const year = currentYear + index;
-    const amount = spaces
-      .filter((space) => space.recommendedRefreshYear === year)
-      .reduce((sum, space) => sum + space.forecastAmount, 0);
-    return { year, amount };
-  });
-
-  return {
-    totalPortfolioValue,
-    fiveYearForecast,
-    dueThisYear,
-    overdue,
-    deferred,
-    forecastByYear,
-  };
+  return computeDashboardMetrics(spaces);
 }
