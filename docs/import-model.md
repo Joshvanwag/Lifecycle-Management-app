@@ -19,6 +19,38 @@ Upload → Inspect headers → Auto-map recognized fields → Ask about ambiguou
 - Only interrupt user when necessary
 - Do not make duplicate detection the center of the experience
 
+## Phase 2 Development Import (Asset QT)
+
+For development and testing, `scripts/import-asset-qt.mjs` ingests the Asset QT query-table CSV export.
+
+**All accounts (recommended for this dataset):** creates one organization per `acc.Account Name`:
+
+```bash
+SUPABASE_SECRET_KEY=... npm run db:import-qt -- --all-accounts --replace
+```
+
+Accounts in the sample file: University of Utah, Weber State University, University Health Care, Yaamava Resort & Casino, Clearvista, Onset Financial, Utah Department of Transportation, Henkel of America.
+
+**Single account** into an existing organization:
+
+```bash
+ORGANIZATION_ID=<uuid> npm run db:import-qt -- --account "Weber State University" --replace
+```
+
+Column mapping:
+
+| CSV column | Target |
+| --- | --- |
+| `acc.Account Name` | Campus name; optional `--account` filter |
+| `Lifecycle Asset Type` | Space type |
+| `lm.Building Name` | Building |
+| `lm.Room Code` | Physical location |
+| `lm.Room Name` | Space display name |
+| Asset columns (`al.*`) | Asset fields |
+| `Install Date` / `Replacement Year` | Lifecycle timing |
+
+This is a **development import**, not the Phase 4 user-facing import workflow. CSV has no cost column — valid lump-sum Spaces with $0 per-asset costs.
+
 ## Four Primary Import Actions
 
 ### 1. Add New Spaces

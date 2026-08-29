@@ -90,3 +90,10 @@ These rules are mandatory project-level engineering constraints for AI agents an
 - Keep commits focused and understandable.
 - Do not commit secrets, local environment files, build artifacts, generated dependency directories, or other inappropriate files.
 - Never force-push or rewrite shared Git history without explicit approval.
+
+## Cursor Cloud specific instructions
+
+- **Secrets:** Cloud Agents need `SUPABASE_SECRET_KEY` (or `SUPABASE_SERVICE_ROLE_KEY`) in Cursor environment secrets or `/workspace/.env.local` for admin scripts. The publishable/anon key alone is not enough for `--all-accounts` import or `db:seed`.
+- **Portfolio import:** After migrations are applied, run `./scripts/run-import-all-accounts.sh` (or `npm run db:import-qt -- --all-accounts --replace`) — uses the Node script and Supabase JS client, not MCP SQL chunks.
+- **Demo org:** `University of Example` (`b0c29489-416a-46b0-ad61-4fc44cc2b9f7`) is separate from the 8 benchmark portfolio orgs. Do not rename it during import tests.
+- **Dev server:** `npm run dev` on port 3000 (also configured in `.cursor/environment.json` terminals).

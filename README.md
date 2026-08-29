@@ -41,7 +41,16 @@ Open [http://localhost:3000](http://localhost:3000).
    ```bash
    ORGANIZATION_ID=<your-org-uuid> npm run db:seed
    ```
-   Find your organization ID in the Supabase dashboard (`organizations` table) after signup.
+6. Import Asset QT query-table data (optional):
+   ```bash
+   # All 8 accounts → one organization per acc.Account Name (requires service role)
+   SUPABASE_SECRET_KEY=... npm run db:import-qt -- --all-accounts --replace
+
+   # Or a single account into your signed-up organization
+   IMPORT_EMAIL=you@example.com IMPORT_PASSWORD=... ORGANIZATION_ID=<uuid> \
+     npm run db:import-qt -- --account "University of Utah" --replace
+   ```
+   CSV source: `data/Lifecycle_Management_Asset_QT.csv` (2,586 assets, 8 accounts).
 
 ### Environment Variables
 
