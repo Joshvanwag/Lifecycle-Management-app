@@ -26,11 +26,60 @@ interface SpaceFiltersProps {
   filters: SpaceFiltersState;
   onFiltersChange: (filters: SpaceFiltersState) => void;
   options: {
+    organizations: { id: string; name: string }[];
     campuses: string[];
     buildings: string[];
     spaceTypes: string[];
     years: string[];
   };
+}
+
+function OrganizationFilterGroup({
+  organizations,
+  selectedIds,
+  onChange,
+}: {
+  organizations: { id: string; name: string }[];
+  selectedIds: string[];
+  onChange: (organizationIds: string[]) => void;
+}) {
+  if (organizations.length <= 1) {
+    return null;
+  }
+
+  return (
+    <div className="space-y-2">
+      <Label>Organization</Label>
+      <p className="text-xs text-muted-foreground">
+        Leave unselected to include all organizations.
+      </p>
+      <div className="flex flex-wrap gap-2">
+        {organizations.map((organization) => {
+          const isSelected = selectedIds.includes(organization.id);
+          return (
+            <button
+              key={organization.id}
+              type="button"
+              onClick={() =>
+                onChange(
+                  isSelected
+                    ? selectedIds.filter((id) => id !== organization.id)
+                    : [...selectedIds, organization.id],
+                )
+              }
+              className={`rounded-md border px-3 py-1.5 text-sm transition-colors ${
+                isSelected
+                  ? "border-primary bg-primary/10 text-primary"
+                  : "border-border bg-background hover:bg-muted"
+              }`}
+            >
+              {organization.name}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
 }
 
 function toggleValue<T extends string>(values: T[], value: T): T[] {
@@ -94,6 +143,11 @@ export function SpaceFilters({
         </SheetHeader>
 
         <div className="space-y-6 overflow-y-auto px-6 py-4">
+          <OrganizationFilterGroup
+            organizations={options.organizations}
+            selectedIds={filters.organizationIds}
+            onChange={(organizationIds) => onFiltersChange({ ...filters, organizationIds })}
+          />
           <FilterChipGroup
             label="Campus"
             values={options.campuses}
@@ -150,15 +204,22 @@ export function SpaceFilters({
 export function ActiveFilterChips({
   filters,
   onFiltersChange,
+  organizationOptions = [],
 }: {
   filters: SpaceFiltersState;
   onFiltersChange: (filters: SpaceFiltersState) => void;
+  organizationOptions?: { id: string; name: string }[];
 }) {
-  const chips: { key: keyof SpaceFiltersState; value: string }[] = [];
+  const organizationNames = new Map(
+    organizationOptions.map((organization) => [organization.id, organization.name]),
+  );
+  const chips: { key: keyof SpaceFiltersState; value: string; label: string }[] = [];
 
   (Object.keys(filters) as (keyof SpaceFiltersState)[]).forEach((key) => {
     filters[key].forEach((value) => {
-      chips.push({ key, value });
+      const label =
+        key === "organizationIds" ? (organizationNames.get(value) ?? value) : value;
+      chips.push({ key, value, label });
     });
   });
 
@@ -175,7 +236,7 @@ export function ActiveFilterChips({
     <div className="flex flex-wrap items-center gap-2">
       {chips.map((chip) => (
         <Badge key={`${chip.key}-${chip.value}`} variant="secondary" className="gap-1 pr-1">
-          <span className="capitalize">{chip.value}</span>
+          <span>{chip.label}</span>
           <button
             type="button"
             onClick={() => removeChip(chip.key, chip.value)}

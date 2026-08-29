@@ -3,6 +3,7 @@
 import { useTransition } from "react";
 import { setActiveOrganization } from "@/lib/auth/organization-session";
 import type { Organization } from "@/lib/database.types";
+import { getCustomerOrganizations } from "@/lib/auth/customer-orgs";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -23,9 +24,12 @@ export function OrganizationSwitcher({
   activeOrganizationId,
 }: OrganizationSwitcherProps) {
   const [isPending, startTransition] = useTransition();
+  const customerOrganizations = getCustomerOrganizations(organizations);
+  const selectableOrganizations =
+    customerOrganizations.length > 0 ? customerOrganizations : organizations;
   const activeOrganization =
-    organizations.find((organization) => organization.id === activeOrganizationId) ??
-    organizations[0];
+    selectableOrganizations.find((organization) => organization.id === activeOrganizationId) ??
+    selectableOrganizations[0];
 
   return (
     <DropdownMenu>
@@ -37,7 +41,7 @@ export function OrganizationSwitcher({
       <DropdownMenuContent align="end" className="max-h-80 w-72 overflow-y-auto">
         <DropdownMenuLabel>Switch organization</DropdownMenuLabel>
         <DropdownMenuSeparator />
-        {organizations.map((organization) => (
+        {selectableOrganizations.map((organization) => (
           <DropdownMenuItem
             key={organization.id}
             className="cursor-pointer"

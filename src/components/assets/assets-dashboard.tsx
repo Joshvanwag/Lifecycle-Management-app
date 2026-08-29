@@ -25,14 +25,22 @@ import { Input } from "@/components/ui/input";
 interface AssetsDashboardProps {
   spaces: Space[];
   assets: Asset[];
+  organizationOptions?: { id: string; name: string }[];
 }
 
-export function AssetsDashboard({ spaces, assets }: AssetsDashboardProps) {
+export function AssetsDashboard({
+  spaces,
+  assets,
+  organizationOptions = [],
+}: AssetsDashboardProps) {
   const [search, setSearch] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [filters, setFilters] = useState<SpaceFiltersState>(emptySpaceFilters);
 
-  const filterOptions = useMemo(() => buildSpaceFilterOptions(spaces), [spaces]);
+  const filterOptions = useMemo(
+    () => buildSpaceFilterOptions(spaces, organizationOptions),
+    [spaces, organizationOptions],
+  );
 
   const filteredSpaceIds = useMemo(() => {
     const filtered = filterSpaces(spaces, search, filters);
@@ -79,7 +87,11 @@ export function AssetsDashboard({ spaces, assets }: AssetsDashboardProps) {
         </Button>
       </div>
 
-      <ActiveFilterChips filters={filters} onFiltersChange={setFilters} />
+      <ActiveFilterChips
+        filters={filters}
+        onFiltersChange={setFilters}
+        organizationOptions={organizationOptions}
+      />
 
       {filteredAssets.length !== assets.length && (
         <p className="text-sm text-muted-foreground">

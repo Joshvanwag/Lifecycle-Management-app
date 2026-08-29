@@ -51,6 +51,7 @@ import {
 
 interface OverviewDashboardProps {
   spaces: Space[];
+  organizationOptions?: { id: string; name: string }[];
 }
 
 const metricCards = [
@@ -86,13 +87,19 @@ const metricCards = [
   },
 ];
 
-export function OverviewDashboard({ spaces }: OverviewDashboardProps) {
+export function OverviewDashboard({
+  spaces,
+  organizationOptions = [],
+}: OverviewDashboardProps) {
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [filters, setFilters] = useState<SpaceFiltersState>(emptySpaceFilters);
 
-  const filterOptions = useMemo(() => buildSpaceFilterOptions(spaces), [spaces]);
+  const filterOptions = useMemo(
+    () => buildSpaceFilterOptions(spaces, organizationOptions),
+    [spaces, organizationOptions],
+  );
 
   const filteredSpaces = useMemo(
     () => filterSpaces(spaces, search, filters),
@@ -147,7 +154,11 @@ export function OverviewDashboard({ spaces }: OverviewDashboardProps) {
         </Button>
       </div>
 
-      <ActiveFilterChips filters={filters} onFiltersChange={setFilters} />
+      <ActiveFilterChips
+        filters={filters}
+        onFiltersChange={setFilters}
+        organizationOptions={organizationOptions}
+      />
 
       {filteredSpaces.length !== spaces.length && (
         <p className="text-sm text-muted-foreground">

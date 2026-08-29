@@ -5,10 +5,13 @@ import type { Asset, DashboardMetrics, RefreshEvent, Space } from "@/lib/types";
  * Dashboard pages load live data from Supabase in Phase 2+.
  */
 export const DEMO_ORGANIZATION = "University of Example";
+export const DEMO_ORGANIZATION_ID = "b0c29489-416a-46b0-ad61-4fc44cc2b9f7";
 
 export const demoSpaces: Space[] = [
   {
     id: "space-001",
+    organizationId: DEMO_ORGANIZATION_ID,
+    organizationName: DEMO_ORGANIZATION,
     name: "Classroom 204",
     spaceType: "Classroom",
     campus: "Main Campus",
@@ -28,6 +31,8 @@ export const demoSpaces: Space[] = [
   },
   {
     id: "space-002",
+    organizationId: DEMO_ORGANIZATION_ID,
+    organizationName: DEMO_ORGANIZATION,
     name: "Executive Conference Room",
     spaceType: "Conference Room",
     campus: "Main Campus",
@@ -47,6 +52,8 @@ export const demoSpaces: Space[] = [
   },
   {
     id: "space-003",
+    organizationId: DEMO_ORGANIZATION_ID,
+    organizationName: DEMO_ORGANIZATION,
     name: "Auditorium Technology",
     spaceType: "Auditorium",
     campus: "Main Campus",
@@ -65,6 +72,8 @@ export const demoSpaces: Space[] = [
   },
   {
     id: "space-004",
+    organizationId: DEMO_ORGANIZATION_ID,
+    organizationName: DEMO_ORGANIZATION,
     name: "Building Digital Signage",
     spaceType: "Digital Signage",
     campus: "South Campus",
@@ -82,6 +91,8 @@ export const demoSpaces: Space[] = [
   },
   {
     id: "space-005",
+    organizationId: DEMO_ORGANIZATION_ID,
+    organizationName: DEMO_ORGANIZATION,
     name: "Divisible Conference Suite",
     spaceType: "Conference Room",
     campus: "Main Campus",
@@ -99,6 +110,8 @@ export const demoSpaces: Space[] = [
   },
   {
     id: "space-006",
+    organizationId: DEMO_ORGANIZATION_ID,
+    organizationName: DEMO_ORGANIZATION,
     name: "Mobile Technology Fleet",
     spaceType: "Mobile Fleet",
     campus: "District-wide",
@@ -117,6 +130,8 @@ export const demoSpaces: Space[] = [
   },
   {
     id: "space-007",
+    organizationId: DEMO_ORGANIZATION_ID,
+    organizationName: DEMO_ORGANIZATION,
     name: "Huddle Room 105",
     spaceType: "Huddle Room",
     campus: "North Campus",
@@ -135,6 +150,8 @@ export const demoSpaces: Space[] = [
   },
   {
     id: "space-008",
+    organizationId: DEMO_ORGANIZATION_ID,
+    organizationName: DEMO_ORGANIZATION,
     name: "Training Room B",
     spaceType: "Training Room",
     campus: "Main Campus",
@@ -156,6 +173,8 @@ export const demoSpaces: Space[] = [
 export const demoAssets: Asset[] = [
   {
     id: "asset-001",
+    organizationId: DEMO_ORGANIZATION_ID,
+    organizationName: DEMO_ORGANIZATION,
     spaceId: "space-001",
     manufacturer: "Sony",
     modelNumber: "VPL-FHZ75",
@@ -170,6 +189,8 @@ export const demoAssets: Asset[] = [
   },
   {
     id: "asset-002",
+    organizationId: DEMO_ORGANIZATION_ID,
+    organizationName: DEMO_ORGANIZATION,
     spaceId: "space-001",
     manufacturer: "Crestron",
     modelNumber: "DM-NVX-363",
@@ -186,6 +207,8 @@ export const demoAssets: Asset[] = [
   },
   {
     id: "asset-003",
+    organizationId: DEMO_ORGANIZATION_ID,
+    organizationName: DEMO_ORGANIZATION,
     spaceId: "space-001",
     manufacturer: "QSC",
     modelNumber: "CX-Q 8K8",
@@ -199,6 +222,8 @@ export const demoAssets: Asset[] = [
   },
   {
     id: "asset-004",
+    organizationId: DEMO_ORGANIZATION_ID,
+    organizationName: DEMO_ORGANIZATION,
     spaceId: "space-001",
     manufacturer: "Samsung",
     modelNumber: "QM85R",
@@ -213,6 +238,8 @@ export const demoAssets: Asset[] = [
   },
   {
     id: "asset-005",
+    organizationId: DEMO_ORGANIZATION_ID,
+    organizationName: DEMO_ORGANIZATION,
     spaceId: "space-001",
     manufacturer: "Shure",
     modelNumber: "MXA910",
@@ -226,6 +253,8 @@ export const demoAssets: Asset[] = [
   },
   {
     id: "asset-006",
+    organizationId: DEMO_ORGANIZATION_ID,
+    organizationName: DEMO_ORGANIZATION,
     spaceId: "space-002",
     manufacturer: "Cisco",
     modelNumber: "Room Kit Pro",
@@ -241,6 +270,8 @@ export const demoAssets: Asset[] = [
   },
   {
     id: "asset-007",
+    organizationId: DEMO_ORGANIZATION_ID,
+    organizationName: DEMO_ORGANIZATION,
     spaceId: "space-002",
     manufacturer: "LG",
     modelNumber: "86BH5F",

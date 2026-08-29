@@ -6,6 +6,7 @@ import {
   formatLocationLabel,
   toPlanningStatus,
 } from "@/lib/lifecycle/display";
+import { computeInflatedForecastAmount } from "@/lib/lifecycle/forecast";
 import type { AssetRow, RefreshEventRow } from "@/lib/database.types";
 import type { Asset, DashboardMetrics, RefreshEvent, Space } from "@/lib/types";
 
@@ -41,17 +42,20 @@ function mapSpaceRow(
   location: SpaceLocationRow["physical_locations"],
   assetCount: number,
   forecastAmount: number,
+  organizationId: string,
+  organizationName: string,
 ): Space {
   const campus = location?.buildings.campuses.name ?? "";
   const building = location?.buildings.name ?? "";
   const room = location?.location_type === "room" ? location.name : undefined;
-  const recommendedRefreshYear = deriveRecommendedRefreshYear(
-    row.commissioned_date,
-    row.refresh_cycle_years,
-  );
+  const recommendedRefreshYear =
+    row.planned_refresh_year ??
+    deriveRecommendedRefreshYear(row.commissioned_date, row.refresh_cycle_years);
 
   return {
     id: row.id,
+    organizationId,
+    organizationName,
     name: row.name,
     spaceType: row.space_type,
     campus,
@@ -138,7 +142,9 @@ async function getForecastTotals(client: Client, organizationId: string, spaceId
 
   const { data, error } = await client
     .from("forecast_cost_components")
-    .select("space_id, forecast_amount")
+    .select(
+      "space_id, forecast_amount, cost_basis, cost_basis_date, inflation_rate, recommended_replacement_year",
+    )
     .eq("organization_id", organizationId)
     .in("space_id", spaceIds);
 
@@ -147,8 +153,25 @@ async function getForecastTotals(client: Client, organizationId: string, spaceId
   }
 
   const totals = new Map<string, number>();
-  for (const row of (data ?? []) as { space_id: string; forecast_amount: number }[]) {
-    totals.set(row.space_id, (totals.get(row.space_id) ?? 0) + Number(row.forecast_amount));
+  for (const row of (data ?? []) as {
+    space_id: string;
+    forecast_amount: number;
+    cost_basis: number;
+    cost_basis_date: string;
+    inflation_rate: number;
+    recommended_replacement_year: number;
+  }[]) {
+    const storedAmount = Number(row.forecast_amount);
+    const amount =
+      storedAmount > 0
+        ? storedAmount
+        : computeInflatedForecastAmount({
+            costBasis: Number(row.cost_basis),
+            costBasisDate: row.cost_basis_date,
+            inflationRate: Number(row.inflation_rate),
+            replacementYear: row.recommended_replacement_year,
+          });
+    totals.set(row.space_id, (totals.get(row.space_id) ?? 0) + amount);
   }
   return totals;
 }
@@ -169,6 +192,7 @@ export async function listSpaces(
   client: Client,
   organizationId: string,
   options: ListSpacesOptions = {},
+  organizationName = "",
 ): Promise<ListSpacesResult> {
   const page = Math.max(1, options.page ?? 1);
   const pageSize = Math.min(100, Math.max(1, options.pageSize ?? 50));
@@ -203,6 +227,8 @@ export async function listSpaces(
       locations.get(row.id) ?? null,
       assetCounts.get(row.id) ?? 0,
       forecastTotals.get(row.id) ?? Number(row.original_cost),
+      organizationId,
+      organizationName,
     ),
   );
 
@@ -214,12 +240,16 @@ export async function listSpaces(
   };
 }
 
-export async function getAllSpaces(client: Client, organizationId: string): Promise<Space[]> {
+export async function getAllSpaces(
+  client: Client,
+  organizationId: string,
+  organizationName = "",
+): Promise<Space[]> {
   const spaces: Space[] = [];
   let page = 1;
 
   while (true) {
-    const result = await listSpaces(client, organizationId, { page, pageSize: 100 });
+    const result = await listSpaces(client, organizationId, { page, pageSize: 100 }, organizationName);
     spaces.push(...result.spaces);
     if (spaces.length >= result.totalCount) {
       break;
@@ -230,7 +260,23 @@ export async function getAllSpaces(client: Client, organizationId: string): Prom
   return spaces;
 }
 
-function mapAssetRow(row: AssetRow): Asset {
+export async function getAllSpacesForOrganizations(
+  client: Client,
+  organizationIds: string[],
+  organizationNames: Map<string, string>,
+): Promise<Space[]> {
+  const spaces: Space[] = [];
+
+  for (const organizationId of organizationIds) {
+    const organizationName = organizationNames.get(organizationId) ?? "Unknown";
+    const orgSpaces = await getAllSpaces(client, organizationId, organizationName);
+    spaces.push(...orgSpaces);
+  }
+
+  return spaces;
+}
+
+function mapAssetRow(row: AssetRow, organizationId: string, organizationName: string): Asset {
   const recommendedRefreshYear = deriveRecommendedRefreshYear(
     row.install_date,
     row.refresh_cycle_years,
@@ -238,6 +284,8 @@ function mapAssetRow(row: AssetRow): Asset {
 
   return {
     id: row.id,
+    organizationId,
+    organizationName,
     spaceId: row.space_id,
     manufacturer: row.manufacturer,
     modelNumber: row.model_number,
@@ -254,7 +302,11 @@ function mapAssetRow(row: AssetRow): Asset {
   };
 }
 
-export async function getAllAssets(client: Client, organizationId: string): Promise<Asset[]> {
+export async function getAllAssets(
+  client: Client,
+  organizationId: string,
+  organizationName = "",
+): Promise<Asset[]> {
   const { data, error } = await client
     .from("assets")
     .select("*")
@@ -266,13 +318,32 @@ export async function getAllAssets(client: Client, organizationId: string): Prom
     throw new Error(`Failed to load assets: ${error.message}`);
   }
 
-  return ((data ?? []) as AssetRow[]).map(mapAssetRow);
+  return ((data ?? []) as AssetRow[]).map((row) =>
+    mapAssetRow(row, organizationId, organizationName),
+  );
+}
+
+export async function getAllAssetsForOrganizations(
+  client: Client,
+  organizationIds: string[],
+  organizationNames: Map<string, string>,
+): Promise<Asset[]> {
+  const assets: Asset[] = [];
+
+  for (const organizationId of organizationIds) {
+    const organizationName = organizationNames.get(organizationId) ?? "Unknown";
+    const orgAssets = await getAllAssets(client, organizationId, organizationName);
+    assets.push(...orgAssets);
+  }
+
+  return assets;
 }
 
 export async function getSpaceById(
   client: Client,
   organizationId: string,
   spaceId: string,
+  organizationName = "",
 ): Promise<Space | null> {
   const { data, error } = await client
     .from("spaces")
@@ -302,6 +373,8 @@ export async function getSpaceById(
     locations.get(row.id) ?? null,
     assetCounts.get(row.id) ?? 0,
     forecastTotals.get(row.id) ?? Number(row.original_cost),
+    organizationId,
+    organizationName,
   );
 }
 
@@ -309,6 +382,7 @@ export async function getAssetsBySpaceId(
   client: Client,
   organizationId: string,
   spaceId: string,
+  organizationName = "",
 ): Promise<Asset[]> {
   const { data, error } = await client
     .from("assets")
@@ -322,7 +396,9 @@ export async function getAssetsBySpaceId(
     throw new Error(`Failed to load assets: ${error.message}`);
   }
 
-  return ((data ?? []) as AssetRow[]).map(mapAssetRow);
+  return ((data ?? []) as AssetRow[]).map((row) =>
+    mapAssetRow(row, organizationId, organizationName),
+  );
 }
 
 export async function getRefreshHistoryBySpaceId(

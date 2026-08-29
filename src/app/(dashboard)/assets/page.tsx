@@ -1,25 +1,26 @@
 import { AuthenticatedDashboardShell } from "@/components/layout/authenticated-dashboard-shell";
 import { AssetsDashboard } from "@/components/assets/assets-dashboard";
 import { requireAuthContext } from "@/lib/auth/context";
-import { getAllAssets, getAllSpaces } from "@/lib/data/spaces";
+import { loadPlatformDashboardData } from "@/lib/data/platform-dashboard";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function AssetsPage() {
   const auth = await requireAuthContext();
   const supabase = await createClient();
-  const organizationId = auth.organization.id;
+  const { spaces, assets, organizationOptions, isAggregatedView } =
+    await loadPlatformDashboardData(auth, supabase);
 
-  const [spaces, assets] = await Promise.all([
-    getAllSpaces(supabase, organizationId),
-    getAllAssets(supabase, organizationId),
-  ]);
+  const description = isAggregatedView
+    ? `${assets.length} assets across ${organizationOptions.length} customer organizations`
+    : "Equipment inventory across all Spaces";
 
   return (
-    <AuthenticatedDashboardShell
-      title="Assets"
-      description="Equipment inventory across all Spaces"
-    >
-      <AssetsDashboard spaces={spaces} assets={assets} />
+    <AuthenticatedDashboardShell title="Assets" description={description}>
+      <AssetsDashboard
+        spaces={spaces}
+        assets={assets}
+        organizationOptions={organizationOptions}
+      />
     </AuthenticatedDashboardShell>
   );
 }
