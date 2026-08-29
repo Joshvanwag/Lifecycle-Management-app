@@ -1,61 +1,99 @@
 import Link from "next/link";
 import { signUp } from "@/lib/auth/actions";
+import { createClient } from "@/lib/supabase/server";
+import { getInvitationPreview } from "@/lib/data/invitations";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { INDUSTRY_TYPE_CODES, INDUSTRY_TYPE_LABELS } from "@/lib/benchmark/constants";
 
 export default async function SignUpPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; invite?: string }>;
 }) {
   const params = await searchParams;
+  const inviteToken = params.invite?.trim();
+
+  if (!inviteToken) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-muted/30 p-6">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle>Invitation required</CardTitle>
+            <CardDescription>
+              Accounts are created by invitation only. Contact your administrator if you need
+              access.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button asChild className="w-full">
+              <Link href="/login">Back to sign in</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  const supabase = await createClient();
+  const invitation = await getInvitationPreview(supabase, inviteToken);
+
+  if (!invitation?.is_valid) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-muted/30 p-6">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle>Invalid invitation</CardTitle>
+            <CardDescription>
+              This invitation link is expired, revoked, or already used. Ask your administrator for
+              a new invitation.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button asChild className="w-full">
+              <Link href="/login">Back to sign in</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   const errorMessage =
     params.error === "missing-fields"
       ? "Complete all fields to create your account."
-      : params.error
-        ? decodeURIComponent(params.error)
-        : null;
+      : params.error === "email-mismatch"
+        ? "Use the email address this invitation was sent to."
+        : params.error === "invalid-invite"
+          ? "This invitation is no longer valid."
+          : params.error
+            ? decodeURIComponent(params.error)
+            : null;
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted/30 p-6">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>Create account</CardTitle>
+          <CardTitle>Accept invitation</CardTitle>
           <CardDescription>
-            Your organization is created automatically when you sign up.
+            Create your account to join {invitation.organization_name}.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form action={signUp} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="organizationName">Organization name</Label>
-              <Input id="organizationName" name="organizationName" required />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="industryType">Industry type</Label>
-              <select
-                id="industryType"
-                name="industryType"
-                required
-                defaultValue="university"
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              >
-                {INDUSTRY_TYPE_CODES.map((code) => (
-                  <option key={code} value={code}>
-                    {INDUSTRY_TYPE_LABELS[code]}
-                  </option>
-                ))}
-              </select>
-              <p className="text-xs text-muted-foreground">
-                Used for anonymous industry benchmarking. You can change this later in Settings.
-              </p>
-            </div>
+            <input type="hidden" name="inviteToken" value={inviteToken} />
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" name="email" type="email" autoComplete="email" required />
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                defaultValue={invitation.email}
+                readOnly
+                required
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>

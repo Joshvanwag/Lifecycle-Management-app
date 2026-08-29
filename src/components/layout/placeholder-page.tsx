@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { requireAuthContext } from "@/lib/auth/context";
-import { DashboardShell } from "@/components/layout/dashboard-shell";
+import { AuthenticatedDashboardShell } from "@/components/layout/authenticated-dashboard-shell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -11,16 +10,8 @@ interface PlaceholderPageProps {
 }
 
 export async function PlaceholderPage({ title, description, children }: PlaceholderPageProps) {
-  const auth = await requireAuthContext();
-
   return (
-    <DashboardShell
-      title={title}
-      description={description}
-      userDisplayName={auth.displayName}
-      userInitials={auth.initials}
-      organizationName={auth.organization.name}
-    >
+    <AuthenticatedDashboardShell title={title} description={description}>
       <Card className="max-w-2xl">
         <CardHeader>
           <CardTitle>Coming soon</CardTitle>
@@ -36,6 +27,6 @@ export async function PlaceholderPage({ title, description, children }: Placehol
           </Button>
         </CardContent>
       </Card>
-    </DashboardShell>
+    </AuthenticatedDashboardShell>
   );
 }

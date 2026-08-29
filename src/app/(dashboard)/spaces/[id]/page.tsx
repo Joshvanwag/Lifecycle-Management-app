@@ -13,7 +13,7 @@ import {
 } from "@/lib/data/spaces";
 import { createClient } from "@/lib/supabase/server";
 import { formatCurrency } from "@/lib/utils";
-import { DashboardShell } from "@/components/layout/dashboard-shell";
+import { AuthenticatedDashboardShell } from "@/components/layout/authenticated-dashboard-shell";
 import {
   LifecycleStatusBadge,
   PlanningStatusBadge,
@@ -69,13 +69,7 @@ export default async function SpaceDetailPage({
   ]);
 
   return (
-    <DashboardShell
-      title={space.name}
-      description={space.locationLabel}
-      userDisplayName={auth.displayName}
-      userInitials={auth.initials}
-      organizationName={auth.organization.name}
-    >
+    <AuthenticatedDashboardShell title={space.name} description={space.locationLabel}>
       <div className="space-y-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-3">
@@ -330,6 +324,6 @@ export default async function SpaceDetailPage({
           </TabsContent>
         </Tabs>
       </div>
-    </DashboardShell>
+    </AuthenticatedDashboardShell>
   );
 }

@@ -1,5 +1,6 @@
-import { DashboardShell } from "@/components/layout/dashboard-shell";
+import { AuthenticatedDashboardShell } from "@/components/layout/authenticated-dashboard-shell";
 import { OrganizationSettingsForm } from "@/components/settings/organization-settings-form";
+import { TeamInvitationForm } from "@/components/settings/team-invitation-form";
 import { requireAuthContext } from "@/lib/auth/context";
 
 export default async function SettingsPage({
@@ -21,12 +22,9 @@ export default async function SettingsPage({
           : null;
 
   return (
-    <DashboardShell
+    <AuthenticatedDashboardShell
       title="Settings"
       description="Organization and application settings"
-      userDisplayName={auth.displayName}
-      userInitials={auth.initials}
-      organizationName={auth.organization.name}
     >
       <div className="max-w-2xl space-y-6">
         <OrganizationSettingsForm
@@ -37,10 +35,11 @@ export default async function SettingsPage({
           saved={params.saved === "1"}
           errorMessage={errorMessage}
         />
+        {canManage && <TeamInvitationForm organizationId={auth.organization.id} />}
         <p className="text-sm text-muted-foreground">
           Chart colors are customized from each chart&apos;s options menu.
         </p>
       </div>
-    </DashboardShell>
+    </AuthenticatedDashboardShell>
   );
 }

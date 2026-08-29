@@ -1,4 +1,4 @@
-import { DashboardShell } from "@/components/layout/dashboard-shell";
+import { AuthenticatedDashboardShell } from "@/components/layout/authenticated-dashboard-shell";
 import { SpacesTable } from "@/components/spaces/spaces-table";
 import { requireAuthContext } from "@/lib/auth/context";
 import { listSpaces } from "@/lib/data/spaces";
@@ -22,12 +22,9 @@ export default async function SpacesPage({
   });
 
   return (
-    <DashboardShell
+    <AuthenticatedDashboardShell
       title="Spaces"
       description={`${totalCount} Spaces in ${auth.organization.name}`}
-      userDisplayName={auth.displayName}
-      userInitials={auth.initials}
-      organizationName={auth.organization.name}
     >
       <SpacesTable
         spaces={spaces}
@@ -35,6 +32,6 @@ export default async function SpacesPage({
         page={page}
         pageSize={PAGE_SIZE}
       />
-    </DashboardShell>
+    </AuthenticatedDashboardShell>
   );
 }
