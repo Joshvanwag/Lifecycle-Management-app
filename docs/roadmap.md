@@ -1,6 +1,6 @@
 # Roadmap
 
-## Phase 1 — Foundation (Current)
+## Phase 1 — Foundation (Complete)
 
 - [x] Next.js + TypeScript + Tailwind scaffold
 - [x] shadcn/ui components
@@ -14,7 +14,7 @@
 - [x] AI engineering rules (AGENTS.md)
 - [x] Supabase migration directory structure
 
-## Phase 2 — Database & Tenancy (Current)
+## Phase 2 — Database & Tenancy (Complete)
 
 - [x] Supabase project connection (env + client utilities)
 - [x] Database schema migrations
@@ -30,6 +30,12 @@
 - [x] Authentication flow (sign up, sign in, sign out)
 - [x] Organization context resolution
 - [x] Replace demo data with real queries (Overview, Spaces list, Space detail)
+- [x] Benchmarking foundation schema
+  - [x] Organization industry type and benchmark participation settings
+  - [x] Metric catalog and aggregate output model
+  - [x] Minimum contributor threshold (system setting)
+  - [x] Secure public RPC (`get_benchmark_metrics_public`)
+  - [x] Benchmarking RLS (no cross-tenant operational access)
 
 ## Phase 3 — Core Lifecycle
 

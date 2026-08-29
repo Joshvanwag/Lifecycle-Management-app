@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { INDUSTRY_TYPE_CODES, INDUSTRY_TYPE_LABELS } from "@/lib/benchmark/constants";
 
 export default async function SignUpPage({
   searchParams,
@@ -32,6 +33,25 @@ export default async function SignUpPage({
             <div className="space-y-2">
               <Label htmlFor="organizationName">Organization name</Label>
               <Input id="organizationName" name="organizationName" required />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="industryType">Industry type</Label>
+              <select
+                id="industryType"
+                name="industryType"
+                required
+                defaultValue="university"
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                {INDUSTRY_TYPE_CODES.map((code) => (
+                  <option key={code} value={code}>
+                    {INDUSTRY_TYPE_LABELS[code]}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-muted-foreground">
+                Used for anonymous industry benchmarking. You can change this later in Settings.
+              </p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>

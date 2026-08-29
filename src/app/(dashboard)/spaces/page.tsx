@@ -4,12 +4,21 @@ import { requireAuthContext } from "@/lib/auth/context";
 import { listSpaces } from "@/lib/data/spaces";
 import { createClient } from "@/lib/supabase/server";
 
-export default async function SpacesPage() {
+const PAGE_SIZE = 50;
+
+export default async function SpacesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>;
+}) {
   const auth = await requireAuthContext();
   const supabase = await createClient();
+  const params = await searchParams;
+  const page = Math.max(1, Number.parseInt(params.page ?? "1", 10) || 1);
+
   const { spaces, totalCount } = await listSpaces(supabase, auth.organization.id, {
-    page: 1,
-    pageSize: 50,
+    page,
+    pageSize: PAGE_SIZE,
   });
 
   return (
@@ -20,7 +29,12 @@ export default async function SpacesPage() {
       userInitials={auth.initials}
       organizationName={auth.organization.name}
     >
-      <SpacesTable spaces={spaces} totalCount={totalCount} />
+      <SpacesTable
+        spaces={spaces}
+        totalCount={totalCount}
+        page={page}
+        pageSize={PAGE_SIZE}
+      />
     </DashboardShell>
   );
 }

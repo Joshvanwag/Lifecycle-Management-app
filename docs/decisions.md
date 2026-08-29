@@ -127,3 +127,39 @@ Lifecycle status (`upcoming`, `due`, `overdue`) is derived at read time from `co
 Install `@supabase/server` for header-based JWT verification and new API key resolution (`SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY`, `SUPABASE_JWKS_URL`). Keep `@supabase/ssr` as the cookie-session client for the Next.js App Router.
 
 **Rationale:** The packages are complementary, not replacements. Next.js dashboard auth stays cookie-based. `@supabase/server` is available for route handlers, Edge Functions, and other header-authenticated backends. Existing Next.js env helpers accept both the new names and the legacy `NEXT_PUBLIC_SUPABASE_ANON_KEY` / `SUPABASE_SERVICE_ROLE_KEY` aliases.
+
+## ADR-015: Industry-Only Benchmark Cohorts
+
+**Date:** Phase 2 (benchmarking addendum)  
+**Status:** Accepted
+
+Organization benchmark cohorts are segmented by **industry type only** (`university`, `government`, `corporate`, `other` initially). Space Type and Asset Category slice metrics within a cohort but do not create narrower organization cohorts.
+
+**Rationale:** Product requirement to compare lifecycle programs at a broad industry level without enabling re-identification via geographic, size, or subtype segmentation.
+
+## ADR-016: Reciprocal Benchmark Participation
+
+**Date:** Phase 2 (benchmarking addendum)  
+**Status:** Accepted
+
+`benchmark_participation` defaults to `true`. If an organization opts out, it stops contributing to aggregates **and** loses access to benchmark results. Normal lifecycle data is unaffected.
+
+**Rationale:** Product reciprocity rule; prevents free-riding on anonymized peer data.
+
+## ADR-017: Metric-Level Minimum Contributor Threshold
+
+**Date:** Phase 2 (benchmarking addendum)  
+**Status:** Accepted
+
+Each benchmark metric (including Space Type / Asset Category / period context) requires **≥ 5 distinct organizations** with valid data before display. Threshold stored in `benchmark_system_settings.min_contributor_threshold`. Contributor counts are never customer-facing.
+
+**Rationale:** Prevent re-identification and misleading small-sample benchmarks.
+
+## ADR-018: Trusted Aggregation Boundary for Benchmarks
+
+**Date:** Phase 2 (benchmarking addendum)  
+**Status:** Accepted
+
+Benchmark aggregates are produced via service-role server-side jobs into `benchmark_aggregate_metrics`. Customers read results through `get_benchmark_metrics_public()` only — never by querying other tenants' operational tables.
+
+**Rationale:** Benchmarking is aggregate analytics, not cross-tenant data access. Preserves RLS on operational tables.
