@@ -118,3 +118,12 @@ Lifecycle status (`upcoming`, `due`, `overdue`) is derived at read time from `co
 `read_only` members can SELECT only. `member`, `admin`, and `owner` can write tenant data. Only `admin` and `owner` can manage memberships and organization settings.
 
 **Rationale:** Simplest valid tenant security for MVP; documented in `/docs/security.md`.
+
+## ADR-014: Add `@supabase/server` Alongside `@supabase/ssr`
+
+**Date:** Phase 2  
+**Status:** Accepted
+
+Install `@supabase/server` for header-based JWT verification and new API key resolution (`SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY`, `SUPABASE_JWKS_URL`). Keep `@supabase/ssr` as the cookie-session client for the Next.js App Router.
+
+**Rationale:** The packages are complementary, not replacements. Next.js dashboard auth stays cookie-based. `@supabase/server` is available for route handlers, Edge Functions, and other header-authenticated backends. Existing Next.js env helpers accept both the new names and the legacy `NEXT_PUBLIC_SUPABASE_ANON_KEY` / `SUPABASE_SERVICE_ROLE_KEY` aliases.
