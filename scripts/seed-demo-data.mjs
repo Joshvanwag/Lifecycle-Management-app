@@ -4,17 +4,17 @@
  * Usage (after migrations are applied and a user has signed up):
  *   ORGANIZATION_ID=<uuid> npm run db:seed
  *
- * Requires NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in the environment.
+ * Requires a project URL and secret key in the environment.
  */
 
 import { createClient } from "@supabase/supabase-js";
 
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL;
+const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_SECRET_KEY;
 const organizationId = process.argv[2] ?? process.env.ORGANIZATION_ID;
 
 if (!url || !serviceRoleKey) {
-  console.error("Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY.");
+  console.error("Missing project URL or secret key (SUPABASE_URL / SUPABASE_SECRET_KEY).");
   process.exit(1);
 }
 

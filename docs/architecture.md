@@ -15,6 +15,7 @@
 | Application | Next.js 15, React 19, TypeScript |
 | Styling | Tailwind CSS, shadcn/ui |
 | Backend | Supabase (PostgreSQL, Auth, MFA, SSO, RLS) |
+| Server clients | `@supabase/ssr` (cookie sessions) and `@supabase/server` (header/JWT verification) |
 | Hosting | AWS Amplify (planned, not yet configured) |
 | Source Control | Git, GitHub |
 
