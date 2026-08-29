@@ -1,4 +1,4 @@
-import { DashboardShell } from "@/components/layout/dashboard-shell";
+import { AuthenticatedDashboardShell } from "@/components/layout/authenticated-dashboard-shell";
 import { AssetsDashboard } from "@/components/assets/assets-dashboard";
 import { requireAuthContext } from "@/lib/auth/context";
 import { getAllAssets, getAllSpaces } from "@/lib/data/spaces";
@@ -15,14 +15,11 @@ export default async function AssetsPage() {
   ]);
 
   return (
-    <DashboardShell
+    <AuthenticatedDashboardShell
       title="Assets"
       description="Equipment inventory across all Spaces"
-      userDisplayName={auth.displayName}
-      userInitials={auth.initials}
-      organizationName={auth.organization.name}
     >
       <AssetsDashboard spaces={spaces} assets={assets} />
-    </DashboardShell>
+    </AuthenticatedDashboardShell>
   );
 }

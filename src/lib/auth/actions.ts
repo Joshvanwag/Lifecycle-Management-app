@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getInvitationPreview } from "@/lib/data/invitations";
 
 export async function signIn(formData: FormData) {
   const email = String(formData.get("email") ?? "").trim();
@@ -19,33 +20,38 @@ export async function signIn(formData: FormData) {
     redirect("/login?error=invalid-credentials");
   }
 
+  await supabase.rpc("accept_pending_invitations");
+
   redirect(redirectTo.startsWith("/") ? redirectTo : "/");
 }
 
 export async function signUp(formData: FormData) {
-  const email = String(formData.get("email") ?? "").trim();
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
-  const organizationName = String(formData.get("organizationName") ?? "").trim();
-  const industryType = String(formData.get("industryType") ?? "other").trim();
+  const inviteToken = String(formData.get("inviteToken") ?? "").trim();
 
-  if (!email || !password || !organizationName) {
+  if (!email || !password || !inviteToken) {
     redirect("/signup?error=missing-fields");
   }
 
   const supabase = await createClient();
+
+  const invitation = await getInvitationPreview(supabase, inviteToken);
+  if (!invitation?.is_valid) {
+    redirect("/signup?error=invalid-invite");
+  }
+
+  if (invitation.email.toLowerCase() !== email) {
+    redirect("/signup?error=email-mismatch");
+  }
+
   const { error } = await supabase.auth.signUp({
     email,
     password,
-    options: {
-      data: {
-        organization_name: organizationName,
-        industry_type: industryType,
-      },
-    },
   });
 
   if (error) {
-    redirect(`/signup?error=${encodeURIComponent(error.message)}`);
+    redirect(`/signup?invite=${inviteToken}&error=${encodeURIComponent(error.message)}`);
   }
 
   redirect("/");

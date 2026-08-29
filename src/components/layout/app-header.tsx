@@ -1,7 +1,9 @@
 "use client";
 
-import { Bell, ChevronDown, Search } from "lucide-react";
+import { Bell, ChevronDown } from "lucide-react";
+import { OrganizationSwitcher } from "@/components/layout/organization-switcher";
 import { signOut } from "@/lib/auth/actions";
+import type { Organization } from "@/lib/database.types";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,24 +14,27 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
 
 interface AppHeaderProps {
   title: string;
   description?: string;
-  showSearch?: boolean;
   userDisplayName: string;
   userInitials: string;
   organizationName: string;
+  isPlatformAdmin?: boolean;
+  organizations?: Organization[];
+  activeOrganizationId?: string;
 }
 
 export function AppHeader({
   title,
   description,
-  showSearch = false,
   userDisplayName,
   userInitials,
   organizationName,
+  isPlatformAdmin = false,
+  organizations = [],
+  activeOrganizationId,
 }: AppHeaderProps) {
   return (
     <header className="flex h-14 shrink-0 items-center justify-between gap-4 border-b bg-background px-6">
@@ -41,11 +46,11 @@ export function AppHeader({
       </div>
 
       <div className="flex items-center gap-3">
-        {showSearch && (
-          <div className="relative hidden w-64 md:block">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input placeholder="Search..." className="pl-9" />
-          </div>
+        {isPlatformAdmin && organizations.length > 0 && activeOrganizationId && (
+          <OrganizationSwitcher
+            organizations={organizations}
+            activeOrganizationId={activeOrganizationId}
+          />
         )}
 
         <Button variant="ghost" size="icon" aria-label="Notifications">
@@ -60,7 +65,10 @@ export function AppHeader({
               </Avatar>
               <div className="hidden text-left sm:block">
                 <p className="text-sm font-medium leading-none">{userDisplayName}</p>
-                <p className="text-xs text-muted-foreground">{organizationName}</p>
+                <p className="text-xs text-muted-foreground">
+                  {organizationName}
+                  {isPlatformAdmin ? " · DEV team" : ""}
+                </p>
               </div>
               <ChevronDown className="h-4 w-4 opacity-60" />
             </Button>

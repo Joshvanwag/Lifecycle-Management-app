@@ -7,6 +7,9 @@ export type Json =
   | Json[];
 
 export type Database = {
+  __InternalSupabase: {
+    PostgrestVersion: "12";
+  };
   public: {
     Tables: {
       organizations: {
@@ -18,6 +21,7 @@ export type Database = {
           floors_enabled: boolean;
           industry_type: string;
           benchmark_participation: boolean;
+          is_dev_org: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -29,6 +33,7 @@ export type Database = {
           floors_enabled?: boolean;
           industry_type?: string;
           benchmark_participation?: boolean;
+          is_dev_org?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -40,6 +45,7 @@ export type Database = {
           floors_enabled?: boolean;
           industry_type?: string;
           benchmark_participation?: boolean;
+          is_dev_org?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -65,6 +71,45 @@ export type Database = {
           organization_id?: string;
           user_id?: string;
           role?: "owner" | "admin" | "member" | "read_only";
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      organization_invitations: {
+        Row: {
+          id: string;
+          organization_id: string;
+          email: string;
+          role: "owner" | "admin" | "member" | "read_only";
+          token: string;
+          invited_by: string | null;
+          expires_at: string;
+          accepted_at: string | null;
+          revoked_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          email: string;
+          role?: "owner" | "admin" | "member" | "read_only";
+          token?: string;
+          invited_by?: string | null;
+          expires_at?: string;
+          accepted_at?: string | null;
+          revoked_at?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          email?: string;
+          role?: "owner" | "admin" | "member" | "read_only";
+          token?: string;
+          invited_by?: string | null;
+          expires_at?: string;
+          accepted_at?: string | null;
+          revoked_at?: string | null;
           created_at?: string;
         };
         Relationships: [];
@@ -398,7 +443,86 @@ export type Database = {
       };
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      accept_pending_invitations: { Args: Record<PropertyKey, never>; Returns: string };
+      can_manage_organization: {
+        Args: { target_organization_id: string };
+        Returns: boolean;
+      };
+      can_read_organization: {
+        Args: { target_organization_id: string };
+        Returns: boolean;
+      };
+      can_write_organization: {
+        Args: { target_organization_id: string };
+        Returns: boolean;
+      };
+      get_benchmark_metrics_admin: {
+        Args: {
+          p_asset_category?: string;
+          p_industry_type?: string;
+          p_metric_code?: string;
+          p_period_year?: number;
+          p_space_type?: string;
+        };
+        Returns: {
+          asset_category: string | null;
+          average: number | null;
+          computed_at: string;
+          contributor_count: number;
+          id: string;
+          industry_type: string;
+          is_eligible: boolean;
+          median: number | null;
+          metric_code: string;
+          percentile_25: number | null;
+          percentile_75: number | null;
+          period_year: number | null;
+          space_type: string | null;
+        }[];
+      };
+      get_benchmark_metrics_public: {
+        Args: {
+          p_asset_category?: string;
+          p_metric_code?: string;
+          p_period_year?: number;
+          p_space_type?: string;
+        };
+        Returns: {
+          asset_category: string | null;
+          average: number | null;
+          computed_at: string;
+          id: string;
+          industry_type: string;
+          median: number | null;
+          metric_code: string;
+          percentile_25: number | null;
+          percentile_75: number | null;
+          period_year: number | null;
+          space_type: string | null;
+        }[];
+      };
+      get_invitation_preview: {
+        Args: { p_token: string };
+        Returns: {
+          email: string;
+          expires_at: string;
+          is_valid: boolean;
+          organization_name: string;
+          role: "owner" | "admin" | "member" | "read_only";
+        }[];
+      };
+      is_platform_admin: { Args: Record<PropertyKey, never>; Returns: boolean };
+      user_can_access_benchmarks: {
+        Args: { target_industry_type: string };
+        Returns: boolean;
+      };
+      user_membership_role: {
+        Args: { target_organization_id: string };
+        Returns: "owner" | "admin" | "member" | "read_only";
+      };
+      user_organization_ids: { Args: Record<PropertyKey, never>; Returns: string[] };
+    };
     Enums: {
       membership_role: "owner" | "admin" | "member" | "read_only";
       planning_status: "unplanned" | "scheduled" | "deferred" | "completed";

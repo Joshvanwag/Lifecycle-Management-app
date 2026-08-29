@@ -1,15 +1,23 @@
-import { DashboardShell } from "@/components/layout/dashboard-shell";
+import { AuthenticatedDashboardShell } from "@/components/layout/authenticated-dashboard-shell";
 import { OrganizationSettingsForm } from "@/components/settings/organization-settings-form";
+import { TeamInvitationForm } from "@/components/settings/team-invitation-form";
 import { requireAuthContext } from "@/lib/auth/context";
 
 export default async function SettingsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ saved?: string; error?: string }>;
+  searchParams: Promise<{ saved?: string; invited?: string; error?: string }>;
 }) {
   const auth = await requireAuthContext();
   const params = await searchParams;
   const canManage = auth.membership.role === "owner" || auth.membership.role === "admin";
+
+  const successMessage =
+    params.saved === "1"
+      ? "Organization settings saved."
+      : params.invited === "1"
+        ? "Invitation sent."
+        : null;
 
   const errorMessage =
     params.error === "unauthorized"
@@ -21,14 +29,12 @@ export default async function SettingsPage({
           : null;
 
   return (
-    <DashboardShell
+    <AuthenticatedDashboardShell
       title="Settings"
       description="Organization and application settings"
-      userDisplayName={auth.displayName}
-      userInitials={auth.initials}
-      organizationName={auth.organization.name}
     >
       <div className="max-w-2xl space-y-6">
+        {successMessage && <p className="text-sm text-green-700">{successMessage}</p>}
         <OrganizationSettingsForm
           organizationName={auth.organization.name}
           industryType={auth.organization.industry_type}
@@ -37,10 +43,11 @@ export default async function SettingsPage({
           saved={params.saved === "1"}
           errorMessage={errorMessage}
         />
+        {canManage && <TeamInvitationForm organizationId={auth.organization.id} />}
         <p className="text-sm text-muted-foreground">
           Chart colors are customized from each chart&apos;s options menu.
         </p>
       </div>
-    </DashboardShell>
+    </AuthenticatedDashboardShell>
   );
 }

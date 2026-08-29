@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChevronDown, RefreshCw } from "lucide-react";
+import { ChevronDown, RefreshCw, Shield } from "lucide-react";
 import { mainNavigation } from "@/config/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -16,7 +16,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { lifecycleActions } from "@/config/navigation";
 
-export function AppSidebar() {
+interface AppSidebarProps {
+  isPlatformAdmin?: boolean;
+}
+
+export function AppSidebar({ isPlatformAdmin = false }: AppSidebarProps) {
   const pathname = usePathname();
 
   return (
@@ -65,6 +69,29 @@ export function AppSidebar() {
             </ul>
           </div>
         ))}
+        {isPlatformAdmin && (
+          <div className="mt-6">
+            <p className="mb-2 px-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              DEV
+            </p>
+            <ul className="space-y-0.5">
+              <li>
+                <Link
+                  href="/admin"
+                  className={cn(
+                    "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                    pathname.startsWith("/admin")
+                      ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                      : "text-sidebar-foreground hover:bg-sidebar-accent/70 hover:text-sidebar-accent-foreground",
+                  )}
+                >
+                  <Shield className="h-4 w-4 shrink-0 opacity-80" />
+                  <span>Admin</span>
+                </Link>
+              </li>
+            </ul>
+          </div>
+        )}
       </nav>
 
       <div className="border-t border-sidebar-border p-3">

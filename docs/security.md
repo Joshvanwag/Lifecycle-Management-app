@@ -17,9 +17,32 @@ Supabase Auth provides:
 
 User's authenticated identity determines accessible organization(s).
 
-On signup, a database trigger (`handle_new_user`) creates:
-- One `organizations` row (name from signup metadata)
-- One `organization_memberships` row with role `owner`
+### Invitation-only onboarding
+
+Users **cannot** self-provision organizations. New accounts are created only through a valid organization invitation:
+
+1. A platform administrator creates the organization and sends an owner invitation, or an organization owner/admin invites a team member.
+2. The invitee opens `/signup?invite=<token>` and creates an account with the invited email address.
+3. The `handle_new_user` trigger (or `accept_pending_invitations()` on sign-in) links the auth user to the invited organization via `organization_memberships`.
+
+Users who sign up without a valid invitation receive an auth account but **no organization membership** and cannot access the dashboard.
+
+Direct INSERT into `organizations` or self-assigned memberships are blocked by RLS. Organization creation uses the service role from platform admin server actions only.
+
+### DEV organization (platform access)
+
+Cross-tenant platform access is granted by membership in the **DEV** organization (`organizations.is_dev_org = true`). There is exactly one DEV org. Members can:
+
+- View and switch between all customer organizations
+- Read/write all tenant data (cross-tenant support access)
+- Create customer organizations and invitations from `/admin`
+- Call `get_benchmark_metrics_admin()` to inspect sub-threshold benchmark aggregates including `contributor_count`
+
+**Customer organization owners retain the standard under-5 benchmark rule** via `get_benchmark_metrics_public()`. The contributor threshold bypass applies only to DEV org members.
+
+Invite additional DEV teammates from **Settings** or **`/admin`** while in the DEV organization. New operators join via the standard invitation flow — no CLI command or JWT metadata flag required.
+
+The DEV org is provisioned by migration / `npm run db:ensure-dev-org`.
 
 Dashboard routes are protected by Next.js middleware. Unauthenticated users are redirected to `/login`.
 
@@ -59,7 +82,8 @@ RLS is enabled on all tenant-owned tables:
 | `user_organization_ids()` | Returns organization IDs for `auth.uid()` |
 | `can_read_organization(uuid)` | Membership exists |
 | `can_write_organization(uuid)` | Role is owner, admin, or member |
-| `can_manage_organization(uuid)` | Role is owner or admin |
+| `can_manage_organization(uuid)` | Role is owner or admin, or caller is platform admin |
+| `is_platform_admin()` | True when caller is a member of the DEV org (`is_dev_org`) |
 
 ### Policy pattern
 
@@ -68,9 +92,9 @@ RLS is enabled on all tenant-owned tables:
 - **Organization update:** `can_manage_organization(id)`
 - **Membership management:** `can_manage_organization(organization_id)`
 
-Organization inserts are not exposed to authenticated clients; signup uses the `handle_new_user` security-definer trigger.
+Organization inserts are not exposed to authenticated clients; new organizations are created by platform administrators via service-role server actions.
 
-Migrations: `supabase/migrations/20250829180001_rls_policies.sql`
+Migrations: `supabase/migrations/20250829180001_rls_policies.sql`, `supabase/migrations/20250829210000_invitation_only_platform_admin.sql`, `supabase/migrations/20250829220000_dev_org_platform_access.sql`
 
 ## Benchmarking Security (Phase 2)
 

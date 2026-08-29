@@ -163,3 +163,21 @@ Each benchmark metric (including Space Type / Asset Category / period context) r
 Benchmark aggregates are produced via service-role server-side jobs into `benchmark_aggregate_metrics`. Customers read results through `get_benchmark_metrics_public()` only — never by querying other tenants' operational tables.
 
 **Rationale:** Benchmarking is aggregate analytics, not cross-tenant data access. Preserves RLS on operational tables.
+
+## ADR-019: Invitation-Only Onboarding
+
+**Date:** Phase 2 (security addendum)  
+**Status:** Accepted
+
+Users cannot self-provision organizations. New accounts require a valid `organization_invitations` token. The signup trigger links users to invited organizations only. Organization creation is restricted to platform administrators via service-role server actions.
+
+**Rationale:** Prevents unauthorized org/membership injection and ensures users are linked to the correct tenant.
+
+## ADR-020: DEV Organization Platform Access
+
+**Date:** Phase 2 (security addendum)  
+**Status:** Accepted
+
+Cross-tenant platform access is granted by membership in a single **DEV** organization (`organizations.is_dev_org = true`), not by hardcoded CLI commands or JWT metadata flags. DEV org members have cross-tenant read/write access via updated RLS helpers and may call `get_benchmark_metrics_admin()` to inspect sub-threshold benchmark metrics including contributor counts. Additional operators are onboarded by inviting them to the DEV org. Customer organization owners continue using `get_benchmark_metrics_public()` with the minimum-5-contributor rule unchanged.
+
+**Rationale:** App operators need full visibility for support through normal invitation-based membership; customer anonymization guarantees remain intact for all organization owners.

@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { signIn } from "@/lib/auth/actions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,9 +15,11 @@ export default async function LoginPage({
       ? "Enter your email and password."
       : params.error === "invalid-credentials"
         ? "Invalid email or password."
-        : params.error
-          ? "Unable to sign in. Please try again."
-          : null;
+        : params.error === "no-organization"
+          ? "Your account is not linked to an organization yet. Use your invitation link or contact your administrator."
+          : params.error
+            ? "Unable to sign in. Please try again."
+            : null;
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted/30 p-6">
@@ -50,10 +51,7 @@ export default async function LoginPage({
             </Button>
           </form>
           <p className="mt-4 text-center text-sm text-muted-foreground">
-            Need an account?{" "}
-            <Link href="/signup" className="font-medium text-primary hover:underline">
-              Create one
-            </Link>
+            Need access? Ask your administrator for an invitation.
           </p>
         </CardContent>
       </Card>
