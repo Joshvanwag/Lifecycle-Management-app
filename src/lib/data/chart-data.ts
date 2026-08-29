@@ -1,4 +1,4 @@
-import type { Asset, Space } from "@/lib/types";
+import type { Asset, LifecycleStatus, Space } from "@/lib/types";
 
 const MONTH_LABELS = [
   "Jan",
@@ -16,7 +16,7 @@ const MONTH_LABELS = [
 ] as const;
 
 export interface LifecycleStatusSlice {
-  name: "Active" | "Planned";
+  name: LifecycleStatus;
   value: number;
 }
 
@@ -31,21 +31,19 @@ export interface CategorySlice {
 }
 
 export function computeLifecycleStatusSlices(spaces: Space[]): LifecycleStatusSlice[] {
-  let active = 0;
-  let planned = 0;
+  const counts: Record<LifecycleStatus, number> = {
+    upcoming: 0,
+    due: 0,
+    overdue: 0,
+  };
 
   for (const space of spaces) {
-    if (space.planningStatus === "scheduled") {
-      planned += 1;
-    } else {
-      active += 1;
-    }
+    counts[space.lifecycleStatus] += 1;
   }
 
-  return [
-    { name: "Active" as const, value: active },
-    { name: "Planned" as const, value: planned },
-  ].filter((slice) => slice.value > 0);
+  return (["upcoming", "due", "overdue"] as const)
+    .map((name) => ({ name, value: counts[name] }))
+    .filter((slice) => slice.value > 0);
 }
 
 export function computeDeploymentByMonth(spaces: Space[]): {
