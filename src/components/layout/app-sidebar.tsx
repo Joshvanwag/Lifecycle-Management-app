@@ -72,7 +72,7 @@ export function AppSidebar({ isPlatformAdmin = false }: AppSidebarProps) {
         {isPlatformAdmin && (
           <div className="mt-6">
             <p className="mb-2 px-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              Platform
+              DEV
             </p>
             <ul className="space-y-0.5">
               <li>

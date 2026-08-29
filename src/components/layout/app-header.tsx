@@ -67,7 +67,7 @@ export function AppHeader({
                 <p className="text-sm font-medium leading-none">{userDisplayName}</p>
                 <p className="text-xs text-muted-foreground">
                   {organizationName}
-                  {isPlatformAdmin ? " · Platform admin" : ""}
+                  {isPlatformAdmin ? " · DEV team" : ""}
                 </p>
               </div>
               <ChevronDown className="h-4 w-4 opacity-60" />

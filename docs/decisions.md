@@ -173,11 +173,11 @@ Users cannot self-provision organizations. New accounts require a valid `organiz
 
 **Rationale:** Prevents unauthorized org/membership injection and ensures users are linked to the correct tenant.
 
-## ADR-020: Platform Administrator Access
+## ADR-020: DEV Organization Platform Access
 
 **Date:** Phase 2 (security addendum)  
 **Status:** Accepted
 
-Platform admin status is stored in `auth.users.raw_app_meta_data.platform_admin` (server-set only). Platform admins have cross-tenant read/write access via updated RLS helpers and may call `get_benchmark_metrics_admin()` to inspect sub-threshold benchmark metrics including contributor counts. Customer organization owners continue using `get_benchmark_metrics_public()` with the minimum-5-contributor rule unchanged.
+Cross-tenant platform access is granted by membership in a single **DEV** organization (`organizations.is_dev_org = true`), not by hardcoded CLI commands or JWT metadata flags. DEV org members have cross-tenant read/write access via updated RLS helpers and may call `get_benchmark_metrics_admin()` to inspect sub-threshold benchmark metrics including contributor counts. Additional operators are onboarded by inviting them to the DEV org. Customer organization owners continue using `get_benchmark_metrics_public()` with the minimum-5-contributor rule unchanged.
 
-**Rationale:** App operators need full visibility for support; customer anonymization guarantees remain intact for all organization owners.
+**Rationale:** App operators need full visibility for support through normal invitation-based membership; customer anonymization guarantees remain intact for all organization owners.

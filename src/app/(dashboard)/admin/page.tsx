@@ -53,12 +53,48 @@ export default async function AdminPage({
 
   return (
     <AuthenticatedDashboardShell
-      title="Platform Admin"
-      description="Create organizations and manage invitations"
+      title="DEV Admin"
+      description="Manage customer organizations and DEV team access"
     >
       <div className="mx-auto max-w-3xl space-y-6">
         {successMessage && <p className="text-sm text-green-700">{successMessage}</p>}
         {errorMessage && <p className="text-sm text-destructive">{errorMessage}</p>}
+
+        {auth.devOrganization && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Invite DEV team member</CardTitle>
+              <CardDescription>
+                DEV organization members can switch into any customer account and bypass benchmark
+                contributor thresholds. Invite teammates to {auth.devOrganization.name}.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form action={createInvitation} className="space-y-4">
+                <input type="hidden" name="organizationId" value={auth.devOrganization.id} />
+                <input type="hidden" name="returnTo" value="/admin" />
+                <div className="space-y-2">
+                  <Label htmlFor="devEmail">Email</Label>
+                  <Input id="devEmail" name="email" type="email" required />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="devRole">Role</Label>
+                  <select
+                    id="devRole"
+                    name="role"
+                    defaultValue="admin"
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  >
+                    <option value="owner">Owner</option>
+                    <option value="admin">Admin</option>
+                    <option value="member">Member</option>
+                  </select>
+                </div>
+                <Button type="submit">Invite to DEV</Button>
+              </form>
+            </CardContent>
+          </Card>
+        )}
 
         <Card>
           <CardHeader>
@@ -99,10 +135,10 @@ export default async function AdminPage({
 
         <Card>
           <CardHeader>
-            <CardTitle>Invite user</CardTitle>
+            <CardTitle>Invite customer organization user</CardTitle>
             <CardDescription>
-              Invite a user to {auth.organization.name}. They must sign up or sign in with this
-              email.
+              Invite a user to the currently selected organization ({auth.organization.name}).
+              Switch organizations from the header to invite users elsewhere.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -173,11 +209,11 @@ export default async function AdminPage({
 
         <Card>
           <CardHeader>
-            <CardTitle>Benchmark admin access</CardTitle>
+            <CardTitle>Benchmark access for DEV team</CardTitle>
             <CardDescription>
-              Platform administrators bypass the minimum contributor threshold and can inspect
+              DEV organization members bypass the minimum contributor threshold and can inspect
               sub-threshold metrics with contributor counts. Customer organization owners still use
-              the standard under-5 rule via get_benchmark_metrics_public().
+              the standard under-5 rule.
             </CardDescription>
           </CardHeader>
         </Card>

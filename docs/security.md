@@ -29,23 +29,20 @@ Users who sign up without a valid invitation receive an auth account but **no or
 
 Direct INSERT into `organizations` or self-assigned memberships are blocked by RLS. Organization creation uses the service role from platform admin server actions only.
 
-### Platform administrators
+### DEV organization (platform access)
 
-Platform admin status is stored in **`auth.users.raw_app_meta_data.platform_admin`** (server-set only, never `user_metadata`).
+Cross-tenant platform access is granted by membership in the **DEV** organization (`organizations.is_dev_org = true`). There is exactly one DEV org. Members can:
 
-Platform administrators can:
-- View and switch between all organizations
+- View and switch between all customer organizations
 - Read/write all tenant data (cross-tenant support access)
-- Create organizations and invitations
+- Create customer organizations and invitations from `/admin`
 - Call `get_benchmark_metrics_admin()` to inspect sub-threshold benchmark aggregates including `contributor_count`
 
-**Customer organization owners retain the standard under-5 benchmark rule** via `get_benchmark_metrics_public()`. The contributor threshold bypass applies only to platform administrators.
+**Customer organization owners retain the standard under-5 benchmark rule** via `get_benchmark_metrics_public()`. The contributor threshold bypass applies only to DEV org members.
 
-Grant platform admin access with:
+Invite additional DEV teammates from **Settings** or **`/admin`** while in the DEV organization. New operators join via the standard invitation flow — no CLI command or JWT metadata flag required.
 
-```bash
-npm run admin:grant-platform -- user@example.com
-```
+The DEV org is provisioned by migration / `npm run db:ensure-dev-org`.
 
 Dashboard routes are protected by Next.js middleware. Unauthenticated users are redirected to `/login`.
 
@@ -86,7 +83,7 @@ RLS is enabled on all tenant-owned tables:
 | `can_read_organization(uuid)` | Membership exists |
 | `can_write_organization(uuid)` | Role is owner, admin, or member |
 | `can_manage_organization(uuid)` | Role is owner or admin, or caller is platform admin |
-| `is_platform_admin()` | Reads `app_metadata.platform_admin` from JWT |
+| `is_platform_admin()` | True when caller is a member of the DEV org (`is_dev_org`) |
 
 ### Policy pattern
 
@@ -97,7 +94,7 @@ RLS is enabled on all tenant-owned tables:
 
 Organization inserts are not exposed to authenticated clients; new organizations are created by platform administrators via service-role server actions.
 
-Migrations: `supabase/migrations/20250829180001_rls_policies.sql`, `supabase/migrations/20250829210000_invitation_only_platform_admin.sql`
+Migrations: `supabase/migrations/20250829180001_rls_policies.sql`, `supabase/migrations/20250829210000_invitation_only_platform_admin.sql`, `supabase/migrations/20250829220000_dev_org_platform_access.sql`
 
 ## Benchmarking Security (Phase 2)
 

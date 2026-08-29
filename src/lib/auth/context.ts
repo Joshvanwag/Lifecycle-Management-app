@@ -2,7 +2,8 @@ import { cache } from "react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { ACTIVE_ORGANIZATION_COOKIE } from "@/lib/auth/constants";
-import { isPlatformAdminUser } from "@/lib/auth/platform-admin";
+import { pickDefaultActiveOrganization } from "@/lib/auth/dev-org";
+import { userHasDevOrgAccess } from "@/lib/auth/platform-admin";
 import { createClient } from "@/lib/supabase/server";
 import type { Organization, OrganizationMembership } from "@/lib/database.types";
 
@@ -12,6 +13,7 @@ export interface AuthContext {
   displayName: string;
   initials: string;
   isPlatformAdmin: boolean;
+  devOrganization: Organization | null;
   organization: Organization;
   membership: OrganizationMembership;
   organizations: Organization[];
@@ -35,9 +37,9 @@ function getInitials(displayName: string): string {
 
 function syntheticMembership(organizationId: string): OrganizationMembership {
   return {
-    id: "platform-admin",
+    id: "dev-org-access",
     organization_id: organizationId,
-    user_id: "platform-admin",
+    user_id: "dev-org-access",
     role: "owner",
     created_at: new Date(0).toISOString(),
   };
@@ -55,7 +57,7 @@ export const getAuthContext = cache(async (): Promise<AuthContext | null> => {
 
   await supabase.rpc("accept_pending_invitations");
 
-  const isPlatformAdmin = isPlatformAdminUser(user);
+  const isPlatformAdmin = await userHasDevOrgAccess();
 
   const { data: membershipRows, error: membershipError } = await supabase
     .from("organization_memberships")
@@ -85,7 +87,7 @@ export const getAuthContext = cache(async (): Promise<AuthContext | null> => {
 
     organizations = allOrganizations;
   } else {
-    if (!memberships?.length) {
+    if (!memberships.length) {
       return null;
     }
 
@@ -105,18 +107,16 @@ export const getAuthContext = cache(async (): Promise<AuthContext | null> => {
     organizations = memberOrganizations;
   }
 
+  const devOrganization = organizations.find((organization) => organization.is_dev_org) ?? null;
+
   const cookieStore = await cookies();
   const preferredOrganizationId = cookieStore.get(ACTIVE_ORGANIZATION_COOKIE)?.value;
 
   const organization =
-    organizations.find((entry) => entry.id === preferredOrganizationId) ??
-    organizations.find((entry) =>
-      memberships?.some((membership) => membership.organization_id === entry.id),
-    ) ??
-    organizations[0]!;
+    pickDefaultActiveOrganization(organizations, preferredOrganizationId) ?? organizations[0]!;
 
   const membership =
-    memberships?.find((entry) => entry.organization_id === organization.id) ??
+    memberships.find((entry) => entry.organization_id === organization.id) ??
     (isPlatformAdmin ? syntheticMembership(organization.id) : null);
 
   if (!membership) {
@@ -132,6 +132,7 @@ export const getAuthContext = cache(async (): Promise<AuthContext | null> => {
     displayName,
     initials: getInitials(displayName),
     isPlatformAdmin,
+    devOrganization,
     organization,
     membership,
     organizations,

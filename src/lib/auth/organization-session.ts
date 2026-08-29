@@ -9,7 +9,7 @@ export async function setActiveOrganization(organizationId: string) {
   const auth = await requireAuthContext();
 
   if (!auth.isPlatformAdmin) {
-    throw new Error("Only platform administrators can switch organizations.");
+    throw new Error("Only DEV organization members can switch customer organizations.");
   }
 
   const allowed = auth.organizations.some((organization) => organization.id === organizationId);

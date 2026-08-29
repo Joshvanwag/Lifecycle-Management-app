@@ -21,6 +21,7 @@ export type Database = {
           floors_enabled: boolean;
           industry_type: string;
           benchmark_participation: boolean;
+          is_dev_org: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -32,6 +33,7 @@ export type Database = {
           floors_enabled?: boolean;
           industry_type?: string;
           benchmark_participation?: boolean;
+          is_dev_org?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -43,6 +45,7 @@ export type Database = {
           floors_enabled?: boolean;
           industry_type?: string;
           benchmark_participation?: boolean;
+          is_dev_org?: boolean;
           created_at?: string;
           updated_at?: string;
         };
