@@ -6,11 +6,18 @@ import { requireAuthContext } from "@/lib/auth/context";
 export default async function SettingsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ saved?: string; error?: string }>;
+  searchParams: Promise<{ saved?: string; invited?: string; error?: string }>;
 }) {
   const auth = await requireAuthContext();
   const params = await searchParams;
   const canManage = auth.membership.role === "owner" || auth.membership.role === "admin";
+
+  const successMessage =
+    params.saved === "1"
+      ? "Organization settings saved."
+      : params.invited === "1"
+        ? "Invitation sent."
+        : null;
 
   const errorMessage =
     params.error === "unauthorized"
@@ -27,6 +34,7 @@ export default async function SettingsPage({
       description="Organization and application settings"
     >
       <div className="max-w-2xl space-y-6">
+        {successMessage && <p className="text-sm text-green-700">{successMessage}</p>}
         <OrganizationSettingsForm
           organizationName={auth.organization.name}
           industryType={auth.organization.industry_type}
