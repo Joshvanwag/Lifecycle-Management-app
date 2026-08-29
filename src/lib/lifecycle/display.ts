@@ -1,24 +1,17 @@
-import type { LifecycleStatus, PlanningStatus } from "@/lib/types";
+import type { PlanningStatus } from "@/lib/types";
+import {
+  calendarYearFromDate,
+  deriveLifecycleStatus,
+  recommendedReplacementYear,
+} from "@/lib/lifecycle/engine";
 
-const CURRENT_YEAR = new Date().getFullYear();
-
-/** Simple display-only lifecycle status until the Phase 3 engine ships. */
-export function deriveLifecycleStatus(recommendedRefreshYear: number): LifecycleStatus {
-  if (recommendedRefreshYear < CURRENT_YEAR) {
-    return "overdue";
-  }
-  if (recommendedRefreshYear === CURRENT_YEAR) {
-    return "due";
-  }
-  return "upcoming";
-}
+export { deriveLifecycleStatus };
 
 export function deriveRecommendedRefreshYear(
   commissionedDate: string,
   refreshCycleYears: number,
 ): number {
-  const year = new Date(commissionedDate).getFullYear();
-  return year + refreshCycleYears;
+  return recommendedReplacementYear(calendarYearFromDate(commissionedDate), refreshCycleYears);
 }
 
 export function toPlanningStatus(value: string): PlanningStatus {

@@ -287,8 +287,9 @@ When done, report:
 | Phase | Status | Focus |
 |-------|--------|-------|
 | 1 | Complete | App shell, demo UI, documentation |
-| 2 | **Next** | Supabase schema, RLS, auth, live data |
-| 3 | Planned | Lifecycle engine, forecasting |
+| 2 | Complete | Supabase schema, RLS, auth, live data |
+| 3 | Complete | Lifecycle engine, forecasting, in-app refresh |
+| 4 | **Next** | Import workflows |
 | 4 | Planned | Import workflows |
 | 5 | Planned | Reporting & planning |
 | 6 | Planned | Enterprise features (MFA, SSO, exports) |

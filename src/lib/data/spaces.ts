@@ -6,7 +6,8 @@ import {
   formatLocationLabel,
   toPlanningStatus,
 } from "@/lib/lifecycle/display";
-import { computeInflatedForecastAmount } from "@/lib/lifecycle/forecast";
+import { summarizeForecast } from "@/lib/lifecycle/engine";
+import { backfillMissingSpaceForecasts } from "@/lib/lifecycle/recompute";
 import type { AssetRow, RefreshEventRow } from "@/lib/database.types";
 import type { Asset, DashboardMetrics, RefreshEvent, Space } from "@/lib/types";
 
@@ -37,20 +38,35 @@ interface SpaceListRow {
   planned_refresh_year: number | null;
 }
 
+interface ForecastComponentRow {
+  space_id: string;
+  asset_id: string | null;
+  forecast_amount: number;
+  recommended_replacement_year: number;
+  cost_basis: number;
+}
+
 function mapSpaceRow(
   row: SpaceListRow,
   location: SpaceLocationRow["physical_locations"],
   assetCount: number,
-  forecastAmount: number,
+  components: ForecastComponentRow[],
   organizationId: string,
   organizationName: string,
 ): Space {
   const campus = location?.buildings.campuses.name ?? "";
   const building = location?.buildings.name ?? "";
   const room = location?.location_type === "room" ? location.name : undefined;
-  const recommendedRefreshYear =
+  const fallbackYear =
     row.planned_refresh_year ??
     deriveRecommendedRefreshYear(row.commissioned_date, row.refresh_cycle_years);
+  const forecast = summarizeForecast(
+    components.map((component) => ({
+      forecastAmount: Number(component.forecast_amount),
+      recommendedReplacementYear: component.recommended_replacement_year,
+    })),
+    fallbackYear,
+  );
 
   return {
     id: row.id,
@@ -65,12 +81,13 @@ function mapSpaceRow(
     commissionedDate: row.commissioned_date,
     commissionedYear: new Date(row.commissioned_date).getFullYear(),
     refreshCycleYears: row.refresh_cycle_years,
-    recommendedRefreshYear,
-    lifecycleStatus: deriveLifecycleStatus(recommendedRefreshYear),
+    recommendedRefreshYear: forecast.recommendedRefreshYear,
+    lifecycleStatus: deriveLifecycleStatus(forecast.recommendedRefreshYear),
     planningStatus: toPlanningStatus(row.planning_status),
     plannedRefreshYear: row.planned_refresh_year ?? undefined,
     originalCost: Number(row.original_cost),
-    forecastAmount,
+    forecastAmount: forecast.forecastAmount,
+    forecastByYear: forecast.forecastByYear,
     assetCount,
   };
 }
@@ -135,45 +152,87 @@ async function getAssetCounts(client: Client, organizationId: string, spaceIds: 
   return counts;
 }
 
-async function getForecastTotals(client: Client, organizationId: string, spaceIds: string[]) {
+async function getForecastComponents(
+  client: Client,
+  organizationId: string,
+  spaceIds: string[],
+) {
   if (spaceIds.length === 0) {
-    return new Map<string, number>();
+    return new Map<string, ForecastComponentRow[]>();
   }
 
   const { data, error } = await client
     .from("forecast_cost_components")
-    .select(
-      "space_id, forecast_amount, cost_basis, cost_basis_date, inflation_rate, recommended_replacement_year",
-    )
+    .select("space_id, asset_id, forecast_amount, recommended_replacement_year, cost_basis")
     .eq("organization_id", organizationId)
     .in("space_id", spaceIds);
 
   if (error) {
-    throw new Error(`Failed to load forecast totals: ${error.message}`);
+    throw new Error(`Failed to load forecast components: ${error.message}`);
   }
 
-  const totals = new Map<string, number>();
-  for (const row of (data ?? []) as {
-    space_id: string;
-    forecast_amount: number;
-    cost_basis: number;
-    cost_basis_date: string;
-    inflation_rate: number;
-    recommended_replacement_year: number;
-  }[]) {
-    const storedAmount = Number(row.forecast_amount);
-    const amount =
-      storedAmount > 0
-        ? storedAmount
-        : computeInflatedForecastAmount({
-            costBasis: Number(row.cost_basis),
-            costBasisDate: row.cost_basis_date,
-            inflationRate: Number(row.inflation_rate),
-            replacementYear: row.recommended_replacement_year,
-          });
-    totals.set(row.space_id, (totals.get(row.space_id) ?? 0) + amount);
+  const map = new Map<string, ForecastComponentRow[]>();
+  for (const row of (data ?? []) as ForecastComponentRow[]) {
+    const list = map.get(row.space_id) ?? [];
+    list.push(row);
+    map.set(row.space_id, list);
   }
-  return totals;
+  return map;
+}
+
+async function maybeBackfillForecasts(
+  client: Client,
+  organizationId: string,
+  rows: SpaceListRow[],
+  componentsBySpace: Map<string, ForecastComponentRow[]>,
+) {
+  const needsBackfill = rows.some((row) => {
+    const components = componentsBySpace.get(row.id) ?? [];
+    const lump = components.find((component) => component.asset_id === null);
+    const priced = components.filter((component) => component.asset_id !== null);
+    const doubleCounted =
+      Boolean(lump) &&
+      priced.length > 0 &&
+      Number(lump?.cost_basis ?? 0) >= Number(row.original_cost) - 0.01;
+    const total = components.reduce((sum, component) => sum + Number(component.forecast_amount), 0);
+    return (
+      components.length === 0 ||
+      doubleCounted ||
+      (Number(row.original_cost) > 0 && total === 0)
+    );
+  });
+
+  if (!needsBackfill) {
+    return componentsBySpace;
+  }
+
+  const { data: organization, error } = await client
+    .from("organizations")
+    .select("default_inflation_rate")
+    .eq("id", organizationId)
+    .maybeSingle();
+
+  if (error || !organization) {
+    return componentsBySpace;
+  }
+
+  try {
+    await backfillMissingSpaceForecasts(
+      client,
+      organizationId,
+      Number(
+        (organization as { default_inflation_rate: number }).default_inflation_rate,
+      ),
+    );
+  } catch {
+    return componentsBySpace;
+  }
+
+  return getForecastComponents(
+    client,
+    organizationId,
+    rows.map((row) => row.id),
+  );
 }
 
 export interface ListSpacesOptions {
@@ -215,18 +274,24 @@ export async function listSpaces(
 
   const rows = (data ?? []) as SpaceListRow[];
   const spaceIds = rows.map((row) => row.id);
-  const [locations, assetCounts, forecastTotals] = await Promise.all([
+  const [locations, assetCounts, initialComponents] = await Promise.all([
     getSpaceLocations(client, spaceIds),
     getAssetCounts(client, organizationId, spaceIds),
-    getForecastTotals(client, organizationId, spaceIds),
+    getForecastComponents(client, organizationId, spaceIds),
   ]);
+  const forecastComponents = await maybeBackfillForecasts(
+    client,
+    organizationId,
+    rows,
+    initialComponents,
+  );
 
   const spaces = rows.map((row) =>
     mapSpaceRow(
       row,
       locations.get(row.id) ?? null,
       assetCounts.get(row.id) ?? 0,
-      forecastTotals.get(row.id) ?? Number(row.original_cost),
+      forecastComponents.get(row.id) ?? [],
       organizationId,
       organizationName,
     ),
@@ -362,17 +427,23 @@ export async function getSpaceById(
   }
 
   const row = data as SpaceListRow;
-  const [locations, assetCounts, forecastTotals] = await Promise.all([
+  const [locations, assetCounts, initialComponents] = await Promise.all([
     getSpaceLocations(client, [row.id]),
     getAssetCounts(client, organizationId, [row.id]),
-    getForecastTotals(client, organizationId, [row.id]),
+    getForecastComponents(client, organizationId, [row.id]),
   ]);
+  const forecastComponents = await maybeBackfillForecasts(
+    client,
+    organizationId,
+    [row],
+    initialComponents,
+  );
 
   return mapSpaceRow(
     row,
     locations.get(row.id) ?? null,
     assetCounts.get(row.id) ?? 0,
-    forecastTotals.get(row.id) ?? Number(row.original_cost),
+    forecastComponents.get(row.id) ?? [],
     organizationId,
     organizationName,
   );

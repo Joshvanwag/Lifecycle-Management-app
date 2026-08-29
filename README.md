@@ -81,9 +81,11 @@ supabase/           # Supabase config and migrations
 
 **Phase 1:** Application foundation, UI shell, demo data, documentation.
 
-**Phase 2 (current):** Supabase schema, tenant isolation, RLS, authentication, live data on Overview and Spaces pages.
+**Phase 2:** Supabase schema, tenant isolation, RLS, authentication, live data on Overview and Spaces pages.
 
-**Phase 3 (next):** Lifecycle calculation engine, forecasting with compound inflation.
+**Phase 3 (current):** Lifecycle engine, compound-inflation forecasts, planning status, and in-app refresh actions.
+
+**Phase 4 (next):** CSV/Excel import workflows.
 
 ## Documentation
 

@@ -24,6 +24,8 @@ export default async function SettingsPage({
       ? "You do not have permission to update organization settings."
       : params.error === "invalid-industry"
         ? "Select a valid industry type."
+        : params.error === "invalid-lifecycle-defaults"
+          ? "Enter a valid refresh cycle and inflation rate."
         : params.error
           ? decodeURIComponent(params.error)
           : null;
@@ -39,6 +41,8 @@ export default async function SettingsPage({
           organizationName={auth.organization.name}
           industryType={auth.organization.industry_type}
           benchmarkParticipation={auth.organization.benchmark_participation}
+          defaultRefreshCycleYears={auth.organization.default_refresh_cycle_years}
+          defaultInflationRate={Number(auth.organization.default_inflation_rate)}
           canManage={canManage}
           saved={params.saved === "1"}
           errorMessage={errorMessage}

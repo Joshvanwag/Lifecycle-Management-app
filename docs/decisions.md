@@ -181,3 +181,57 @@ Users cannot self-provision organizations. New accounts require a valid `organiz
 Cross-tenant platform access is granted by membership in a single **DEV** organization (`organizations.is_dev_org = true`), not by hardcoded CLI commands or JWT metadata flags. DEV org members have cross-tenant read/write access via updated RLS helpers and may call `get_benchmark_metrics_admin()` to inspect sub-threshold benchmark metrics including contributor counts. Additional operators are onboarded by inviting them to the DEV org. Customer organization owners continue using `get_benchmark_metrics_public()` with the minimum-5-contributor rule unchanged.
 
 **Rationale:** App operators need full visibility for support through normal invitation-based membership; customer anonymization guarantees remain intact for all organization owners.
+
+## ADR-021: Calendar Year Forecasting in Phase 3
+
+**Date:** Phase 3  
+**Status:** Accepted
+
+Replacement years and dashboard bars use calendar year. Chart legends already show `2026`, not `FY2026`.
+
+**Rationale:** Matches current UI. Fiscal-year calendars stay in `/docs/open-questions.md`.
+
+## ADR-022: Persist Forecast Amounts on Write
+
+**Date:** Phase 3  
+**Status:** Accepted
+
+A pure engine computes `recommended_replacement_year` and `forecast_amount`. Server actions persist those values on `forecast_cost_components`. Dashboard reads stored amounts. No separate materialization table.
+
+**Rationale:** The columns already exist. Scale-out caching remains an open question.
+
+## ADR-023: Space Status From Earliest Cost Year
+
+**Date:** Phase 3  
+**Status:** Accepted
+
+Space list/header lifecycle status uses the earliest recommended replacement year among current cost rows. Dashboard year totals sum component dollars, so one Space can appear in multiple years.
+
+**Rationale:** Partial refresh creates independent schedules; a single Space commissioned date is not enough.
+
+## ADR-024: Planning Year Is Overlay Only
+
+**Date:** Phase 3  
+**Status:** Accepted
+
+`planning_status` and `planned_refresh_year` do not change calculated replacement years, retire assets, or rewrite forecasts.
+
+**Rationale:** Planning and lifecycle are separate concepts in `/docs/lifecycle-model.md`.
+
+## ADR-025: Single-Asset Partial Refresh Is Individual Replacement
+
+**Date:** Phase 3  
+**Status:** Accepted
+
+Partial Refresh writes `individual_replacement` when exactly one asset is selected. There is no fifth Update Lifecycle menu item.
+
+**Rationale:** Same user flow; event history still distinguishes a single replacement.
+
+## ADR-026: Lifecycle Writes Use the Signed-In Session
+
+**Date:** Phase 3  
+**Status:** Accepted
+
+Add Space, refresh, correct-inventory, and planning updates run as Next.js server actions with the user session. RLS `can_write_organization()` enforces owner/admin/member. Service role is not used to bypass RLS.
+
+**Rationale:** Tenant isolation must hold for lifecycle mutations.

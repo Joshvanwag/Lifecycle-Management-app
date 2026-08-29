@@ -70,18 +70,12 @@ AWS Amplify will host the Next.js application. Supabase provides managed Postgre
 
 ## Phase 1 Status
 
-- Next.js application scaffolded at repository root
-- UI shell with sidebar navigation
-- Demo data for Overview and Spaces pages
-- Supabase client utilities prepared (not yet connected)
-- Migration directory structure created
-- Documentation established
+Complete. Application shell, documentation, and demo UI.
 
-## Phase 2 Plan
+## Phase 2 Status
 
-- Supabase database schema
-- Organizations, users, memberships
-- Locations, Spaces, Assets
-- Lifecycle defaults
-- RLS policies
-- Authentication flow
+Complete. Supabase schema, RLS, auth, and live Overview/Spaces reads.
+
+## Phase 3 Status
+
+Complete. Lifecycle engine, compound-inflation forecasts, planning edits, and in-app Add Space / Full Refresh / Partial Refresh / Correct Inventory. CSV import remains Phase 4. Forecast / Capital Plan / Reports pages remain Phase 5.

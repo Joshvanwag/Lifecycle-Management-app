@@ -75,6 +75,10 @@ export function SpacesTable({
             className="pl-9"
           />
         </div>
+        <div className="flex gap-2">
+        <Button asChild>
+          <Link href="/spaces/new">Add Space</Link>
+        </Button>
         <Button variant="outline" onClick={() => setFiltersOpen(true)}>
           <Filter className="h-4 w-4" />
           Filters
@@ -84,6 +88,7 @@ export function SpacesTable({
             </span>
           )}
         </Button>
+        </div>
       </div>
 
       <ActiveFilterChips filters={filters} onFiltersChange={setFilters} />

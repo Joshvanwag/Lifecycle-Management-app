@@ -4,12 +4,15 @@ import { INDUSTRY_TYPE_CODES, INDUSTRY_TYPE_LABELS } from "@/lib/benchmark/const
 import { updateOrganizationSettings } from "@/lib/organization/actions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 interface OrganizationSettingsFormProps {
   organizationName: string;
   industryType: string;
   benchmarkParticipation: boolean;
+  defaultRefreshCycleYears: number;
+  defaultInflationRate: number;
   canManage: boolean;
   saved?: boolean;
   errorMessage?: string | null;
@@ -19,6 +22,8 @@ export function OrganizationSettingsForm({
   organizationName,
   industryType,
   benchmarkParticipation,
+  defaultRefreshCycleYears,
+  defaultInflationRate,
   canManage,
   saved,
   errorMessage,
@@ -28,8 +33,8 @@ export function OrganizationSettingsForm({
       <CardHeader>
         <CardTitle>Organization</CardTitle>
         <CardDescription>
-          Settings for {organizationName}. Lifecycle defaults and user management will expand in
-          later phases.
+          Settings for {organizationName}. Lifecycle defaults apply to new Spaces and forecast
+          recalculation.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -53,6 +58,37 @@ export function OrganizationSettingsForm({
               <p className="text-xs text-muted-foreground">
                 Determines your anonymous industry benchmark cohort.
               </p>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="defaultRefreshCycleYears">Default refresh cycle (years)</Label>
+                <Input
+                  id="defaultRefreshCycleYears"
+                  name="defaultRefreshCycleYears"
+                  type="number"
+                  min={1}
+                  max={50}
+                  required
+                  defaultValue={defaultRefreshCycleYears}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="defaultInflationPercent">Default inflation (%)</Label>
+                <Input
+                  id="defaultInflationPercent"
+                  name="defaultInflationPercent"
+                  type="number"
+                  min={0}
+                  max={50}
+                  step="0.1"
+                  required
+                  defaultValue={(defaultInflationRate * 100).toFixed(1)}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Changing inflation updates future forecasts only. Historical costs stay the same.
+                </p>
+              </div>
             </div>
 
             <div className="flex items-start gap-3 rounded-lg border p-4">
@@ -91,6 +127,14 @@ export function OrganizationSettingsForm({
               <dd className="font-medium">
                 {benchmarkParticipation ? "Enabled" : "Disabled"}
               </dd>
+            </div>
+            <div>
+              <dt className="text-sm text-muted-foreground">Default refresh cycle</dt>
+              <dd className="font-medium">{defaultRefreshCycleYears} years</dd>
+            </div>
+            <div>
+              <dt className="text-sm text-muted-foreground">Default inflation</dt>
+              <dd className="font-medium">{(defaultInflationRate * 100).toFixed(1)}%</dd>
             </div>
             <p className="text-sm text-muted-foreground sm:col-span-2">
               Only organization owners and admins can change these settings.
