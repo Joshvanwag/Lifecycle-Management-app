@@ -54,6 +54,14 @@ Should NOT feel like:
 
 Implemented globally in `src/app/globals.css`.
 
+## Charts
+
+- Each forecast year uses a distinct color on bar and timeline charts
+- A legend shows the year-to-color mapping below chart titles
+- Users customize chart colors under Settings → Chart colors (saved per browser for the organization)
+- Lifecycle and planning status colors use the same preference system for future stacked/grouped charts
+- Charts link to color settings via "Customize colors"
+
 ## Filtering
 
 Do NOT use a filter bar with many dropdowns across the top.

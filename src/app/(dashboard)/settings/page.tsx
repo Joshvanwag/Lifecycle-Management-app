@@ -1,15 +1,21 @@
-import { PlaceholderPage } from "@/components/layout/placeholder-page";
+import { DashboardShell } from "@/components/layout/dashboard-shell";
+import { ChartColorSettings } from "@/components/settings/chart-color-settings";
+import { requireAuthContext } from "@/lib/auth/context";
 
-export default function SettingsPage() {
+export default async function SettingsPage() {
+  const auth = await requireAuthContext();
+
   return (
-    <PlaceholderPage
+    <DashboardShell
       title="Settings"
       description="Organization and application settings"
+      userDisplayName={auth.displayName}
+      userInitials={auth.initials}
+      organizationName={auth.organization.name}
     >
-      <p className="text-sm text-muted-foreground">
-        Settings will include organization defaults (refresh cycle, inflation), user management,
-        and future SSO configuration.
-      </p>
-    </PlaceholderPage>
+      <div className="max-w-2xl space-y-6">
+        <ChartColorSettings />
+      </div>
+    </DashboardShell>
   );
 }

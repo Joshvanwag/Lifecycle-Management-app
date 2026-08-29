@@ -2,6 +2,10 @@
 
 import { X } from "lucide-react";
 import type { LifecycleStatus, PlanningStatus } from "@/lib/types";
+import {
+  emptySpaceFilters,
+  type SpaceFiltersState,
+} from "@/lib/filters/space-filters";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -14,23 +18,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 
-export interface SpaceFiltersState {
-  campus: string[];
-  building: string[];
-  spaceType: string[];
-  lifecycleStatus: LifecycleStatus[];
-  planningStatus: PlanningStatus[];
-  year: string[];
-}
-
-export const emptySpaceFilters: SpaceFiltersState = {
-  campus: [],
-  building: [],
-  spaceType: [],
-  lifecycleStatus: [],
-  planningStatus: [],
-  year: [],
-};
+export { emptySpaceFilters, type SpaceFiltersState };
 
 interface SpaceFiltersProps {
   open: boolean;

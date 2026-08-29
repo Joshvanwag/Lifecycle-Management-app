@@ -2,21 +2,38 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useMemo, useState } from "react";
 import {
   AlertTriangle,
   CalendarClock,
   Clock,
   DollarSign,
+  Filter,
+  Search,
   TrendingUp,
 } from "lucide-react";
-import type { DashboardMetrics, Space } from "@/lib/types";
-import { formatCurrency } from "@/lib/utils";
-import { ForecastChart } from "@/components/overview/forecast-chart";
+import {
+  ActiveFilterChips,
+  SpaceFilters,
+} from "@/components/spaces/space-filters";
 import {
   LifecycleStatusBadge,
   PlanningStatusBadge,
 } from "@/components/spaces/status-badges";
+import { ForecastChart } from "@/components/overview/forecast-chart";
+import { computeDashboardMetrics } from "@/lib/data/dashboard-metrics";
+import {
+  buildSpaceFilterOptions,
+  countActiveFilters,
+  emptySpaceFilters,
+  filterSpaces,
+  type SpaceFiltersState,
+} from "@/lib/filters/space-filters";
+import type { Space } from "@/lib/types";
+import { formatCurrency } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -27,8 +44,7 @@ import {
 } from "@/components/ui/table";
 
 interface OverviewDashboardProps {
-  metrics: DashboardMetrics;
-  upcomingSpaces: Space[];
+  spaces: Space[];
 }
 
 const metricCards = [
@@ -36,7 +52,7 @@ const metricCards = [
     key: "totalPortfolioValue" as const,
     label: "Total Portfolio Value",
     icon: DollarSign,
-    description: "Current cost basis across all Spaces",
+    description: "Current cost basis across filtered Spaces",
   },
   {
     key: "fiveYearForecast" as const,
@@ -64,11 +80,65 @@ const metricCards = [
   },
 ];
 
-export function OverviewDashboard({ metrics, upcomingSpaces }: OverviewDashboardProps) {
+export function OverviewDashboard({ spaces }: OverviewDashboardProps) {
   const router = useRouter();
+  const [search, setSearch] = useState("");
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [filters, setFilters] = useState<SpaceFiltersState>(emptySpaceFilters);
+
+  const filterOptions = useMemo(() => buildSpaceFilterOptions(spaces), [spaces]);
+
+  const filteredSpaces = useMemo(
+    () => filterSpaces(spaces, search, filters),
+    [spaces, search, filters],
+  );
+
+  const metrics = useMemo(
+    () => computeDashboardMetrics(filteredSpaces),
+    [filteredSpaces],
+  );
+
+  const upcomingSpaces = useMemo(
+    () =>
+      filteredSpaces
+        .filter((space) => space.lifecycleStatus === "upcoming" || space.lifecycleStatus === "due")
+        .slice(0, 5),
+    [filteredSpaces],
+  );
+
+  const activeFilterCount = countActiveFilters(filters);
 
   return (
     <div className="space-y-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="relative w-full max-w-md">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Search Spaces..."
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            className="pl-9"
+          />
+        </div>
+        <Button variant="outline" onClick={() => setFiltersOpen(true)}>
+          <Filter className="h-4 w-4" />
+          Filters
+          {activeFilterCount > 0 && (
+            <span className="ml-1 rounded-full bg-primary px-1.5 py-0.5 text-xs text-primary-foreground">
+              {activeFilterCount}
+            </span>
+          )}
+        </Button>
+      </div>
+
+      <ActiveFilterChips filters={filters} onFiltersChange={setFilters} />
+
+      {filteredSpaces.length !== spaces.length && (
+        <p className="text-sm text-muted-foreground">
+          Showing {filteredSpaces.length} of {spaces.length} Spaces
+        </p>
+      )}
+
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         {metricCards.map((card) => {
           const Icon = card.icon;
@@ -95,12 +165,15 @@ export function OverviewDashboard({ metrics, upcomingSpaces }: OverviewDashboard
         <Card>
           <CardHeader>
             <CardTitle>Upcoming Spaces</CardTitle>
-            <CardDescription>Spaces with upcoming lifecycle needs</CardDescription>
+            <CardDescription>
+              Spaces with upcoming lifecycle needs matching your filters
+            </CardDescription>
           </CardHeader>
           <CardContent className="p-0">
             {upcomingSpaces.length === 0 ? (
               <p className="p-6 text-sm text-muted-foreground">
-                No Spaces yet. Run the demo seed script or add Spaces to see portfolio data here.
+                No upcoming Spaces match the current filters. Adjust filters or add Spaces to see
+                portfolio data here.
               </p>
             ) : (
               <Table>
@@ -144,6 +217,14 @@ export function OverviewDashboard({ metrics, upcomingSpaces }: OverviewDashboard
           </CardContent>
         </Card>
       </div>
+
+      <SpaceFilters
+        open={filtersOpen}
+        onOpenChange={setFiltersOpen}
+        filters={filters}
+        onFiltersChange={setFilters}
+        options={filterOptions}
+      />
     </div>
   );
 }
