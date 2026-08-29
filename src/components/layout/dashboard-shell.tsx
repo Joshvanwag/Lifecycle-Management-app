@@ -6,6 +6,9 @@ interface DashboardShellProps {
   title: string;
   description?: string;
   showSearch?: boolean;
+  userDisplayName: string;
+  userInitials: string;
+  organizationName: string;
 }
 
 export function DashboardShell({
@@ -13,12 +16,22 @@ export function DashboardShell({
   title,
   description,
   showSearch,
+  userDisplayName,
+  userInitials,
+  organizationName,
 }: DashboardShellProps) {
   return (
     <div className="flex h-screen overflow-hidden bg-background">
       <AppSidebar />
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        <AppHeader title={title} description={description} showSearch={showSearch} />
+        <AppHeader
+          title={title}
+          description={description}
+          showSearch={showSearch}
+          userDisplayName={userDisplayName}
+          userInitials={userInitials}
+          organizationName={organizationName}
+        />
         <main className="flex-1 overflow-y-auto p-6 scrollbar-thin">{children}</main>
       </div>
     </div>

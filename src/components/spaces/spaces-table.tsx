@@ -29,9 +29,10 @@ import {
 
 interface SpacesTableProps {
   spaces: Space[];
+  totalCount?: number;
 }
 
-export function SpacesTable({ spaces }: SpacesTableProps) {
+export function SpacesTable({ spaces, totalCount }: SpacesTableProps) {
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -172,7 +173,7 @@ export function SpacesTable({ spaces }: SpacesTableProps) {
       </div>
 
       <p className="text-sm text-muted-foreground">
-        Showing {filteredSpaces.length} of {spaces.length} Spaces
+        Showing {filteredSpaces.length} of {totalCount ?? spaces.length} Spaces
       </p>
 
       <SpaceFilters

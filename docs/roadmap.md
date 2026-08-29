@@ -14,22 +14,22 @@
 - [x] AI engineering rules (AGENTS.md)
 - [x] Supabase migration directory structure
 
-## Phase 2 — Database & Tenancy (Next)
+## Phase 2 — Database & Tenancy (Current)
 
-- [ ] Supabase project connection
-- [ ] Database schema migrations
-  - [ ] Organizations
-  - [ ] Organization memberships
-  - [ ] Location hierarchy (campus, building, floor, physical location)
-  - [ ] Spaces
-  - [ ] Assets
-  - [ ] Forecast cost components
-  - [ ] Refresh events
-  - [ ] Organization defaults (refresh cycle, inflation)
-- [ ] Row Level Security policies
-- [ ] Authentication flow (sign up, sign in, sign out)
-- [ ] Organization context resolution
-- [ ] Replace demo data with real queries
+- [x] Supabase project connection (env + client utilities)
+- [x] Database schema migrations
+  - [x] Organizations
+  - [x] Organization memberships
+  - [x] Location hierarchy (campus, building, floor, physical location)
+  - [x] Spaces
+  - [x] Assets
+  - [x] Forecast cost components
+  - [x] Refresh events
+  - [x] Organization defaults (refresh cycle, inflation)
+- [x] Row Level Security policies
+- [x] Authentication flow (sign up, sign in, sign out)
+- [x] Organization context resolution
+- [x] Replace demo data with real queries (Overview, Spaces list, Space detail)
 
 ## Phase 3 — Core Lifecycle
 

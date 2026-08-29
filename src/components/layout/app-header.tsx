@@ -1,7 +1,7 @@
 "use client";
 
 import { Bell, ChevronDown, Search } from "lucide-react";
-import { DEMO_ORGANIZATION } from "@/lib/demo-data";
+import { signOut } from "@/lib/auth/actions";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,9 +18,19 @@ interface AppHeaderProps {
   title: string;
   description?: string;
   showSearch?: boolean;
+  userDisplayName: string;
+  userInitials: string;
+  organizationName: string;
 }
 
-export function AppHeader({ title, description, showSearch = false }: AppHeaderProps) {
+export function AppHeader({
+  title,
+  description,
+  showSearch = false,
+  userDisplayName,
+  userInitials,
+  organizationName,
+}: AppHeaderProps) {
   return (
     <header className="flex h-14 shrink-0 items-center justify-between gap-4 border-b bg-background px-6">
       <div className="min-w-0">
@@ -46,11 +56,11 @@ export function AppHeader({ title, description, showSearch = false }: AppHeaderP
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="gap-2 px-2">
               <Avatar className="h-8 w-8">
-                <AvatarFallback>JD</AvatarFallback>
+                <AvatarFallback>{userInitials}</AvatarFallback>
               </Avatar>
               <div className="hidden text-left sm:block">
-                <p className="text-sm font-medium leading-none">Jane Doe</p>
-                <p className="text-xs text-muted-foreground">{DEMO_ORGANIZATION}</p>
+                <p className="text-sm font-medium leading-none">{userDisplayName}</p>
+                <p className="text-xs text-muted-foreground">{organizationName}</p>
               </div>
               <ChevronDown className="h-4 w-4 opacity-60" />
             </Button>
@@ -61,7 +71,13 @@ export function AppHeader({ title, description, showSearch = false }: AppHeaderP
             <DropdownMenuItem>Profile</DropdownMenuItem>
             <DropdownMenuItem>Organization Settings</DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Sign out</DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <form action={signOut}>
+                <button type="submit" className="w-full cursor-pointer text-left">
+                  Sign out
+                </button>
+              </form>
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

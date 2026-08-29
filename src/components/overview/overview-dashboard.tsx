@@ -69,11 +69,6 @@ export function OverviewDashboard({ metrics, upcomingSpaces }: OverviewDashboard
 
   return (
     <div className="space-y-6">
-      <div className="rounded-lg border border-dashed border-primary/30 bg-primary/5 px-4 py-3 text-sm text-muted-foreground">
-        <span className="font-medium text-foreground">Demo data</span> — This dashboard uses
-        static sample data for development. Connect Supabase to load live organization data.
-      </div>
-
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         {metricCards.map((card) => {
           const Icon = card.icon;
@@ -103,43 +98,49 @@ export function OverviewDashboard({ metrics, upcomingSpaces }: OverviewDashboard
             <CardDescription>Spaces with upcoming lifecycle needs</CardDescription>
           </CardHeader>
           <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Space</TableHead>
-                  <TableHead>Refresh</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Forecast</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {upcomingSpaces.map((space) => (
-                  <TableRow
-                    key={space.id}
-                    className="cursor-pointer"
-                    data-clickable="true"
-                    onClick={() => router.push(`/spaces/${space.id}`)}
-                  >
-                    <TableCell>
-                      <Link href={`/spaces/${space.id}`} className="font-medium hover:underline">
-                        {space.name}
-                      </Link>
-                      <p className="text-xs text-muted-foreground">{space.spaceType}</p>
-                    </TableCell>
-                    <TableCell>{space.recommendedRefreshYear}</TableCell>
-                    <TableCell>
-                      <div className="flex flex-wrap gap-1">
-                        <LifecycleStatusBadge status={space.lifecycleStatus} />
-                        <PlanningStatusBadge status={space.planningStatus} />
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right font-medium">
-                      {formatCurrency(space.forecastAmount)}
-                    </TableCell>
+            {upcomingSpaces.length === 0 ? (
+              <p className="p-6 text-sm text-muted-foreground">
+                No Spaces yet. Run the demo seed script or add Spaces to see portfolio data here.
+              </p>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Space</TableHead>
+                    <TableHead>Refresh</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Forecast</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {upcomingSpaces.map((space) => (
+                    <TableRow
+                      key={space.id}
+                      className="cursor-pointer"
+                      data-clickable="true"
+                      onClick={() => router.push(`/spaces/${space.id}`)}
+                    >
+                      <TableCell>
+                        <Link href={`/spaces/${space.id}`} className="font-medium hover:underline">
+                          {space.name}
+                        </Link>
+                        <p className="text-xs text-muted-foreground">{space.spaceType}</p>
+                      </TableCell>
+                      <TableCell>{space.recommendedRefreshYear}</TableCell>
+                      <TableCell>
+                        <div className="flex flex-wrap gap-1">
+                          <LifecycleStatusBadge status={space.lifecycleStatus} />
+                          <PlanningStatusBadge status={space.planningStatus} />
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right font-medium">
+                        {formatCurrency(space.forecastAmount)}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
           </CardContent>
         </Card>
       </div>
