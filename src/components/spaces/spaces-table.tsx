@@ -27,7 +27,7 @@ import {
   countActiveFilters,
   filterSpaces,
 } from "@/lib/filters/space-filters";
-import type { Space } from "@/lib/types";
+import type { LifecycleStatus, Space } from "@/lib/types";
 import { formatCurrency } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -105,10 +105,19 @@ export function SpacesTable({
           title="Spaces by Lifecycle Status"
           description="Upcoming, due, and overdue counts with percentages"
           data={lifecycleDistribution}
-          onSegmentClick={setLifecycleDrill}
+          onSegmentClick={(name) => {
+            setLifecycleDrill(name);
+            setAppliedFilters({
+              ...appliedFilters,
+              lifecycleStatus: [name as LifecycleStatus],
+            });
+          }}
           selectedName={lifecycleDrill}
           drillLabel={lifecycleDrill ?? undefined}
-          onReset={() => setLifecycleDrill(null)}
+          onReset={() => {
+            setLifecycleDrill(null);
+            setAppliedFilters({ ...appliedFilters, lifecycleStatus: [] });
+          }}
         />
         <RankedListChart
           title="Spaces by Type"

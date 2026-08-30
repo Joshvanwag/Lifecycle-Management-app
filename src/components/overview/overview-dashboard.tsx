@@ -6,6 +6,7 @@ import {
   Building2,
   CalendarClock,
   CheckCircle2,
+  Clock3,
   DollarSign,
   Package,
   TrendingUp,
@@ -37,7 +38,7 @@ import {
   countActiveFilters,
   filterSpaces,
 } from "@/lib/filters/space-filters";
-import type { Asset, LifecycleStatus, Space } from "@/lib/types";
+import type { Asset, LifecycleStatus, PlanningStatus, Space } from "@/lib/types";
 import { formatCurrency } from "@/lib/utils";
 
 interface OverviewDashboardProps {
@@ -58,6 +59,7 @@ export function OverviewDashboard({
   const [planningDrill, setPlanningDrill] = useState<string | null>(null);
   const [yearDrill, setYearDrill] = useState<string | null>(null);
   const [spaceTypeDrill, setSpaceTypeDrill] = useState<string | null>(null);
+  const [categoryDrill, setCategoryDrill] = useState<string | null>(null);
 
   const filterOptions = useMemo(
     () => buildSpaceFilterOptions(spaces, organizationOptions),
@@ -106,12 +108,35 @@ export function OverviewDashboard({
     return rows.map((row) => ({ name: String(row.year), value: row.amount }));
   }, [replacementByYear, yearDrill]);
 
+  const groupedChartData = useMemo(() => {
+    if (!yearDrill) return recommendedVsPlanned;
+    const year = Number(yearDrill);
+    return recommendedVsPlanned.filter((row) => row.year === year);
+  }, [recommendedVsPlanned, yearDrill]);
+
   const spaceTypeChartData = useMemo(() => {
     const rows = spaceTypeDrill
       ? spacesByType.filter((row) => row.name === spaceTypeDrill)
       : spacesByType;
     return rows.map((row) => ({ name: row.name, value: row.value }));
   }, [spacesByType, spaceTypeDrill]);
+
+  const categoryChartData = useMemo(() => {
+    const rows = categoryDrill
+      ? topCategories.filter((row) => row.name === categoryDrill)
+      : topCategories;
+    return rows.map((row) => ({ name: row.name, value: row.amount }));
+  }, [topCategories, categoryDrill]);
+
+  const clearLifecycleDrill = () => {
+    setLifecycleDrill(null);
+    setAppliedFilters({ ...appliedFilters, lifecycleStatus: [] });
+  };
+
+  const clearPlanningDrill = () => {
+    setPlanningDrill(null);
+    setAppliedFilters({ ...appliedFilters, planningStatus: [] });
+  };
 
   return (
     <div className="space-y-6">
@@ -139,12 +164,12 @@ export function OverviewDashboard({
         <KpiCard label="Spaces" value={metrics.spaceCount} icon={Building2} />
         <KpiCard label="Assets" value={metrics.assetCount} icon={Package} />
         <KpiCard
-          label="Current Portfolio Value"
+          label="Portfolio Value"
           value={formatCurrency(metrics.totalPortfolioValue)}
           icon={DollarSign}
         />
         <KpiCard
-          label="5-Year Replacement Need"
+          label="5-Year Need"
           value={formatCurrency(metrics.fiveYearNeed)}
           icon={TrendingUp}
         />
@@ -153,6 +178,7 @@ export function OverviewDashboard({
           value={formatCurrency(metrics.dueThisYear)}
           icon={CalendarClock}
         />
+        <KpiCard label="Due Spaces" value={metrics.dueSpaces} icon={Clock3} />
         <KpiCard
           label="Overdue"
           value={formatCurrency(metrics.overdueAmount)}
@@ -179,10 +205,7 @@ export function OverviewDashboard({
           }}
           selectedName={lifecycleDrill}
           drillLabel={lifecycleDrill ? formatStatusLabel(lifecycleDrill) : undefined}
-          onReset={() => {
-            setLifecycleDrill(null);
-            setAppliedFilters({ ...appliedFilters, lifecycleStatus: [] });
-          }}
+          onReset={clearLifecycleDrill}
         />
         <LabeledBarChart
           title="Replacement Need by Year"
@@ -200,14 +223,18 @@ export function OverviewDashboard({
         <GroupedBarChart
           title="Recommended vs Planned"
           description="Recommended lifecycle need compared with intentionally planned work"
-          data={recommendedVsPlanned}
+          data={groupedChartData}
+          onBarClick={(year) => setYearDrill(String(year))}
+          selectedYear={yearDrill ? Number(yearDrill) : null}
+          drillLabel={yearDrill ? `Year ${yearDrill}` : undefined}
+          onReset={() => setYearDrill(null)}
         />
         <RankedListChart
           title="Portfolio by Space Type"
           description="Distribution of Spaces across types"
           data={spaceTypeChartData}
           valueFormatter={(value) => String(value)}
-          onItemClick={(name) => setSpaceTypeDrill(name)}
+          onItemClick={setSpaceTypeDrill}
           selectedName={spaceTypeDrill}
           drillLabel={spaceTypeDrill ?? undefined}
           onReset={() => setSpaceTypeDrill(null)}
@@ -220,16 +247,26 @@ export function OverviewDashboard({
           description="Unplanned, scheduled, deferred, and completed lifecycle planning"
           data={planningDistribution}
           colorType="planningStatus"
-          onSegmentClick={setPlanningDrill}
+          onSegmentClick={(name) => {
+            setPlanningDrill(name);
+            setAppliedFilters({
+              ...appliedFilters,
+              planningStatus: [name as PlanningStatus],
+            });
+          }}
           selectedName={planningDrill}
           drillLabel={planningDrill ? formatStatusLabel(planningDrill) : undefined}
-          onReset={() => setPlanningDrill(null)}
+          onReset={clearPlanningDrill}
         />
         <RankedListChart
           title="Top Future Cost Categories"
           description="Asset categories driving the largest future lifecycle costs"
-          data={topCategories.map((row) => ({ name: row.name, value: row.amount }))}
+          data={categoryChartData}
           valueFormatter={(value) => formatCurrency(value)}
+          onItemClick={setCategoryDrill}
+          selectedName={categoryDrill}
+          drillLabel={categoryDrill ?? undefined}
+          onReset={() => setCategoryDrill(null)}
         />
       </div>
 
