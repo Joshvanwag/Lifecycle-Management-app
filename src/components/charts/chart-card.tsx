@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { MoreVertical, RotateCcw, Settings2 } from "lucide-react";
+import { RotateCcw, Settings2 } from "lucide-react";
 import type { ChartColorScheme } from "@/lib/charts/colors";
 import {
   defaultChartSettings,
@@ -11,12 +11,6 @@ import { ChartColorSheet } from "@/components/charts/chart-color-sheet";
 import { ChartSettingsSheet } from "@/components/charts/chart-settings-sheet";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 interface ChartCardProps {
   title: string;
@@ -43,7 +37,7 @@ export function ChartCard({
   onReset,
   settings = defaultChartSettings,
   onSettingsChange,
-  showSettings = true,
+  showSettings = false,
 }: ChartCardProps) {
   const [colorSheetOpen, setColorSheetOpen] = useState(false);
   const [settingsSheetOpen, setSettingsSheetOpen] = useState(false);
@@ -51,10 +45,10 @@ export function ChartCard({
   return (
     <>
       <Card className={className}>
-        <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
-          <div className="space-y-1">
-            <CardTitle>{title}</CardTitle>
-            {description ? <CardDescription>{description}</CardDescription> : null}
+        <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0 pb-3">
+          <div className="space-y-0.5">
+            <CardTitle className="text-sm font-semibold">{title}</CardTitle>
+            {description ? <CardDescription className="text-xs">{description}</CardDescription> : null}
             {drillLabel ? (
               <p className="text-xs font-medium text-primary">Filtered: {drillLabel}</p>
             ) : null}
@@ -84,22 +78,9 @@ export function ChartCard({
                 <span className="sr-only">Chart settings</span>
               </Button>
             ) : null}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 cursor-pointer">
-                  <MoreVertical className="h-4 w-4" />
-                  <span className="sr-only">Chart options</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem className="cursor-pointer" onClick={() => setColorSheetOpen(true)}>
-                  Customize colors
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
           </div>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-3 pt-0">
           {legend}
           {children}
         </CardContent>

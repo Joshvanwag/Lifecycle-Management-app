@@ -205,6 +205,14 @@ function computeSpaceTypeMetrics(spaces: Space[], spaceType: string): OwnBenchma
 
   return [
     {
+      code: "space_type_avg_replacement_cost",
+      name: "Average Replacement Cost by Space Type",
+      domain: "financial",
+      kind: "currency",
+      spaceType,
+      value: count ? value / count : null,
+    },
+    {
       code: "space_type_avg_lifecycle_years",
       name: "Average Lifecycle by Space Type",
       domain: "lifecycle_health",
@@ -328,8 +336,18 @@ export function computeOwnContextBenchmarkMetrics(
 ): OwnBenchmarkMetric[] {
   const spaceTypes = [...new Set(spaces.map((space) => space.spaceType))].sort();
   const categories = [...new Set(assets.map((asset) => asset.category))].sort();
+  const priced = assets.filter((asset) => asset.cost > 0);
 
   return [
+    {
+      code: "avg_cost_per_asset",
+      name: "Average Replacement Cost per Asset",
+      domain: "financial",
+      kind: "currency",
+      value: priced.length
+        ? priced.reduce((sum, asset) => sum + asset.cost, 0) / priced.length
+        : null,
+    },
     ...spaceTypes.flatMap((spaceType) => computeSpaceTypeMetrics(spaces, spaceType)),
     ...categories.flatMap((category) => computeAssetCategoryMetrics(assets, category)),
   ];

@@ -61,23 +61,24 @@ One customer organization = one tenant. Users normally belong to one organizatio
 
 ## Reporting
 
-Executive Overview, Forecast (including capital planning), Benchmark, and **Reports** (custom chart builder) answer:
+Executive Overview, Forecast (including capital planning), and Benchmark answer:
 
 - What do we own?
 - What needs replacement, when, and at what cost?
 - What is planned vs recommended?
 - How do we compare with industry peers?
 
-Reports let users filter portfolio data, name a chart, pick chart type (pie, ranked list, bar, line, grouped bar, or table), tune display settings (numbers, goal line, legend), save configurations, and export CSV/Excel.
+There is no standalone Reports product page or custom-report builder. Analytical views live on Overview, Spaces, Assets, Forecast, and Benchmark. Export utilities may remain for technical reuse. Import history lives on Update Lifecycles → History.
 
 ## Navigation and Information Architecture
 
 See `/docs/ui-ux.md` for full UX specification. Summary:
 
-- **Update Lifecycles** hub exposes four distinct workflows (Add New Spaces, Full Refresh, Partial Refresh, Correct Inventory)
+- **Update Lifecycles** hub exposes four distinct workflows (Add New Spaces, Full Refresh, Partial Refresh, Correct Inventory), with Actions and History tabs
 - **Forecast** is the primary planning workspace (absorbs Capital Plan)
-- **Benchmark** and **Reports** live under Analytics
-- Customer users see single-organization context; DEV team may switch organizations
+- **Benchmark** is a single scrollable analytics page under Analytics
+- Reports, Imports, Capital Plan, and Correct Inventory are not primary navigation items
+- Customer users see single-organization context; DEV team may switch organizations from the top-left header only
 
 ## User Roles (Initial)
 

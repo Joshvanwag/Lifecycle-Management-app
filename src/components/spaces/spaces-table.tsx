@@ -3,9 +3,6 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { DistributionChart } from "@/components/charts/distribution-chart";
-import { RankedListChart } from "@/components/charts/ranked-list-chart";
 import { FilterToolbar } from "@/components/dashboard/filter-toolbar";
 import { KpiCard } from "@/components/dashboard/kpi-card";
 import {
@@ -27,9 +24,8 @@ import {
   countActiveFilters,
   filterSpaces,
 } from "@/lib/filters/space-filters";
-import type { LifecycleStatus, Space } from "@/lib/types";
+import type { Space } from "@/lib/types";
 import { formatCurrency } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -41,23 +37,13 @@ import {
 
 interface SpacesTableProps {
   spaces: Space[];
-  totalCount?: number;
-  page?: number;
-  pageSize?: number;
 }
 
-export function SpacesTable({
-  spaces,
-  totalCount,
-  page = 1,
-  pageSize = 50,
-}: SpacesTableProps) {
+export function SpacesTable({ spaces }: SpacesTableProps) {
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [appliedFilters, setAppliedFilters] = useState<SpaceFiltersState>(emptySpaceFilters);
-  const [lifecycleDrill, setLifecycleDrill] = useState<string | null>(null);
-  const [typeDrill, setTypeDrill] = useState<string | null>(null);
 
   const filterOptions = useMemo(() => buildSpaceFilterOptions(spaces), [spaces]);
 
@@ -74,25 +60,9 @@ export function SpacesTable({
   const spacesByType = useMemo(() => computeSpacesByType(filteredSpaces), [filteredSpaces]);
 
   const activeFilterCount = countActiveFilters(appliedFilters);
-  const total = totalCount ?? spaces.length;
-  const totalPages = Math.max(1, Math.ceil(total / pageSize));
-  const rangeStart = total === 0 ? 0 : (page - 1) * pageSize + 1;
-  const rangeEnd = Math.min(page * pageSize, total);
 
   return (
     <div className="space-y-4">
-      <FilterToolbar
-        search={search}
-        onSearchChange={setSearch}
-        searchPlaceholder="Search Spaces..."
-        activeFilterCount={activeFilterCount}
-        onOpenFilters={() => setFiltersOpen(true)}
-        appliedFilters={appliedFilters}
-        onFiltersChange={setAppliedFilters}
-        filteredCount={filteredSpaces.length}
-        totalCount={spaces.length}
-      />
-
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <KpiCard label="Total Spaces" value={summary.spaceCount} />
         <KpiCard label="Current Portfolio Value" value={formatCurrency(summary.totalPortfolioValue)} />
@@ -101,38 +71,31 @@ export function SpacesTable({
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <DistributionChart
-          title="Spaces by Lifecycle Status"
-          description="Upcoming, due, and overdue counts with percentages"
-          data={lifecycleDistribution}
-          onSegmentClick={(name) => {
-            setLifecycleDrill(name);
-            setAppliedFilters({
-              ...appliedFilters,
-              lifecycleStatus: [name as LifecycleStatus],
-            });
-          }}
-          selectedName={lifecycleDrill}
-          drillLabel={lifecycleDrill ?? undefined}
-          onReset={() => {
-            setLifecycleDrill(null);
-            setAppliedFilters({ ...appliedFilters, lifecycleStatus: [] });
-          }}
-        />
-        <RankedListChart
-          title="Spaces by Type"
-          description="Space type distribution"
-          data={(typeDrill
-            ? spacesByType.filter((row) => row.name === typeDrill)
-            : spacesByType.slice(0, 8)
-          ).map((row) => ({ name: row.name, value: row.value }))}
-          valueFormatter={(value) => String(value)}
-          onItemClick={setTypeDrill}
-          selectedName={typeDrill}
-          drillLabel={typeDrill ?? undefined}
-          onReset={() => setTypeDrill(null)}
-        />
+        <p className="text-xs text-muted-foreground">
+          Lifecycle: {lifecycleDistribution.map((row) => `${row.name} ${row.value}`).join(" · ") || "—"}
+        </p>
+        <p className="text-xs text-muted-foreground">
+          Types: {spacesByType.slice(0, 4).map((row) => `${row.name} ${row.value}`).join(" · ") || "—"}
+        </p>
       </div>
+
+      <FilterToolbar
+        showSearch
+        searchSlot={
+          <input
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Search Spaces..."
+            className="h-9 w-full max-w-md rounded-md border border-input bg-background px-3 text-sm"
+          />
+        }
+        activeFilterCount={activeFilterCount}
+        onOpenFilters={() => setFiltersOpen(true)}
+        appliedFilters={appliedFilters}
+        onFiltersChange={setAppliedFilters}
+        filteredCount={filteredSpaces.length}
+        totalCount={spaces.length}
+      />
 
       <div className="rounded-xl border bg-card">
         <Table>
@@ -173,9 +136,7 @@ export function SpacesTable({
                       {space.name}
                     </Link>
                   </TableCell>
-                  <TableCell className="max-w-[180px] truncate text-muted-foreground">
-                    {space.locationLabel}
-                  </TableCell>
+                  <TableCell className="text-muted-foreground">{space.locationLabel}</TableCell>
                   <TableCell>{space.spaceType}</TableCell>
                   <TableCell className="text-right">{space.assetCount}</TableCell>
                   <TableCell>
@@ -198,46 +159,9 @@ export function SpacesTable({
         </Table>
       </div>
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-sm text-muted-foreground">
-          {search || activeFilterCount > 0
-            ? `Showing ${filteredSpaces.length} filtered on this page (${rangeStart}–${rangeEnd} of ${total} Spaces)`
-            : `Showing ${rangeStart}–${rangeEnd} of ${total} Spaces`}
-        </p>
-        {totalPages > 1 && (
-          <div className="flex items-center gap-2">
-            {page > 1 ? (
-              <Button variant="outline" size="sm" asChild>
-                <Link href={page === 2 ? "/spaces" : `/spaces?page=${page - 1}`}>
-                  <ChevronLeft className="h-4 w-4" />
-                  Previous
-                </Link>
-              </Button>
-            ) : (
-              <Button variant="outline" size="sm" disabled>
-                <ChevronLeft className="h-4 w-4" />
-                Previous
-              </Button>
-            )}
-            <span className="text-sm text-muted-foreground">
-              Page {page} of {totalPages}
-            </span>
-            {page < totalPages ? (
-              <Button variant="outline" size="sm" asChild>
-                <Link href={`/spaces?page=${page + 1}`}>
-                  Next
-                  <ChevronRight className="h-4 w-4" />
-                </Link>
-              </Button>
-            ) : (
-              <Button variant="outline" size="sm" disabled>
-                Next
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
-        )}
-      </div>
+      <p className="text-sm text-muted-foreground">
+        Showing {filteredSpaces.length} of {spaces.length} Spaces
+      </p>
 
       <SpaceFilters
         open={filtersOpen}

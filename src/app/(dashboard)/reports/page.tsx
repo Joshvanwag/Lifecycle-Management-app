@@ -1,27 +1,6 @@
-import { AuthenticatedDashboardShell } from "@/components/layout/authenticated-dashboard-shell";
-import { ReportsHub } from "@/components/reports/reports-hub";
-import { requireAuthContext } from "@/lib/auth/context";
-import { loadPlatformDashboardData } from "@/lib/data/platform-dashboard";
-import { listSavedReports } from "@/lib/data/saved-reports";
-import { createClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
 
-export default async function ReportsPage() {
-  const auth = await requireAuthContext();
-  const supabase = await createClient();
-  const [{ spaces, assets }, savedReports] = await Promise.all([
-    loadPlatformDashboardData(auth, supabase, {
-      includeAssets: true,
-      activeOrganizationOnly: true,
-    }),
-    listSavedReports(supabase, auth.organization.id, auth.userId),
-  ]);
-
-  return (
-    <AuthenticatedDashboardShell
-      title="Reports"
-      description={`Build custom charts and exports for ${auth.organization.name}`}
-    >
-      <ReportsHub spaces={spaces} assets={assets} savedReports={savedReports} />
-    </AuthenticatedDashboardShell>
-  );
+/** Reports is no longer a primary product page. Analytical views live on Overview, Forecast, and Benchmark. */
+export default function ReportsRedirect() {
+  redirect("/");
 }

@@ -1,8 +1,6 @@
 import {
   BarChart3,
   Building2,
-  FileBarChart,
-  FileUp,
   LayoutDashboard,
   Package,
   Plus,
@@ -26,7 +24,7 @@ export const updateLifecyclesNavItem: NavItem = {
   title: "Update Lifecycles",
   href: "/update-lifecycles",
   icon: Plus,
-  description: "Choose how to update your lifecycle inventory",
+  description: "Add Spaces, refresh inventory, or correct records",
 };
 
 export const mainNavigation: NavGroup[] = [
@@ -36,7 +34,7 @@ export const mainNavigation: NavGroup[] = [
         title: "Overview",
         href: "/",
         icon: LayoutDashboard,
-        description: "Portfolio summary and key metrics",
+        description: "Portfolio health, lifecycle needs, and planning outlook",
       },
     ],
   },
@@ -47,13 +45,13 @@ export const mainNavigation: NavGroup[] = [
         title: "Spaces",
         href: "/spaces",
         icon: Building2,
-        description: "Manage lifecycle-managed environments",
+        description: "Manage lifecycle Spaces and upcoming replacement needs",
       },
       {
         title: "Assets",
         href: "/assets",
         icon: Package,
-        description: "Equipment inventory across all Spaces",
+        description: "Active equipment, age, and replacement exposure",
       },
     ],
   },
@@ -64,7 +62,7 @@ export const mainNavigation: NavGroup[] = [
         title: "Forecast",
         href: "/forecast",
         icon: TrendingUp,
-        description: "Replacement planning and capital forecasting",
+        description: "Future lifecycle need versus planned work",
       },
     ],
   },
@@ -75,24 +73,7 @@ export const mainNavigation: NavGroup[] = [
         title: "Benchmark",
         href: "/benchmark",
         icon: BarChart3,
-        description: "Compare lifecycle performance with industry peers",
-      },
-      {
-        title: "Reports",
-        href: "/reports",
-        icon: FileBarChart,
-        description: "Predefined lifecycle and portfolio reports",
-      },
-    ],
-  },
-  {
-    label: "Data",
-    items: [
-      {
-        title: "Imports",
-        href: "/imports",
-        icon: FileUp,
-        description: "Import history and file upload operations",
+        description: "Compare with anonymized industry peers",
       },
     ],
   },
@@ -112,26 +93,22 @@ export const lifecycleActionCards = [
   {
     title: "Add New Spaces",
     description: "Add newly deployed Spaces and equipment to the lifecycle inventory.",
-    href: "/spaces/new",
-    importHref: "/imports/add",
+    href: "/update-lifecycles/add",
   },
   {
     title: "Full Refresh",
     description: "Replace the active inventory for an existing Space and restart its full lifecycle.",
-    href: "/spaces",
-    importHref: "/imports/full-refresh",
+    href: "/update-lifecycles/full-refresh",
   },
   {
     title: "Partial Refresh",
-    description: "Select existing equipment being replaced, then add the new equipment with its own lifecycle.",
-    href: "/spaces",
-    importHref: "/imports/partial-refresh",
+    description: "Select existing equipment being replaced, then add the new equipment.",
+    href: "/update-lifecycles/partial-refresh",
   },
   {
     title: "Correct Inventory",
-    description: "Fix existing inventory data without creating a refresh event or resetting lifecycle history.",
+    description: "Fix existing inventory data without creating a refresh event.",
     href: "/inventory/correct",
-    importHref: null,
   },
 ] as const;
 
@@ -141,24 +118,6 @@ export const lifecycleActions = lifecycleActionCards.map((action) => ({
   description: action.description,
   href: action.href,
 }));
-
-export const importActions = [
-  {
-    title: "Add New Spaces",
-    description: "Create Spaces and equipment from a CSV or Excel file.",
-    href: "/imports/add",
-  },
-  {
-    title: "Full Refresh",
-    description: "Retire all active equipment and import the new inventory. No matching.",
-    href: "/imports/full-refresh",
-  },
-  {
-    title: "Partial Refresh",
-    description: "Select the assets being replaced, then import the new equipment.",
-    href: "/imports/partial-refresh",
-  },
-];
 
 export function spaceLifecycleActions(spaceId: string) {
   return [

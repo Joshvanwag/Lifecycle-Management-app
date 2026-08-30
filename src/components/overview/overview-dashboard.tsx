@@ -6,7 +6,6 @@ import {
   Building2,
   CalendarClock,
   CheckCircle2,
-  Clock3,
   DollarSign,
   Package,
   TrendingUp,
@@ -16,6 +15,7 @@ import { GroupedBarChart } from "@/components/charts/grouped-bar-chart";
 import { LabeledBarChart } from "@/components/charts/labeled-bar-chart";
 import { RankedListChart } from "@/components/charts/ranked-list-chart";
 import { FilterToolbar } from "@/components/dashboard/filter-toolbar";
+import { KpiGrid } from "@/components/design-system/kpi-grid";
 import { KpiCard } from "@/components/dashboard/kpi-card";
 import {
   SpaceFilters,
@@ -52,7 +52,6 @@ export function OverviewDashboard({
   assets = [],
   organizationOptions = [],
 }: OverviewDashboardProps) {
-  const [search, setSearch] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [appliedFilters, setAppliedFilters] = useState<SpaceFiltersState>(emptySpaceFilters);
   const [lifecycleDrill, setLifecycleDrill] = useState<string | null>(null);
@@ -67,8 +66,8 @@ export function OverviewDashboard({
   );
 
   const filteredSpaces = useMemo(
-    () => filterSpaces(spaces, search, appliedFilters),
-    [spaces, search, appliedFilters],
+    () => filterSpaces(spaces, "", appliedFilters),
+    [spaces, appliedFilters],
   );
 
   const filteredAssets = useMemo(() => {
@@ -141,16 +140,11 @@ export function OverviewDashboard({
   return (
     <div className="space-y-6">
       <FilterToolbar
-        search={search}
-        onSearchChange={setSearch}
-        searchPlaceholder="Search Spaces..."
         activeFilterCount={activeFilterCount}
         onOpenFilters={() => setFiltersOpen(true)}
         appliedFilters={appliedFilters}
         onFiltersChange={setAppliedFilters}
         organizationOptions={organizationOptions}
-        filteredCount={filteredSpaces.length}
-        totalCount={spaces.length}
       />
 
       {emptyCosts && (
@@ -160,16 +154,16 @@ export function OverviewDashboard({
         </div>
       )}
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <KpiGrid>
         <KpiCard label="Spaces" value={metrics.spaceCount} icon={Building2} />
         <KpiCard label="Assets" value={metrics.assetCount} icon={Package} />
         <KpiCard
-          label="Portfolio Value"
+          label="Current Portfolio Value"
           value={formatCurrency(metrics.totalPortfolioValue)}
           icon={DollarSign}
         />
         <KpiCard
-          label="5-Year Need"
+          label="5-Year Replacement Need"
           value={formatCurrency(metrics.fiveYearNeed)}
           icon={TrendingUp}
         />
@@ -178,7 +172,6 @@ export function OverviewDashboard({
           value={formatCurrency(metrics.dueThisYear)}
           icon={CalendarClock}
         />
-        <KpiCard label="Due Spaces" value={metrics.dueSpaces} icon={Clock3} />
         <KpiCard
           label="Overdue"
           value={formatCurrency(metrics.overdueAmount)}
@@ -189,7 +182,19 @@ export function OverviewDashboard({
           value={formatCurrency(metrics.plannedAmount)}
           icon={CheckCircle2}
         />
-      </div>
+      </KpiGrid>
+
+      <LabeledBarChart
+        title="Replacement Need by Year"
+        description="Recommended replacement cost by year"
+        data={replacementChartData}
+        tooltipLabel="Recommended Need"
+        heightClassName="h-72"
+        onBarClick={(name) => setYearDrill(name)}
+        selectedName={yearDrill}
+        drillLabel={yearDrill ? `Year ${yearDrill}` : undefined}
+        onReset={() => setYearDrill(null)}
+      />
 
       <div className="grid gap-4 lg:grid-cols-2">
         <DistributionChart
@@ -207,19 +212,6 @@ export function OverviewDashboard({
           drillLabel={lifecycleDrill ? formatStatusLabel(lifecycleDrill) : undefined}
           onReset={clearLifecycleDrill}
         />
-        <LabeledBarChart
-          title="Replacement Need by Year"
-          description="Future replacement cost with visible dollar labels"
-          data={replacementChartData}
-          colorScheme={{ type: "years", years: replacementByYear.map((row) => row.year) }}
-          onBarClick={(name) => setYearDrill(name)}
-          selectedName={yearDrill}
-          drillLabel={yearDrill ? `Year ${yearDrill}` : undefined}
-          onReset={() => setYearDrill(null)}
-        />
-      </div>
-
-      <div className="grid gap-4 lg:grid-cols-2">
         <GroupedBarChart
           title="Recommended vs Planned"
           description="Recommended lifecycle need compared with intentionally planned work"
@@ -228,16 +220,6 @@ export function OverviewDashboard({
           selectedYear={yearDrill ? Number(yearDrill) : null}
           drillLabel={yearDrill ? `Year ${yearDrill}` : undefined}
           onReset={() => setYearDrill(null)}
-        />
-        <RankedListChart
-          title="Portfolio by Space Type"
-          description="Distribution of Spaces across types"
-          data={spaceTypeChartData}
-          valueFormatter={(value) => String(value)}
-          onItemClick={setSpaceTypeDrill}
-          selectedName={spaceTypeDrill}
-          drillLabel={spaceTypeDrill ?? undefined}
-          onReset={() => setSpaceTypeDrill(null)}
         />
       </div>
 
@@ -269,6 +251,17 @@ export function OverviewDashboard({
           onReset={() => setCategoryDrill(null)}
         />
       </div>
+
+      <RankedListChart
+        title="Portfolio by Space Type"
+        description="Spaces by type"
+        data={spaceTypeChartData.slice(0, 8)}
+        valueFormatter={(value) => String(value)}
+        onItemClick={setSpaceTypeDrill}
+        selectedName={spaceTypeDrill}
+        drillLabel={spaceTypeDrill ?? undefined}
+        onReset={() => setSpaceTypeDrill(null)}
+      />
 
       <SpaceFilters
         open={filtersOpen}

@@ -10,7 +10,7 @@ import {
   LifecycleStatusBadge,
   PlanningStatusBadge,
 } from "@/components/spaces/status-badges";
-import { CHART_PALETTE } from "@/lib/charts/colors";
+import { GAP_SERIES } from "@/components/charts/grouped-bar-chart";
 import {
   amountInYear,
   computeExtendedMetrics,
@@ -133,7 +133,8 @@ export function ForecastPlanningDashboard({ spaces, initialYear }: ForecastPlann
         title="10-Year Capital Need"
         description="Projected replacement cost by year with visible dollar labels"
         data={replacementByYear.map((row) => ({ name: String(row.year), value: row.amount }))}
-        colorScheme={{ type: "years", years: replacementByYear.map((row) => row.year) }}
+        tooltipLabel="Recommended Need"
+        heightClassName="h-72"
         onBarClick={(name) => setDrill({ level: "year", year: Number(name) })}
         selectedName={drill.level !== "summary" ? String(drill.year) : null}
         drillLabel={drill.level !== "summary" ? `FY${drill.year}` : undefined}
@@ -154,9 +155,7 @@ export function ForecastPlanningDashboard({ spaces, initialYear }: ForecastPlann
           title="Planning Gap"
           description="Recommended minus planned — positive values show unplanned need"
           data={planningGap}
-          series={[
-            { key: "gap", label: "Planning Gap", color: CHART_PALETTE[9]! },
-          ]}
+          series={GAP_SERIES}
           onBarClick={(year) => setDrill({ level: "year", year })}
           selectedYear={drill.level !== "summary" ? drill.year : null}
           drillLabel={drill.level !== "summary" ? `FY${drill.year}` : undefined}

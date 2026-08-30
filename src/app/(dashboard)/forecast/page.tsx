@@ -13,18 +13,14 @@ export default async function ForecastPage({
   const supabase = await createClient();
   const params = await searchParams;
   const initialYear = params.year ? Number.parseInt(params.year, 10) : undefined;
-  const { spaces, isAggregatedView } = await loadPlatformDashboardData(auth, supabase, {
+  const { spaces } = await loadPlatformDashboardData(auth, supabase, {
     includeAssets: false,
   });
 
   return (
     <AuthenticatedDashboardShell
       title="Forecast"
-      description={
-        isAggregatedView
-          ? "Replacement planning and capital forecasting across customer organizations"
-          : `Replacement planning for ${auth.organization.name}`
-      }
+      description="Plan future lifecycle needs and compare recommended work with planned work."
     >
       <ForecastPlanningDashboard
         spaces={spaces}

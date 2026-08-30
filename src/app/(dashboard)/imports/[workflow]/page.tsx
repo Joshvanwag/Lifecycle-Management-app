@@ -67,9 +67,9 @@ export default async function ImportWorkflowPage({
     <AuthenticatedDashboardShell title={`${title} import`} description="CSV or Excel">
       <div className="mx-auto max-w-4xl space-y-6">
         <Button variant="ghost" size="sm" asChild className="-ml-2 w-fit">
-          <Link href="/imports">
+          <Link href="/update-lifecycles">
             <ArrowLeft className="h-4 w-4" />
-            Back to Imports
+            Back to Update Lifecycles
           </Link>
         </Button>
         <Card>

@@ -35,21 +35,17 @@ export function AppHeader({
   return (
     <header className="flex h-14 shrink-0 items-center justify-between gap-4 border-b bg-background px-6">
       <div className="min-w-0">
-        <p className="truncate text-lg font-semibold tracking-tight">{organizationName}</p>
-      </div>
-
-      <div className="flex items-center gap-3">
         {isPlatformAdmin && organizations.length > 0 && activeOrganizationId ? (
           <OrganizationSwitcher
             organizations={organizations}
             activeOrganizationId={activeOrganizationId}
           />
         ) : (
-          <div className="hidden max-w-[220px] truncate text-sm font-medium text-muted-foreground sm:block">
-            {organizationName}
-          </div>
+          <p className="truncate text-lg font-semibold tracking-tight">{organizationName}</p>
         )}
+      </div>
 
+      <div className="flex items-center gap-2">
         <Button variant="ghost" size="icon" aria-label="Notifications">
           <Bell className="h-4 w-4" />
         </Button>
@@ -63,7 +59,7 @@ export function AppHeader({
               <div className="hidden text-left sm:block">
                 <p className="text-sm font-medium leading-none">{userDisplayName}</p>
                 <p className="text-xs text-muted-foreground">
-                  {isPlatformAdmin ? "DEV team" : organizationName}
+                  {isPlatformAdmin ? "DEV team" : "Member"}
                 </p>
               </div>
               <ChevronDown className="h-4 w-4 opacity-60" />
@@ -72,8 +68,9 @@ export function AppHeader({
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel>My Account</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Profile</DropdownMenuItem>
-            <DropdownMenuItem>Organization Settings</DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <a href="/settings">Organization Settings</a>
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
               <form action={signOut}>

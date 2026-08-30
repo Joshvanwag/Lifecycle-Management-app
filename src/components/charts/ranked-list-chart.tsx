@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { ChartCard } from "@/components/charts/chart-card";
 import { defaultChartSettings, type ChartDisplaySettings } from "@/lib/charts/chart-settings";
-import { CHART_PALETTE } from "@/lib/charts/colors";
+import { CHART_RECOMMENDED } from "@/lib/charts/colors";
 import { cn } from "@/lib/utils";
 
 interface RankedListChartProps {
@@ -34,9 +34,9 @@ export function RankedListChart({
   onSettingsChange,
   className,
 }: RankedListChartProps) {
-  const [internalSettings, setInternalSettings] = useState(defaultChartSettings);
+  const [internalSettings] = useState(defaultChartSettings);
   const settings = controlledSettings ?? internalSettings;
-  const setSettings = onSettingsChange ?? setInternalSettings;
+  void onSettingsChange;
 
   const maxValue = useMemo(
     () => Math.max(...data.map((row) => row.value), settings.goalLine ?? 0, 1),
@@ -50,8 +50,6 @@ export function RankedListChart({
       colorScheme={{ type: "lifecycleStatus" }}
       drillLabel={drillLabel}
       onReset={onReset}
-      settings={settings}
-      onSettingsChange={setSettings}
       className={className}
     >
       {data.length === 0 ? (
@@ -66,8 +64,8 @@ export function RankedListChart({
               <span className="font-medium text-foreground">{valueFormatter(settings.goalLine)}</span>
             </div>
           )}
-          <ul className="space-y-2">
-            {data.map((row, index) => {
+          <ul className="space-y-1.5">
+            {data.map((row) => {
               const width = Math.max(4, (row.value / maxValue) * 100);
               const goalWidth =
                 settings.goalLine != null && settings.goalLine > 0
@@ -79,7 +77,7 @@ export function RankedListChart({
                   <button
                     type="button"
                     className={cn(
-                      "w-full rounded-lg border px-3 py-2 text-left transition-colors",
+                      "w-full rounded-md px-1 py-1.5 text-left transition-colors",
                       onItemClick && "cursor-pointer hover:bg-accent/40",
                       isSelected && "border-primary bg-primary/5",
                     )}
@@ -102,7 +100,7 @@ export function RankedListChart({
                         className="h-full rounded-full"
                         style={{
                           width: `${width}%`,
-                          backgroundColor: row.fill ?? CHART_PALETTE[index % CHART_PALETTE.length],
+                          backgroundColor: row.fill ?? CHART_RECOMMENDED,
                         }}
                       />
                     </div>

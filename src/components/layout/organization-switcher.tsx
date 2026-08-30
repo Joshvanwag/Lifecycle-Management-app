@@ -1,6 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
+import { ChevronDown } from "lucide-react";
 import { setActiveOrganization } from "@/lib/auth/organization-session";
 import type { Organization } from "@/lib/database.types";
 import { getCustomerOrganizations } from "@/lib/auth/customer-orgs";
@@ -34,11 +35,16 @@ export function OrganizationSwitcher({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" disabled={isPending} className="max-w-[220px]">
+        <Button
+          variant="ghost"
+          disabled={isPending}
+          className="-ml-2 max-w-[280px] px-2 text-lg font-semibold tracking-tight"
+        >
           <span className="truncate">{activeOrganization?.name ?? "Select organization"}</span>
+          <ChevronDown className="h-4 w-4 shrink-0 opacity-60" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="max-h-80 w-72 overflow-y-auto">
+      <DropdownMenuContent align="start" className="max-h-80 w-72 overflow-y-auto">
         <DropdownMenuLabel>Switch organization</DropdownMenuLabel>
         <DropdownMenuSeparator />
         {selectableOrganizations.map((organization) => (

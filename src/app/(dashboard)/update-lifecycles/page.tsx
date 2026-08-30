@@ -1,56 +1,34 @@
-import Link from "next/link";
-import { ArrowRight, FileUp } from "lucide-react";
+import { Suspense } from "react";
 import { AuthenticatedDashboardShell } from "@/components/layout/authenticated-dashboard-shell";
-import { lifecycleActionCards } from "@/config/navigation";
+import { UpdateLifecyclesHub } from "@/components/update-lifecycles/update-lifecycles-hub";
 import { requireAuthContext } from "@/lib/auth/context";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { listImportJobs } from "@/lib/data/import-jobs";
+import { listOrganizationMembers } from "@/lib/data/members";
+import { createClient } from "@/lib/supabase/server";
 
 export default async function UpdateLifecyclesPage() {
   const auth = await requireAuthContext();
+  const supabase = await createClient();
+  const [jobs, members] = await Promise.all([
+    listImportJobs(supabase, auth.organization.id, 50),
+    listOrganizationMembers(supabase, auth.organization.id),
+  ]);
+
+  const emails = new Map(members.map((member) => [member.userId, member.email]));
 
   return (
     <AuthenticatedDashboardShell
       title="Update Lifecycles"
-      description="Choose how you want to update your current lifecycle inventory."
+      description="Choose a workflow, then provide the details that workflow needs."
     >
-      <div className="grid gap-4 md:grid-cols-2">
-        {lifecycleActionCards.map((action) => (
-          <Card
-            key={action.title}
-            className="flex flex-col transition-colors hover:border-primary/30"
-          >
-            <CardHeader>
-              <CardTitle className="text-lg">{action.title}</CardTitle>
-              <CardDescription className="text-sm leading-relaxed">
-                {action.description}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="mt-auto flex flex-wrap gap-2">
-              <Link
-                href={action.href}
-                className="inline-flex cursor-pointer items-center gap-1.5 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-              >
-                Start
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-              {action.importHref && (
-                <Link
-                  href={action.importHref}
-                  className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border px-3 py-2 text-sm font-medium transition-colors hover:bg-accent"
-                >
-                  <FileUp className="h-4 w-4" />
-                  Import from file
-                </Link>
-              )}
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      <p className="mt-6 text-sm text-muted-foreground">
-        Updating inventory for {auth.organization.name}. Each workflow preserves lifecycle history
-        according to its rules — Correct Inventory never creates refresh events.
-      </p>
+      <Suspense>
+        <UpdateLifecyclesHub
+          jobs={jobs.map((job) => ({
+            ...job,
+            userLabel: job.created_by ? (emails.get(job.created_by) ?? "—") : "—",
+          }))}
+        />
+      </Suspense>
     </AuthenticatedDashboardShell>
   );
 }

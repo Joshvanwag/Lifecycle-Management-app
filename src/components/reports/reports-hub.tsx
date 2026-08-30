@@ -142,8 +142,6 @@ function ReportChartPreview({
         title={definition.name}
         description="Recommended vs planned by year"
         data={groupedData}
-        settings={settings}
-        onSettingsChange={onSettingsChange}
         onBarClick={(year) => setDrillName(String(year))}
         selectedYear={drillName ? Number(drillName) : null}
         drillLabel={drillProps.drillLabel}

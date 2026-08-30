@@ -1,37 +1,20 @@
 import { AuthenticatedDashboardShell } from "@/components/layout/authenticated-dashboard-shell";
 import { SpacesTable } from "@/components/spaces/spaces-table";
 import { requireAuthContext } from "@/lib/auth/context";
-import { listSpaces } from "@/lib/data/spaces";
+import { getAllSpaces } from "@/lib/data/spaces";
 import { createClient } from "@/lib/supabase/server";
 
-const PAGE_SIZE = 50;
-
-export default async function SpacesPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ page?: string }>;
-}) {
+export default async function SpacesPage() {
   const auth = await requireAuthContext();
   const supabase = await createClient();
-  const params = await searchParams;
-  const page = Math.max(1, Number.parseInt(params.page ?? "1", 10) || 1);
-
-  const { spaces, totalCount } = await listSpaces(supabase, auth.organization.id, {
-    page,
-    pageSize: PAGE_SIZE,
-  });
+  const spaces = await getAllSpaces(supabase, auth.organization.id, auth.organization.name);
 
   return (
     <AuthenticatedDashboardShell
       title="Spaces"
-      description={`${totalCount} Spaces in ${auth.organization.name}`}
+      description="Manage lifecycle Spaces and understand upcoming replacement needs."
     >
-      <SpacesTable
-        spaces={spaces}
-        totalCount={totalCount}
-        page={page}
-        pageSize={PAGE_SIZE}
-      />
+      <SpacesTable spaces={spaces} />
     </AuthenticatedDashboardShell>
   );
 }

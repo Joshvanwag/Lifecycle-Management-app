@@ -11,35 +11,34 @@ export interface ChartColorPreferences {
   categories: Record<string, string>;
 }
 
-/** High-contrast palette for distinguishing series at a glance. */
+/** Restrained blue/neutral palette. Color means status, not variety. */
 export const CHART_PALETTE = [
   "var(--chart-1)",
   "var(--chart-2)",
-  "var(--chart-3)",
-  "var(--chart-4)",
-  "var(--chart-5)",
-  "var(--chart-6)",
-  "var(--chart-7)",
-  "var(--chart-8)",
-  "var(--chart-9)",
-  "var(--chart-10)",
-  "var(--chart-11)",
-  "var(--chart-12)",
+  "var(--chart-due)",
+  "var(--chart-deferred)",
+  "var(--chart-overdue)",
+  "var(--chart-completed)",
+  "var(--chart-unplanned)",
 ] as const;
+
+export const CHART_RECOMMENDED = "var(--chart-1)";
+export const CHART_PLANNED = "var(--chart-2)";
+export const CHART_GAP = "var(--chart-gap)";
 
 export const DEFAULT_YEAR_COLOR_PALETTE = CHART_PALETTE;
 
 export const DEFAULT_LIFECYCLE_STATUS_COLORS: Record<LifecycleStatus, string> = {
   upcoming: "var(--chart-2)",
-  due: "var(--chart-3)",
-  overdue: "var(--chart-10)",
+  due: "var(--chart-due)",
+  overdue: "var(--chart-overdue)",
 };
 
 export const DEFAULT_PLANNING_STATUS_COLORS: Record<PlanningStatus, string> = {
-  unplanned: "var(--chart-12)",
-  scheduled: "var(--chart-1)",
-  deferred: "var(--chart-5)",
-  completed: "var(--chart-6)",
+  unplanned: "var(--chart-unplanned)",
+  scheduled: "var(--chart-2)",
+  deferred: "var(--chart-deferred)",
+  completed: "var(--chart-completed)",
 };
 
 export const DEFAULT_DEPLOYMENT_STATUS_COLORS = {
@@ -59,13 +58,12 @@ export function createDefaultChartColors(): ChartColorPreferences {
   };
 }
 
-export function getDefaultYearColor(year: number, anchorYear = new Date().getFullYear()): string {
-  const index = Math.max(0, year - anchorYear);
-  return DEFAULT_YEAR_COLOR_PALETTE[index % DEFAULT_YEAR_COLOR_PALETTE.length];
+export function getDefaultYearColor(): string {
+  return CHART_RECOMMENDED;
 }
 
-export function getDefaultCategoryColor(index: number): string {
-  return DEFAULT_CATEGORY_COLOR_PALETTE[index % DEFAULT_CATEGORY_COLOR_PALETTE.length];
+export function getDefaultCategoryColor(): string {
+  return CHART_RECOMMENDED;
 }
 
 export function getYearColor(
@@ -73,7 +71,8 @@ export function getYearColor(
   preferences: ChartColorPreferences,
   anchorYear = new Date().getFullYear(),
 ): string {
-  return preferences.years[String(year)] ?? getDefaultYearColor(year, anchorYear);
+  void anchorYear;
+  return preferences.years[String(year)] ?? getDefaultYearColor();
 }
 
 export function getCategoryColor(
@@ -81,7 +80,8 @@ export function getCategoryColor(
   preferences: ChartColorPreferences,
   fallbackIndex = 0,
 ): string {
-  return preferences.categories[key] ?? getDefaultCategoryColor(fallbackIndex);
+  void fallbackIndex;
+  return preferences.categories[key] ?? getDefaultCategoryColor();
 }
 
 export function getLifecycleStatusColor(

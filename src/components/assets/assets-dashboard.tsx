@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { AlertTriangle, CalendarClock, ChevronLeft, ChevronRight, Package } from "lucide-react";
+import { AlertTriangle, CalendarClock, Package } from "lucide-react";
 import { LabeledBarChart } from "@/components/charts/labeled-bar-chart";
 import { RankedListChart } from "@/components/charts/ranked-list-chart";
 import { FilterToolbar } from "@/components/dashboard/filter-toolbar";
@@ -26,7 +26,6 @@ import {
 } from "@/lib/filters/space-filters";
 import type { Asset, Space } from "@/lib/types";
 import { formatCurrency } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -40,32 +39,21 @@ import {
 interface AssetsDashboardProps {
   spaces: Space[];
   assets: Asset[];
-  chartAssets?: Array<Pick<Asset, "manufacturer" | "category">>;
   organizationOptions?: { id: string; name: string }[];
-  totalCount?: number;
-  page?: number;
-  pageSize?: number;
-  search?: string;
 }
 
 export function AssetsDashboard({
   spaces,
   assets,
-  chartAssets: chartSource,
   organizationOptions = [],
-  totalCount,
-  page = 1,
-  pageSize = 50,
-  search: initialSearch = "",
 }: AssetsDashboardProps) {
-  const [search, setSearch] = useState(initialSearch);
+  const [search, setSearch] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [appliedFilters, setAppliedFilters] = useState<SpaceFiltersState>(emptySpaceFilters);
   const [categoryDrill, setCategoryDrill] = useState<string | null>(null);
   const [manufacturerDrill, setManufacturerDrill] = useState<string | null>(null);
   const [replacementDrill, setReplacementDrill] = useState<string | null>(null);
   const [ageDrill, setAgeDrill] = useState<string | null>(null);
-  const serverPaged = totalCount != null;
 
   const filterOptions = useMemo(
     () => buildSpaceFilterOptions(spaces, organizationOptions),
@@ -73,15 +61,9 @@ export function AssetsDashboard({
   );
 
   const filteredSpaceIds = useMemo(() => {
-    const filtered = filterSpaces(spaces, serverPaged ? "" : search, appliedFilters);
+    const filtered = filterSpaces(spaces, "", appliedFilters);
     return new Set(filtered.map((space) => space.id));
-  }, [spaces, search, appliedFilters, serverPaged]);
-
-  const chartAssets = useMemo(() => {
-    if (chartSource) return chartSource;
-    if (serverPaged) return assets;
-    return assets.filter((asset) => filteredSpaceIds.has(asset.spaceId));
-  }, [assets, chartSource, filteredSpaceIds, serverPaged]);
+  }, [spaces, appliedFilters]);
 
   const tableAssets = useMemo(() => {
     const seen = new Set<string>();
@@ -90,7 +72,6 @@ export function AssetsDashboard({
       seen.add(asset.id);
       return true;
     });
-    if (serverPaged) return unique;
     const query = search.trim().toLowerCase();
     return unique.filter((asset) => {
       if (!filteredSpaceIds.has(asset.spaceId)) return false;
@@ -100,9 +81,11 @@ export function AssetsDashboard({
         .toLowerCase()
         .includes(query);
     });
-  }, [assets, filteredSpaceIds, search, serverPaged]);
+  }, [assets, filteredSpaceIds, search]);
 
-  const kpis = useMemo(() => computeAssetKpis(chartAssets as Asset[]), [chartAssets]);
+  const chartAssets = tableAssets;
+
+  const kpis = useMemo(() => computeAssetKpis(tableAssets), [tableAssets]);
   const categoryBars = useMemo(
     () =>
       computeProductTypeSlices(chartAssets).map((slice) => ({
@@ -126,37 +109,10 @@ export function AssetsDashboard({
   );
 
   const activeFilterCount = countActiveFilters(appliedFilters);
-  const total = totalCount ?? tableAssets.length;
-  const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const spaceById = useMemo(() => new Map(spaces.map((space) => [space.id, space])), [spaces]);
 
   return (
     <div className="space-y-6">
-      <FilterToolbar
-        search={search}
-        onSearchChange={setSearch}
-        searchPlaceholder="Search assets..."
-        activeFilterCount={activeFilterCount}
-        onOpenFilters={() => setFiltersOpen(true)}
-        appliedFilters={appliedFilters}
-        onFiltersChange={setAppliedFilters}
-        organizationOptions={organizationOptions}
-        filteredCount={tableAssets.length}
-        totalCount={assets.length}
-        countLabel="assets"
-        searchSlot={
-          serverPaged ? (
-            <form className="relative w-full max-w-md">
-              <Input
-                name="q"
-                placeholder="Search manufacturer, model, serial..."
-                defaultValue={initialSearch}
-              />
-            </form>
-          ) : undefined
-        }
-      />
-
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <KpiCard label="Total Assets" value={kpis.totalAssets} icon={Package} />
         <KpiCard
@@ -168,66 +124,27 @@ export function AssetsDashboard({
         <KpiCard label="Overdue" value={kpis.overdue} icon={AlertTriangle} />
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <RankedListChart
-          title="Assets by Category"
-          description="Equipment counts by category"
-          data={(categoryDrill
-            ? categoryBars.filter((row) => row.name === categoryDrill)
-            : categoryBars
-          ).map((row) => ({ name: row.name, value: row.value }))}
-          valueFormatter={(value) => String(value)}
-          onItemClick={setCategoryDrill}
-          selectedName={categoryDrill}
-          drillLabel={categoryDrill ?? undefined}
-          onReset={() => setCategoryDrill(null)}
-        />
-        <RankedListChart
-          title="Assets by Manufacturer"
-          description="Top manufacturers by asset count"
-          data={(manufacturerDrill
-            ? manufacturerBars.filter((row) => row.name === manufacturerDrill)
-            : manufacturerBars
-          ).map((row) => ({ name: row.name, value: row.value }))}
-          valueFormatter={(value) => String(value)}
-          onItemClick={setManufacturerDrill}
-          selectedName={manufacturerDrill}
-          drillLabel={manufacturerDrill ?? undefined}
-          onReset={() => setManufacturerDrill(null)}
-        />
-      </div>
+      <FilterToolbar
+        showSearch
+        searchSlot={
+          <Input
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Search manufacturer, model, serial..."
+            className="max-w-md"
+          />
+        }
+        activeFilterCount={activeFilterCount}
+        onOpenFilters={() => setFiltersOpen(true)}
+        appliedFilters={appliedFilters}
+        onFiltersChange={setAppliedFilters}
+        organizationOptions={organizationOptions}
+        filteredCount={tableAssets.length}
+        totalCount={assets.length}
+        countLabel="assets"
+      />
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <RankedListChart
-          title="Replacement Need by Category"
-          description="Future replacement cost by asset category"
-          data={(replacementDrill
-            ? replacementByCategory.filter((row) => row.name === replacementDrill)
-            : replacementByCategory
-          ).map((row) => ({ name: row.name, value: row.amount }))}
-          valueFormatter={(value) => formatCurrency(value)}
-          onItemClick={setReplacementDrill}
-          selectedName={replacementDrill}
-          drillLabel={replacementDrill ?? undefined}
-          onReset={() => setReplacementDrill(null)}
-        />
-        <LabeledBarChart
-          title="Lifecycle Age Distribution"
-          description="Active assets grouped by install age"
-          data={(ageDrill
-            ? ageBuckets.filter((row) => row.name === ageDrill)
-            : ageBuckets
-          ).map((row) => ({ name: row.name, value: row.value }))}
-          valueFormatter={(value) => String(value)}
-          labelFormatter={(value) => String(value)}
-          onBarClick={setAgeDrill}
-          selectedName={ageDrill}
-          drillLabel={ageDrill ?? undefined}
-          onReset={() => setAgeDrill(null)}
-        />
-      </div>
-
-      <div className="rounded-xl border bg-card">
+      <div className="rounded-xl border">
         <Table>
           <TableHeader>
             <TableRow>
@@ -287,25 +204,63 @@ export function AssetsDashboard({
         </Table>
       </div>
 
-      {serverPaged && totalPages > 1 && (
-        <div className="flex items-center justify-between text-sm">
-          <Button variant="outline" size="sm" asChild disabled={page <= 1}>
-            <Link href={`/assets?page=${page - 1}${initialSearch ? `&q=${encodeURIComponent(initialSearch)}` : ""}`}>
-              <ChevronLeft className="h-4 w-4" />
-              Previous
-            </Link>
-          </Button>
-          <span className="text-muted-foreground">
-            Page {page} of {totalPages}
-          </span>
-          <Button variant="outline" size="sm" asChild disabled={page >= totalPages}>
-            <Link href={`/assets?page=${page + 1}${initialSearch ? `&q=${encodeURIComponent(initialSearch)}` : ""}`}>
-              Next
-              <ChevronRight className="h-4 w-4" />
-            </Link>
-          </Button>
-        </div>
-      )}
+      <div className="grid gap-4 lg:grid-cols-2">
+        <RankedListChart
+          title="Assets by Category"
+          description="Counts by category"
+          data={(categoryDrill
+            ? categoryBars.filter((row) => row.name === categoryDrill)
+            : categoryBars.slice(0, 8)
+          ).map((row) => ({ name: row.name, value: row.value }))}
+          valueFormatter={(value) => String(value)}
+          onItemClick={setCategoryDrill}
+          selectedName={categoryDrill}
+          drillLabel={categoryDrill ?? undefined}
+          onReset={() => setCategoryDrill(null)}
+        />
+        <RankedListChart
+          title="Assets by Manufacturer"
+          description="Top 10 by asset count"
+          data={(manufacturerDrill
+            ? manufacturerBars.filter((row) => row.name === manufacturerDrill)
+            : manufacturerBars.slice(0, 10)
+          ).map((row) => ({ name: row.name, value: row.value }))}
+          valueFormatter={(value) => String(value)}
+          onItemClick={setManufacturerDrill}
+          selectedName={manufacturerDrill}
+          drillLabel={manufacturerDrill ?? undefined}
+          onReset={() => setManufacturerDrill(null)}
+        />
+        <RankedListChart
+          title="Replacement Need by Category"
+          description="Future replacement cost by asset category"
+          data={(replacementDrill
+            ? replacementByCategory.filter((row) => row.name === replacementDrill)
+            : replacementByCategory.slice(0, 8)
+          ).map((row) => ({ name: row.name, value: row.amount }))}
+          valueFormatter={(value) => formatCurrency(value)}
+          onItemClick={setReplacementDrill}
+          selectedName={replacementDrill}
+          drillLabel={replacementDrill ?? undefined}
+          onReset={() => setReplacementDrill(null)}
+        />
+        <LabeledBarChart
+          title="Lifecycle Age Distribution"
+          description="Active assets grouped by install age"
+          data={(ageDrill
+            ? ageBuckets.filter((row) => row.name === ageDrill)
+            : ageBuckets
+          ).map((row) => ({ name: row.name, value: row.value }))}
+          valueFormatter={(value) => String(value)}
+          labelFormatter={(value) => String(value)}
+          tooltipLabel="Assets"
+          heightClassName="h-48"
+          onBarClick={setAgeDrill}
+          selectedName={ageDrill}
+          drillLabel={ageDrill ?? undefined}
+          onReset={() => setAgeDrill(null)}
+        />
+      </div>
 
       <SpaceFilters
         open={filtersOpen}

@@ -7,18 +7,15 @@ import { createClient } from "@/lib/supabase/server";
 export default async function OverviewPage() {
   const auth = await requireAuthContext();
   const supabase = await createClient();
-  const { spaces, assets, organizationOptions, isAggregatedView } = await loadPlatformDashboardData(
-    auth,
-    supabase,
-    { includeAssets: true },
-  );
-
-  const description = isAggregatedView
-    ? `Portfolio summary across ${organizationOptions.length} customer organizations`
-    : `Portfolio summary for ${auth.organization.name}`;
+  const { spaces, assets, organizationOptions } = await loadPlatformDashboardData(auth, supabase, {
+    includeAssets: true,
+  });
 
   return (
-    <AuthenticatedDashboardShell title="Overview" description={description}>
+    <AuthenticatedDashboardShell
+      title="Overview"
+      description="Portfolio health, lifecycle needs, and planning outlook."
+    >
       <OverviewDashboard
         spaces={spaces}
         assets={assets}

@@ -298,11 +298,27 @@ Portfolio money reports use Space `original_cost` (Zoho Managed Units Total Init
 ## ADR-031: Reports Stay Canned
 
 **Date:** Product increment  
+**Status:** Superseded by ADR-033
+
+Reports used a custom builder backed by `saved_reports`. That UI is no longer a primary product surface.
+
+## ADR-033: Remove Reports and Standalone Imports From Product IA
+
+**Date:** Design-system polish  
 **Status:** Accepted
 
-Reports use a custom builder backed by `saved_reports` (filter JSON, chart type, display settings). CSV and Excel export use the existing SheetJS dependency. PDF remains an open question.
+Remove Reports and standalone Imports from navigation and primary UX. Analytical questions are answered on Overview, Spaces, Assets, Forecast, and Benchmark. File-import history lives on Update Lifecycles → History. `/reports` redirects to Overview; `/imports` redirects to Update Lifecycles History. Existing export helpers and `/imports/[workflow]` upload routes may remain as implementation details.
 
-**Rationale:** Matches Zoho GLOBAL information needs without a new reporting product.
+**Rationale:** A custom report builder duplicated existing analytical pages and made the product feel unfinished. Import history belongs with the lifecycle workflows that created it.
+
+## ADR-034: Global Organization Context and Restrained Design System
+
+**Date:** Design-system polish  
+**Status:** Accepted
+
+The selected organization applies to every customer-facing page. DEV users switch organizations from the top-left header only. Charts use semantic blue/neutral colors; year series share one color per metric. Filters use compact comboboxes and apply only on Apply. Benchmark is one scrollable dashboard with a single unavailable banner and no tabs, ranks, or contributor counts. Settings use section navigation.
+
+**Rationale:** The product needed one commercial visual grammar and one tenant context, not independently designed dashboard pages.
 
 ## ADR-032: Hosting Docs Without Provisioning Amplify
 

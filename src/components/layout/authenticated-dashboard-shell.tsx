@@ -1,20 +1,21 @@
+import { PageHeader } from "@/components/design-system/page-header";
+
 interface AuthenticatedDashboardShellProps {
   children: React.ReactNode;
   title: string;
   description?: string;
+  actions?: React.ReactNode;
 }
 
 export function AuthenticatedDashboardShell({
   children,
   title,
   description,
+  actions,
 }: AuthenticatedDashboardShellProps) {
   return (
     <div className="space-y-6">
-      <div className="min-w-0">
-        <h1 className="truncate text-lg font-semibold tracking-tight">{title}</h1>
-        {description && <p className="truncate text-sm text-muted-foreground">{description}</p>}
-      </div>
+      <PageHeader title={title} description={description} actions={actions} />
       {children}
     </div>
   );

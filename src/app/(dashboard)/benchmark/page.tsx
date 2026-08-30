@@ -30,7 +30,7 @@ export default async function BenchmarkPage() {
   return (
     <AuthenticatedDashboardShell
       title="Benchmark"
-      description={`${auth.organization.name} compared with anonymized industry peers`}
+      description="Compare your lifecycle program with anonymized, aggregated industry peers."
     >
       <BenchmarkDashboard
         industryType={auth.organization.industry_type}

@@ -15,8 +15,8 @@ import {
 } from "recharts";
 import { ChartCard } from "@/components/charts/chart-card";
 import { defaultChartSettings, type ChartDisplaySettings } from "@/lib/charts/chart-settings";
-import { CHART_PALETTE } from "@/lib/charts/colors";
-import { formatCompactCurrency, formatCurrency } from "@/lib/utils";
+import { CHART_RECOMMENDED } from "@/lib/charts/colors";
+import { formatCompactCurrency } from "@/lib/utils";
 
 interface LabeledBarChartProps {
   title: string;
@@ -32,6 +32,8 @@ interface LabeledBarChartProps {
   settings?: ChartDisplaySettings;
   onSettingsChange?: (settings: ChartDisplaySettings) => void;
   className?: string;
+  tooltipLabel?: string;
+  heightClassName?: string;
 }
 
 export function LabeledBarChart({
@@ -48,10 +50,12 @@ export function LabeledBarChart({
   settings: controlledSettings,
   onSettingsChange,
   className,
+  tooltipLabel = "Value",
+  heightClassName = "h-64",
 }: LabeledBarChartProps) {
-  const [internalSettings, setInternalSettings] = useState(defaultChartSettings);
+  const [internalSettings] = useState(defaultChartSettings);
   const settings = controlledSettings ?? internalSettings;
-  const setSettings = onSettingsChange ?? setInternalSettings;
+  void onSettingsChange;
 
   return (
     <ChartCard
@@ -61,10 +65,9 @@ export function LabeledBarChart({
       drillLabel={drillLabel}
       onReset={onReset}
       settings={settings}
-      onSettingsChange={setSettings}
       className={className}
     >
-      <div className="h-72 w-full">
+      <div className={`${heightClassName} w-full`}>
         {data.length === 0 ? (
           <p className="flex h-full items-center justify-center text-sm text-muted-foreground">
             No data available for the current filters.
@@ -82,7 +85,8 @@ export function LabeledBarChart({
                 axisLine={false}
               />
               <Tooltip
-                formatter={(value: number) => [formatCurrency(value), "Amount"]}
+                formatter={(value: number) => [valueFormatter(Number(value)), tooltipLabel]}
+                labelFormatter={(label) => String(label)}
                 contentStyle={{
                   borderRadius: "8px",
                   border: "1px solid var(--border)",
@@ -103,10 +107,10 @@ export function LabeledBarChart({
                 className={onBarClick ? "cursor-pointer" : undefined}
                 onClick={(entry) => onBarClick?.(String(entry.name))}
               >
-                {data.map((entry, index) => (
+                {data.map((entry) => (
                   <Cell
                     key={entry.name}
-                    fill={entry.fill ?? CHART_PALETTE[index % CHART_PALETTE.length]}
+                    fill={entry.fill ?? CHART_RECOMMENDED}
                     opacity={selectedName && selectedName !== entry.name ? 0.35 : 1}
                   />
                 ))}

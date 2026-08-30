@@ -6,6 +6,21 @@ type Client = Awaited<ReturnType<typeof createClient>>;
 
 export type FileImportWorkflow = "add" | "full_refresh" | "partial_refresh";
 
+export interface ImportJobRecord {
+  id: string;
+  workflow: FileImportWorkflow;
+  source_filename: string | null;
+  status: string;
+  spaces_created: number;
+  spaces_updated: number;
+  assets_created: number;
+  assets_updated: number;
+  assets_retired: number;
+  error_message: string | null;
+  created_at: string;
+  created_by: string | null;
+}
+
 export async function recordImportJob(
   client: Client,
   params: {
@@ -37,11 +52,15 @@ export async function recordImportJob(
   }
 }
 
-export async function listImportJobs(client: Client, organizationId: string, limit = 20) {
+export async function listImportJobs(
+  client: Client,
+  organizationId: string,
+  limit = 20,
+): Promise<ImportJobRecord[]> {
   const { data, error } = await client
     .from("import_jobs")
     .select(
-      "id, workflow, source_filename, status, spaces_created, assets_created, assets_updated, assets_retired, error_message, created_at",
+      "id, workflow, source_filename, status, spaces_created, spaces_updated, assets_created, assets_updated, assets_retired, error_message, created_at, created_by",
     )
     .eq("organization_id", organizationId)
     .order("created_at", { ascending: false })
@@ -51,5 +70,5 @@ export async function listImportJobs(client: Client, organizationId: string, lim
     throw new Error(`Failed to load import history: ${error.message}`);
   }
 
-  return data ?? [];
+  return (data ?? []) as ImportJobRecord[];
 }
