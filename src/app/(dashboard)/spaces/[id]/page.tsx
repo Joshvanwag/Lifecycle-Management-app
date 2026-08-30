@@ -64,16 +64,15 @@ export default async function SpaceDetailPage({
   const lifecycleActions = spaceLifecycleActions(id);
   const canWrite = canWriteOrganization(auth.membership.role);
 
-  const space = await getSpaceById(supabase, organizationId, id);
+  const [space, assets, history] = await Promise.all([
+    getSpaceById(supabase, organizationId, id),
+    getAssetsBySpaceId(supabase, organizationId, id),
+    getRefreshHistoryBySpaceId(supabase, organizationId, id),
+  ]);
 
   if (!space) {
     notFound();
   }
-
-  const [assets, history] = await Promise.all([
-    getAssetsBySpaceId(supabase, organizationId, id),
-    getRefreshHistoryBySpaceId(supabase, organizationId, id),
-  ]);
 
   return (
     <AuthenticatedDashboardShell title={space.name} description={space.locationLabel}>

@@ -9,23 +9,19 @@ export default async function ReportsPage() {
   const auth = await requireAuthContext();
   const supabase = await createClient();
   const [{ spaces, assets }, savedReports] = await Promise.all([
-    loadPlatformDashboardData(auth, supabase, { includeAssets: true }),
+    loadPlatformDashboardData(auth, supabase, {
+      includeAssets: true,
+      activeOrganizationOnly: true,
+    }),
     listSavedReports(supabase, auth.organization.id, auth.userId),
   ]);
-
-  const scopedSpaces = auth.isPlatformAdmin
-    ? spaces.filter((space) => space.organizationId === auth.organization.id)
-    : spaces;
-  const scopedAssets = auth.isPlatformAdmin
-    ? assets.filter((asset) => asset.organizationId === auth.organization.id)
-    : assets;
 
   return (
     <AuthenticatedDashboardShell
       title="Reports"
       description={`Canned portfolio reports for ${auth.organization.name}`}
     >
-      <ReportsHub spaces={scopedSpaces} assets={scopedAssets} savedReports={savedReports} />
+      <ReportsHub spaces={spaces} assets={assets} savedReports={savedReports} />
     </AuthenticatedDashboardShell>
   );
 }

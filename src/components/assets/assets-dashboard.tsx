@@ -79,9 +79,15 @@ export function AssetsDashboard({
   }, [assets, chartSource, filteredSpaceIds, serverPaged]);
 
   const tableAssets = useMemo(() => {
-    if (serverPaged) return assets;
+    const seen = new Set<string>();
+    const unique = assets.filter((asset) => {
+      if (seen.has(asset.id)) return false;
+      seen.add(asset.id);
+      return true;
+    });
+    if (serverPaged) return unique;
     const query = search.trim().toLowerCase();
-    return assets.filter((asset) => {
+    return unique.filter((asset) => {
       if (!filteredSpaceIds.has(asset.spaceId)) return false;
       if (!query) return true;
       return [asset.manufacturer, asset.modelNumber, asset.category, asset.serialNumber]
@@ -238,7 +244,7 @@ export function AssetsDashboard({
               tableAssets.map((asset) => {
                 const space = spaceById.get(asset.spaceId);
                 return (
-                  <TableRow key={asset.id}>
+                  <TableRow key={`${asset.organizationId}:${asset.id}`}>
                     <TableCell className="font-medium">
                       {asset.manufacturer} {asset.modelNumber}
                     </TableCell>

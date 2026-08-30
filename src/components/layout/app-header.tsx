@@ -16,8 +16,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 interface AppHeaderProps {
-  title: string;
-  description?: string;
   userDisplayName: string;
   userInitials: string;
   organizationName: string;
@@ -27,8 +25,6 @@ interface AppHeaderProps {
 }
 
 export function AppHeader({
-  title,
-  description,
   userDisplayName,
   userInitials,
   organizationName,
@@ -39,10 +35,7 @@ export function AppHeader({
   return (
     <header className="flex h-14 shrink-0 items-center justify-between gap-4 border-b bg-background px-6">
       <div className="min-w-0">
-        <h1 className="truncate text-lg font-semibold tracking-tight">{title}</h1>
-        {description && (
-          <p className="truncate text-sm text-muted-foreground">{description}</p>
-        )}
+        <p className="truncate text-lg font-semibold tracking-tight">{organizationName}</p>
       </div>
 
       <div className="flex items-center gap-3">

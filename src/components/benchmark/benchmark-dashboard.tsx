@@ -1,24 +1,30 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { BENCHMARK_UNAVAILABLE_MESSAGE, findOrgValue, findPeerMetric, formatBenchmarkValue } from "@/lib/data/benchmark";
-import type { OrganizationBenchmarkValue } from "@/lib/data/benchmark";
-import type { BenchmarkMetricPublic } from "@/lib/benchmark/constants";
+import {
+  BENCHMARK_UNAVAILABLE_MESSAGE,
+  INDUSTRY_TYPE_LABELS,
+  type BenchmarkMetricPublic,
+  type IndustryTypeCode,
+} from "@/lib/benchmark/constants";
+import type { OwnBenchmarkMetric } from "@/lib/benchmark/own-metrics";
+import { formatCurrency } from "@/lib/utils";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface BenchmarkDashboardProps {
-  industryLabel: string;
-  canAccess: boolean;
-  optedOut: boolean;
-  orgValues: OrganizationBenchmarkValue[];
+  industryType: string;
+  participating: boolean;
+  ownMetrics: OwnBenchmarkMetric[];
   peerMetrics: BenchmarkMetricPublic[];
 }
+
+type MetricKind = "percentage" | "currency" | "years" | "count";
 
 interface MetricDef {
   code: string;
   label: string;
-  kind: "percentage" | "currency" | "years" | "count";
+  kind: MetricKind;
 }
 
 const LIFECYCLE_METRICS: MetricDef[] = [
@@ -36,7 +42,6 @@ const FINANCIAL_METRICS: MetricDef[] = [
   { code: "avg_replacement_cost_per_space", label: "Average Replacement Cost per Space", kind: "currency" },
   { code: "median_replacement_cost_per_space", label: "Median Replacement Cost per Space", kind: "currency" },
   { code: "five_year_forecast_per_space", label: "5-Year Forecast per Space", kind: "currency" },
-  { code: "avg_cost_per_asset", label: "Cost per Asset", kind: "currency" },
   { code: "portfolio_pct_value_overdue", label: "Portfolio Value Overdue %", kind: "percentage" },
 ];
 
@@ -48,16 +53,32 @@ const PLANNING_METRICS: MetricDef[] = [
   { code: "pct_upcoming_with_planned_replacement", label: "Upcoming Lifecycle Need With Plan %", kind: "percentage" },
 ];
 
+function formatBenchmarkValue(value: number | null, kind: MetricKind): string {
+  if (value == null || !Number.isFinite(value)) return "—";
+  if (kind === "percentage") return `${Math.round(value)}%`;
+  if (kind === "years") return `${value.toFixed(1)} yrs`;
+  if (kind === "currency") return formatCurrency(value);
+  return String(Math.round(value));
+}
+
+function findOwnValue(ownMetrics: OwnBenchmarkMetric[], code: string): number | null {
+  return ownMetrics.find((metric) => metric.code === code)?.value ?? null;
+}
+
+function findPeerMetric(peerMetrics: BenchmarkMetricPublic[], code: string): BenchmarkMetricPublic | null {
+  return peerMetrics.find((metric) => metric.metric_code === code && !metric.space_type && !metric.asset_category) ?? null;
+}
+
 function BenchmarkRangeCard({
   metric,
-  orgValues,
+  ownMetrics,
   peerMetrics,
 }: {
   metric: MetricDef;
-  orgValues: OrganizationBenchmarkValue[];
+  ownMetrics: OwnBenchmarkMetric[];
   peerMetrics: BenchmarkMetricPublic[];
 }) {
-  const orgValue = findOrgValue(orgValues, metric.code);
+  const orgValue = findOwnValue(ownMetrics, metric.code);
   const peer = findPeerMetric(peerMetrics, metric.code);
 
   if (!peer) {
@@ -76,13 +97,11 @@ function BenchmarkRangeCard({
   const p25 = peer.percentile_25;
   const p75 = peer.percentile_75;
   const median = peer.median;
-  const org = orgValue;
-
   const rangeMin = p25 ?? peer.average ?? 0;
   const rangeMax = p75 ?? peer.average ?? rangeMin;
   const span = rangeMax - rangeMin || 1;
   const orgPosition =
-    org != null ? Math.min(100, Math.max(0, ((org - rangeMin) / span) * 100)) : null;
+    orgValue != null ? Math.min(100, Math.max(0, ((orgValue - rangeMin) / span) * 100)) : null;
 
   return (
     <Card>
@@ -105,107 +124,45 @@ function BenchmarkRangeCard({
             <p className="font-medium text-foreground">{formatBenchmarkValue(p75, metric.kind)}</p>
           </div>
         </div>
-
         <div className="relative h-3 rounded-full bg-muted">
-          <div
-            className="absolute inset-y-0 rounded-full bg-primary/20"
-            style={{ left: "0%", right: "0%" }}
-          />
+          <div className="absolute inset-y-0 rounded-full bg-primary/20" style={{ left: "0%", right: "0%" }} />
           {orgPosition != null && (
             <div
               className="absolute top-1/2 h-4 w-1 -translate-y-1/2 rounded bg-primary"
               style={{ left: `${orgPosition}%` }}
-              title={`Your organization: ${formatBenchmarkValue(org, metric.kind)}`}
+              title={`Your organization: ${formatBenchmarkValue(orgValue, metric.kind)}`}
             />
           )}
         </div>
-
         <div className="flex items-center justify-between text-sm">
           <span className="text-muted-foreground">Peer average</span>
           <span className="font-medium">{formatBenchmarkValue(peer.average, metric.kind)}</span>
         </div>
         <div className="flex items-center justify-between text-sm">
           <span className="font-medium">Your organization</span>
-          <span className="font-semibold text-primary">
-            {formatBenchmarkValue(org, metric.kind)}
-          </span>
+          <span className="font-semibold text-primary">{formatBenchmarkValue(orgValue, metric.kind)}</span>
         </div>
       </CardContent>
     </Card>
   );
 }
 
-function ContextMetricSection({
-  metrics,
-  orgValues,
-  peerMetrics,
-  contextKey,
-  contextValues,
-}: {
-  metrics: MetricDef[];
-  orgValues: OrganizationBenchmarkValue[];
-  peerMetrics: BenchmarkMetricPublic[];
-  contextKey: "spaceType" | "assetCategory";
-  contextValues: string[];
-}) {
-  if (contextValues.length === 0) {
-    return (
-      <p className="text-sm text-muted-foreground">
-        No {contextKey === "spaceType" ? "Space types" : "asset categories"} available yet.
-      </p>
-    );
-  }
-
-  return (
-    <div className="space-y-6">
-      {contextValues.map((contextValue) => (
-        <div key={contextValue} className="space-y-3">
-          <h3 className="text-sm font-semibold">{contextValue}</h3>
-          <div className="grid gap-4 md:grid-cols-2">
-            {metrics.map((metric) => (
-              <BenchmarkRangeCard
-                key={`${contextValue}-${metric.code}`}
-                metric={metric}
-                orgValues={orgValues.filter((row) =>
-                  contextKey === "spaceType"
-                    ? row.space_type === contextValue
-                    : row.asset_category === contextValue,
-                )}
-                peerMetrics={peerMetrics.filter((row) =>
-                  contextKey === "spaceType"
-                    ? row.space_type === contextValue
-                    : row.asset_category === contextValue,
-                )}
-              />
-            ))}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
 export function BenchmarkDashboard({
-  industryLabel,
-  canAccess,
-  optedOut,
-  orgValues,
+  industryType,
+  participating,
+  ownMetrics,
   peerMetrics,
 }: BenchmarkDashboardProps) {
   const [tab, setTab] = useState("overview");
+  const industryLabel =
+    INDUSTRY_TYPE_LABELS[industryType as IndustryTypeCode] ?? industryType.replace("_", " ");
 
-  const spaceTypes = useMemo(
-    () =>
-      [...new Set(orgValues.map((row) => row.space_type).filter(Boolean) as string[])].sort(),
-    [orgValues],
-  );
-  const categories = useMemo(
-    () =>
-      [...new Set(orgValues.map((row) => row.asset_category).filter(Boolean) as string[])].sort(),
-    [orgValues],
+  const filteredPeerMetrics = useMemo(
+    () => peerMetrics.filter((metric) => metric.industry_type === industryType),
+    [peerMetrics, industryType],
   );
 
-  if (optedOut) {
+  if (!participating) {
     return (
       <Card>
         <CardHeader>
@@ -219,34 +176,6 @@ export function BenchmarkDashboard({
     );
   }
 
-  if (!canAccess) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>{industryLabel} Benchmark</CardTitle>
-          <CardDescription>{BENCHMARK_UNAVAILABLE_MESSAGE}</CardDescription>
-        </CardHeader>
-      </Card>
-    );
-  }
-
-  const equipmentMetrics: MetricDef[] = [
-    { code: "category_avg_lifecycle_years", label: "Average Lifecycle", kind: "years" },
-    { code: "category_median_lifecycle_years", label: "Median Lifecycle", kind: "years" },
-    { code: "category_avg_replacement_cost", label: "Average Replacement Cost", kind: "currency" },
-    { code: "category_median_replacement_cost", label: "Median Replacement Cost", kind: "currency" },
-    { code: "category_overdue_pct", label: "Overdue %", kind: "percentage" },
-    { code: "category_forecast_cost", label: "Forecast Cost", kind: "currency" },
-  ];
-
-  const spaceTypeMetrics: MetricDef[] = [
-    { code: "space_type_avg_lifecycle_years", label: "Average Lifecycle", kind: "years" },
-    { code: "space_type_overdue_pct", label: "Overdue %", kind: "percentage" },
-    { code: "space_type_due_pct", label: "Due %", kind: "percentage" },
-    { code: "space_type_avg_asset_count", label: "Average Asset Count per Space", kind: "count" },
-    { code: "space_type_planned_refresh_coverage_pct", label: "Planned Refresh Coverage", kind: "percentage" },
-  ];
-
   return (
     <div className="space-y-6">
       <div>
@@ -256,15 +185,17 @@ export function BenchmarkDashboard({
         </p>
       </div>
 
+      {filteredPeerMetrics.length === 0 && (
+        <p className="rounded-lg border bg-muted/40 px-4 py-3 text-sm">{BENCHMARK_UNAVAILABLE_MESSAGE}</p>
+      )}
+
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="flex h-auto flex-wrap gap-1">
-          {["overview", "lifecycle", "financial", "planning", "equipment", "space-types"].map(
-            (value) => (
-              <TabsTrigger key={value} value={value} className="cursor-pointer capitalize">
-                {value.replace("-", " ")}
-              </TabsTrigger>
-            ),
-          )}
+          {["overview", "lifecycle", "financial", "planning"].map((value) => (
+            <TabsTrigger key={value} value={value} className="cursor-pointer capitalize">
+              {value.replace("-", " ")}
+            </TabsTrigger>
+          ))}
         </TabsList>
 
         <TabsContent value="overview" className="mt-4 space-y-4">
@@ -273,8 +204,8 @@ export function BenchmarkDashboard({
               <BenchmarkRangeCard
                 key={metric.code}
                 metric={metric}
-                orgValues={orgValues}
-                peerMetrics={peerMetrics}
+                ownMetrics={ownMetrics}
+                peerMetrics={filteredPeerMetrics}
               />
             ))}
           </div>
@@ -286,8 +217,8 @@ export function BenchmarkDashboard({
               <BenchmarkRangeCard
                 key={metric.code}
                 metric={metric}
-                orgValues={orgValues}
-                peerMetrics={peerMetrics}
+                ownMetrics={ownMetrics}
+                peerMetrics={filteredPeerMetrics}
               />
             ))}
           </div>
@@ -299,8 +230,8 @@ export function BenchmarkDashboard({
               <BenchmarkRangeCard
                 key={metric.code}
                 metric={metric}
-                orgValues={orgValues}
-                peerMetrics={peerMetrics}
+                ownMetrics={ownMetrics}
+                peerMetrics={filteredPeerMetrics}
               />
             ))}
           </div>
@@ -312,31 +243,11 @@ export function BenchmarkDashboard({
               <BenchmarkRangeCard
                 key={metric.code}
                 metric={metric}
-                orgValues={orgValues}
-                peerMetrics={peerMetrics}
+                ownMetrics={ownMetrics}
+                peerMetrics={filteredPeerMetrics}
               />
             ))}
           </div>
-        </TabsContent>
-
-        <TabsContent value="equipment" className="mt-4">
-          <ContextMetricSection
-            metrics={equipmentMetrics}
-            orgValues={orgValues}
-            peerMetrics={peerMetrics}
-            contextKey="assetCategory"
-            contextValues={categories.slice(0, 12)}
-          />
-        </TabsContent>
-
-        <TabsContent value="space-types" className="mt-4">
-          <ContextMetricSection
-            metrics={spaceTypeMetrics}
-            orgValues={orgValues}
-            peerMetrics={peerMetrics}
-            contextKey="spaceType"
-            contextValues={spaceTypes.slice(0, 12)}
-          />
         </TabsContent>
       </Tabs>
     </div>

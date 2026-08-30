@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { INDUSTRY_TYPE_CODES, INDUSTRY_TYPE_LABELS } from "@/lib/benchmark/constants";
 import { updateOrganizationSettings } from "@/lib/organization/actions";
 import { Button } from "@/components/ui/button";
@@ -127,7 +128,11 @@ export function OrganizationSettingsForm({
                 <p className="text-xs text-muted-foreground">
                   When enabled, your anonymized lifecycle metrics contribute to industry
                   benchmarks and you can view benchmark results. Opting out is reciprocal — you
-                  will not receive benchmark data if you do not contribute.
+                  will not receive benchmark data if you do not contribute. View results on the{" "}
+                  <Link href="/benchmark" className="underline">
+                    Benchmark
+                  </Link>{" "}
+                  tab.
                 </p>
               </div>
             </div>

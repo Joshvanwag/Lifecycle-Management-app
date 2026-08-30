@@ -1,6 +1,7 @@
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 
-export async function userHasDevOrgAccess(): Promise<boolean> {
+export const userHasDevOrgAccess = cache(async (): Promise<boolean> => {
   const supabase = await createClient();
   const { data, error } = await (
     supabase as unknown as {
@@ -13,4 +14,4 @@ export async function userHasDevOrgAccess(): Promise<boolean> {
   }
 
   return data === true;
-}
+});

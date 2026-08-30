@@ -9,21 +9,15 @@ export default async function CorrectInventoryHubPage() {
   const supabase = await createClient();
   const { spaces, assets } = await loadPlatformDashboardData(auth, supabase, {
     includeAssets: true,
+    activeOrganizationOnly: true,
   });
-
-  const scopedSpaces = auth.isPlatformAdmin
-    ? spaces.filter((space) => space.organizationId === auth.organization.id)
-    : spaces;
-  const scopedAssets = auth.isPlatformAdmin
-    ? assets.filter((asset) => asset.organizationId === auth.organization.id)
-    : assets;
 
   return (
     <AuthenticatedDashboardShell
       title="Correct Inventory"
       description={`Search and edit inventory in ${auth.organization.name} without creating a refresh event`}
     >
-      <CorrectInventorySearch spaces={scopedSpaces} assets={scopedAssets} />
+      <CorrectInventorySearch spaces={spaces} assets={assets} />
     </AuthenticatedDashboardShell>
   );
 }

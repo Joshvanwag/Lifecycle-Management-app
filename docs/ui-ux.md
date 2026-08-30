@@ -14,6 +14,7 @@ Polished modern SaaS application designed for AV/IT lifecycle managers and capit
 ```
 
 - Persistent left sidebar (primary navigation)
+- Sidebar highlights the clicked item immediately; main content shows a loading indicator until the next page is ready
 - Simple top bar with page title
 - Organization context in header (static for customers; switcher for DEV team only)
 - User/account controls top-right
@@ -115,7 +116,7 @@ Preferred pattern:
 - Visual range cards: 25th / median / 75th percentile + peer average + your organization
 - Never show contributor counts, ranks, or customer names
 - Below 5-org threshold: generic unavailable message only
-- Sections/tabs: Overview, Lifecycle Health, Financial, Planning, Equipment, Space Types
+- Sections/tabs: Overview, Lifecycle Health, Financial, Planning
 
 ## Reports
 

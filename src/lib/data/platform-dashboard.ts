@@ -25,11 +25,12 @@ export interface PlatformDashboardData {
 export async function loadPlatformDashboardData(
   auth: AuthContext,
   supabase: Client,
-  options: { includeAssets?: boolean } = {},
+  options: { includeAssets?: boolean; activeOrganizationOnly?: boolean } = {},
 ): Promise<PlatformDashboardData> {
   const includeAssets = options.includeAssets ?? true;
+  const activeOrganizationOnly = options.activeOrganizationOnly ?? false;
 
-  if (!auth.isPlatformAdmin) {
+  if (!auth.isPlatformAdmin || activeOrganizationOnly) {
     const organizationName = auth.organization.name;
     const [spaces, assets] = await Promise.all([
       getAllSpaces(supabase, auth.organization.id, organizationName),

@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { Shield } from "lucide-react";
 import { mainNavigation, updateLifecyclesNavItem } from "@/config/navigation";
+import { pathMatchesHref, useActivePath } from "@/components/layout/navigation-pending";
 import { cn } from "@/lib/utils";
 
 interface AppSidebarProps {
@@ -11,9 +11,9 @@ interface AppSidebarProps {
 }
 
 export function AppSidebar({ isPlatformAdmin = false }: AppSidebarProps) {
-  const pathname = usePathname();
+  const activePath = useActivePath();
   const UpdateIcon = updateLifecyclesNavItem.icon;
-  const isUpdateActive = pathname.startsWith(updateLifecyclesNavItem.href);
+  const isUpdateActive = pathMatchesHref(updateLifecyclesNavItem.href, activePath);
 
   return (
     <aside className="flex h-full w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar">
@@ -30,14 +30,15 @@ export function AppSidebar({ isPlatformAdmin = false }: AppSidebarProps) {
       <nav className="flex-1 overflow-y-auto px-3 py-4 scrollbar-thin">
         <ul className="space-y-0.5">
           {mainNavigation[0]!.items.map((item) => {
-            const isActive = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
+            const isActive = pathMatchesHref(item.href, activePath);
             const Icon = item.icon;
             return (
               <li key={item.href}>
                 <Link
                   href={item.href}
+                  prefetch
                   className={cn(
-                    "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                    "flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                     isActive
                       ? "bg-sidebar-accent text-sidebar-accent-foreground"
                       : "text-sidebar-foreground hover:bg-sidebar-accent/70 hover:text-sidebar-accent-foreground",
@@ -54,8 +55,9 @@ export function AppSidebar({ isPlatformAdmin = false }: AppSidebarProps) {
         <div className="mt-3 px-1">
           <Link
             href={updateLifecyclesNavItem.href}
+            prefetch
             className={cn(
-              "flex items-center gap-2.5 rounded-lg border px-3 py-2.5 text-sm font-medium transition-colors",
+              "flex cursor-pointer items-center gap-2.5 rounded-lg border px-3 py-2.5 text-sm font-medium transition-colors",
               isUpdateActive
                 ? "border-primary/40 bg-primary/10 text-primary"
                 : "border-primary/20 bg-primary/5 text-primary hover:border-primary/30 hover:bg-primary/10",
@@ -75,16 +77,16 @@ export function AppSidebar({ isPlatformAdmin = false }: AppSidebarProps) {
             )}
             <ul className="space-y-0.5">
               {group.items.map((item) => {
-                const isActive =
-                  item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
+                const isActive = pathMatchesHref(item.href, activePath);
                 const Icon = item.icon;
 
                 return (
                   <li key={item.href}>
                     <Link
                       href={item.href}
+                      prefetch
                       className={cn(
-                        "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                        "flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                         isActive
                           ? "bg-sidebar-accent text-sidebar-accent-foreground"
                           : "text-sidebar-foreground hover:bg-sidebar-accent/70 hover:text-sidebar-accent-foreground",
@@ -109,9 +111,10 @@ export function AppSidebar({ isPlatformAdmin = false }: AppSidebarProps) {
               <li>
                 <Link
                   href="/admin"
+                  prefetch
                   className={cn(
-                    "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                    pathname.startsWith("/admin")
+                    "flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                    pathMatchesHref("/admin", activePath)
                       ? "bg-sidebar-accent text-sidebar-accent-foreground"
                       : "text-sidebar-foreground hover:bg-sidebar-accent/70 hover:text-sidebar-accent-foreground",
                   )}
