@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -10,14 +9,13 @@ interface KpiCardProps {
   value: string | number;
   description?: string;
   icon?: LucideIcon;
-  href?: string;
   className?: string;
 }
 
-export function KpiCard({ label, value, description, icon: Icon, href, className }: KpiCardProps) {
-  const content = (
-    <Card className={cn(href && "transition-colors hover:border-primary/30", className)}>
-      <CardContent className="p-4">
+export function KpiCard({ label, value, description, icon: Icon, className }: KpiCardProps) {
+  return (
+    <Card className={cn("h-full", className)}>
+      <CardContent className="flex h-full flex-col justify-center p-4">
         <div className="flex items-start justify-between gap-2">
           <p className="text-sm font-medium text-muted-foreground">{label}</p>
           {Icon && <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />}
@@ -27,14 +25,4 @@ export function KpiCard({ label, value, description, icon: Icon, href, className
       </CardContent>
     </Card>
   );
-
-  if (href) {
-    return (
-      <Link href={href} className="block cursor-pointer">
-        {content}
-      </Link>
-    );
-  }
-
-  return content;
 }

@@ -3,16 +3,11 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, Filter, Search } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { DistributionChart } from "@/components/charts/distribution-chart";
-import { LabeledBarChart } from "@/components/charts/labeled-bar-chart";
+import { RankedListChart } from "@/components/charts/ranked-list-chart";
+import { FilterToolbar } from "@/components/dashboard/filter-toolbar";
 import { KpiCard } from "@/components/dashboard/kpi-card";
-import {
-  ActiveFilterChips,
-  SpaceFilters,
-  emptySpaceFilters,
-  type SpaceFiltersState,
-} from "@/components/spaces/space-filters";
 import {
   LifecycleStatusBadge,
   PlanningStatusBadge,
@@ -23,6 +18,11 @@ import {
   computeSpacesByType,
 } from "@/lib/data/analytics";
 import {
+  SpaceFilters,
+  emptySpaceFilters,
+  type SpaceFiltersState,
+} from "@/components/spaces/space-filters";
+import {
   buildSpaceFilterOptions,
   countActiveFilters,
   filterSpaces,
@@ -30,7 +30,6 @@ import {
 import type { Space } from "@/lib/types";
 import { formatCurrency } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -57,6 +56,8 @@ export function SpacesTable({
   const [search, setSearch] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [appliedFilters, setAppliedFilters] = useState<SpaceFiltersState>(emptySpaceFilters);
+  const [lifecycleDrill, setLifecycleDrill] = useState<string | null>(null);
+  const [typeDrill, setTypeDrill] = useState<string | null>(null);
 
   const filterOptions = useMemo(() => buildSpaceFilterOptions(spaces), [spaces]);
 
@@ -80,6 +81,18 @@ export function SpacesTable({
 
   return (
     <div className="space-y-4">
+      <FilterToolbar
+        search={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Search Spaces..."
+        activeFilterCount={activeFilterCount}
+        onOpenFilters={() => setFiltersOpen(true)}
+        appliedFilters={appliedFilters}
+        onFiltersChange={setAppliedFilters}
+        filteredCount={filteredSpaces.length}
+        totalCount={spaces.length}
+      />
+
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <KpiCard label="Total Spaces" value={summary.spaceCount} />
         <KpiCard label="Current Portfolio Value" value={formatCurrency(summary.totalPortfolioValue)} />
@@ -92,39 +105,25 @@ export function SpacesTable({
           title="Spaces by Lifecycle Status"
           description="Upcoming, due, and overdue counts with percentages"
           data={lifecycleDistribution}
+          onSegmentClick={setLifecycleDrill}
+          selectedName={lifecycleDrill}
+          drillLabel={lifecycleDrill ?? undefined}
+          onReset={() => setLifecycleDrill(null)}
         />
-        <LabeledBarChart
+        <RankedListChart
           title="Spaces by Type"
           description="Space type distribution"
-          data={spacesByType.slice(0, 8).map((row) => ({ name: row.name, value: row.value }))}
-          valueFormatter={(v) => String(v)}
-          labelFormatter={(v) => String(v)}
-          layout="horizontal"
+          data={(typeDrill
+            ? spacesByType.filter((row) => row.name === typeDrill)
+            : spacesByType.slice(0, 8)
+          ).map((row) => ({ name: row.name, value: row.value }))}
+          valueFormatter={(value) => String(value)}
+          onItemClick={setTypeDrill}
+          selectedName={typeDrill}
+          drillLabel={typeDrill ?? undefined}
+          onReset={() => setTypeDrill(null)}
         />
       </div>
-
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="relative w-full max-w-md">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Search Spaces..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
-          />
-        </div>
-        <Button variant="outline" onClick={() => setFiltersOpen(true)}>
-          <Filter className="h-4 w-4" />
-          Filters
-          {activeFilterCount > 0 && (
-            <span className="ml-1 rounded-full bg-primary px-1.5 py-0.5 text-xs text-primary-foreground">
-              {activeFilterCount}
-            </span>
-          )}
-        </Button>
-      </div>
-
-      <ActiveFilterChips filters={appliedFilters} onFiltersChange={setAppliedFilters} />
 
       <div className="rounded-xl border bg-card">
         <Table>

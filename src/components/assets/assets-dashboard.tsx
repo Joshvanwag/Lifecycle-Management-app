@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { AlertTriangle, CalendarClock, ChevronLeft, ChevronRight, Filter, Package, Search } from "lucide-react";
+import { AlertTriangle, CalendarClock, ChevronLeft, ChevronRight, Package } from "lucide-react";
 import { LabeledBarChart } from "@/components/charts/labeled-bar-chart";
+import { RankedListChart } from "@/components/charts/ranked-list-chart";
+import { FilterToolbar } from "@/components/dashboard/filter-toolbar";
 import { KpiCard } from "@/components/dashboard/kpi-card";
 import {
-  ActiveFilterChips,
   SpaceFilters,
   emptySpaceFilters,
   type SpaceFiltersState,
@@ -60,6 +61,8 @@ export function AssetsDashboard({
   const [search, setSearch] = useState(initialSearch);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [appliedFilters, setAppliedFilters] = useState<SpaceFiltersState>(emptySpaceFilters);
+  const [categoryDrill, setCategoryDrill] = useState<string | null>(null);
+  const [manufacturerDrill, setManufacturerDrill] = useState<string | null>(null);
   const serverPaged = totalCount != null;
 
   const filterOptions = useMemo(
@@ -127,6 +130,31 @@ export function AssetsDashboard({
 
   return (
     <div className="space-y-6">
+      <FilterToolbar
+        search={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Search assets..."
+        activeFilterCount={activeFilterCount}
+        onOpenFilters={() => setFiltersOpen(true)}
+        appliedFilters={appliedFilters}
+        onFiltersChange={setAppliedFilters}
+        organizationOptions={organizationOptions}
+        filteredCount={tableAssets.length}
+        totalCount={assets.length}
+        countLabel="assets"
+        searchSlot={
+          serverPaged ? (
+            <form className="relative w-full max-w-md">
+              <Input
+                name="q"
+                placeholder="Search manufacturer, model, serial..."
+                defaultValue={initialSearch}
+              />
+            </form>
+          ) : undefined
+        }
+      />
+
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <KpiCard label="Total Assets" value={kpis.totalAssets} icon={Package} />
         <KpiCard
@@ -139,84 +167,49 @@ export function AssetsDashboard({
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <LabeledBarChart
+        <RankedListChart
           title="Assets by Category"
           description="Equipment counts by category"
-          data={categoryBars}
-          valueFormatter={(v) => String(v)}
-          labelFormatter={(v) => String(v)}
-          layout="horizontal"
+          data={(categoryDrill
+            ? categoryBars.filter((row) => row.name === categoryDrill)
+            : categoryBars
+          ).map((row) => ({ name: row.name, value: row.value }))}
+          valueFormatter={(value) => String(value)}
+          onItemClick={setCategoryDrill}
+          selectedName={categoryDrill}
+          drillLabel={categoryDrill ?? undefined}
+          onReset={() => setCategoryDrill(null)}
         />
-        <LabeledBarChart
+        <RankedListChart
           title="Assets by Manufacturer"
-          description="Top 10 manufacturers by asset count"
-          data={manufacturerBars}
-          valueFormatter={(v) => String(v)}
-          labelFormatter={(v) => String(v)}
-          layout="horizontal"
+          description="Top manufacturers by asset count"
+          data={(manufacturerDrill
+            ? manufacturerBars.filter((row) => row.name === manufacturerDrill)
+            : manufacturerBars
+          ).map((row) => ({ name: row.name, value: row.value }))}
+          valueFormatter={(value) => String(value)}
+          onItemClick={setManufacturerDrill}
+          selectedName={manufacturerDrill}
+          drillLabel={manufacturerDrill ?? undefined}
+          onReset={() => setManufacturerDrill(null)}
         />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <LabeledBarChart
+        <RankedListChart
           title="Replacement Need by Category"
           description="Future replacement cost by asset category"
           data={replacementByCategory.map((row) => ({ name: row.name, value: row.amount }))}
-          layout="horizontal"
+          valueFormatter={(value) => formatCurrency(value)}
         />
         <LabeledBarChart
           title="Lifecycle Age Distribution"
           description="Active assets grouped by install age"
           data={ageBuckets.map((row) => ({ name: row.name, value: row.value }))}
-          valueFormatter={(v) => String(v)}
-          labelFormatter={(v) => String(v)}
+          valueFormatter={(value) => String(value)}
+          labelFormatter={(value) => String(value)}
         />
       </div>
-
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        {serverPaged ? (
-          <form className="relative w-full max-w-md">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              name="q"
-              placeholder="Search manufacturer, model, serial..."
-              defaultValue={initialSearch}
-              className="pl-9"
-            />
-          </form>
-        ) : (
-          <div className="relative w-full max-w-md">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Search assets..."
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              className="pl-9"
-            />
-          </div>
-        )}
-        <Button variant="outline" onClick={() => setFiltersOpen(true)}>
-          <Filter className="h-4 w-4" />
-          Filters
-          {activeFilterCount > 0 && (
-            <span className="ml-1 rounded-full bg-primary px-1.5 py-0.5 text-xs text-primary-foreground">
-              {activeFilterCount}
-            </span>
-          )}
-        </Button>
-      </div>
-
-      <ActiveFilterChips
-        filters={appliedFilters}
-        onFiltersChange={setAppliedFilters}
-        organizationOptions={organizationOptions}
-      />
-
-      <p className="text-sm text-muted-foreground">
-        {serverPaged
-          ? `${total} assets in the current organization`
-          : `Showing ${tableAssets.length} of ${assets.length} assets`}
-      </p>
 
       <div className="rounded-xl border bg-card">
         <Table>
