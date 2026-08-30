@@ -62,13 +62,23 @@ One customer organization = one tenant. Users normally belong to one organizatio
 
 ## Reporting Baseline
 
-Initial dashboards preserve concepts from the Zoho POC:
+Executive Overview, Forecast (including capital planning), Benchmark, and canned Reports answer:
 
-- Lifecycle overview and status
-- Space lifecycle view
-- Planned amounts by year
-- Asset lists and summaries
-- Manufacturer and category summaries
+- What do we own?
+- What needs replacement, when, and at what cost?
+- What is planned vs recommended?
+- How do we compare with industry peers?
+
+Initial report types: Space Capital Plan, Asset Inventory, Average Cost by Space Type, Lifecycle Status, Replacement Need by Year, Manufacturer Summary, Asset Category Summary, Planning Status.
+
+## Navigation and Information Architecture
+
+See `/docs/ui-ux.md` for full UX specification. Summary:
+
+- **Update Lifecycles** hub exposes four distinct workflows (Add New Spaces, Full Refresh, Partial Refresh, Correct Inventory)
+- **Forecast** is the primary planning workspace (absorbs Capital Plan)
+- **Benchmark** and **Reports** live under Analytics
+- Customer users see single-organization context; DEV team may switch organizations
 
 ## User Roles (Initial)
 

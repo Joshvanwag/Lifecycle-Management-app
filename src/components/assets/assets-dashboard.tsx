@@ -2,24 +2,29 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, Filter, Search } from "lucide-react";
-import { CategoryPieChart } from "@/components/charts/category-pie-chart";
+import { AlertTriangle, CalendarClock, ChevronLeft, ChevronRight, Filter, Package, Search } from "lucide-react";
+import { LabeledBarChart } from "@/components/charts/labeled-bar-chart";
+import { KpiCard } from "@/components/dashboard/kpi-card";
 import {
   ActiveFilterChips,
   SpaceFilters,
   emptySpaceFilters,
   type SpaceFiltersState,
 } from "@/components/spaces/space-filters";
+import { LifecycleStatusBadge } from "@/components/spaces/status-badges";
 import {
-  computeManufacturerSlices,
-  computeProductTypeSlices,
-} from "@/lib/data/chart-data";
+  computeAssetAgeBuckets,
+  computeAssetKpis,
+  computeReplacementNeedByCategory,
+} from "@/lib/data/analytics";
+import { computeManufacturerSlices, computeProductTypeSlices } from "@/lib/data/chart-data";
 import {
   buildSpaceFilterOptions,
   countActiveFilters,
   filterSpaces,
 } from "@/lib/filters/space-filters";
 import type { Asset, Space } from "@/lib/types";
+import { formatCurrency } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -54,7 +59,7 @@ export function AssetsDashboard({
 }: AssetsDashboardProps) {
   const [search, setSearch] = useState(initialSearch);
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [filters, setFilters] = useState<SpaceFiltersState>(emptySpaceFilters);
+  const [appliedFilters, setAppliedFilters] = useState<SpaceFiltersState>(emptySpaceFilters);
   const serverPaged = totalCount != null;
 
   const filterOptions = useMemo(
@@ -63,9 +68,9 @@ export function AssetsDashboard({
   );
 
   const filteredSpaceIds = useMemo(() => {
-    const filtered = filterSpaces(spaces, serverPaged ? "" : search, filters);
+    const filtered = filterSpaces(spaces, serverPaged ? "" : search, appliedFilters);
     return new Set(filtered.map((space) => space.id));
-  }, [spaces, search, filters, serverPaged]);
+  }, [spaces, search, appliedFilters, serverPaged]);
 
   const chartAssets = useMemo(() => {
     if (chartSource) return chartSource;
@@ -92,23 +97,82 @@ export function AssetsDashboard({
     });
   }, [assets, filteredSpaceIds, search, serverPaged]);
 
-  const manufacturerSlices = useMemo(
-    () => computeManufacturerSlices(chartAssets),
+  const kpis = useMemo(() => computeAssetKpis(chartAssets as Asset[]), [chartAssets]);
+  const categoryBars = useMemo(
+    () =>
+      computeProductTypeSlices(chartAssets).map((slice) => ({
+        name: slice.name,
+        value: slice.value,
+      })),
+    [chartAssets],
+  );
+  const manufacturerBars = useMemo(
+    () =>
+      computeManufacturerSlices(chartAssets).map((slice) => ({ name: slice.name, value: slice.value })),
+    [chartAssets],
+  );
+  const replacementByCategory = useMemo(
+    () => computeReplacementNeedByCategory(chartAssets as Asset[]),
+    [chartAssets],
+  );
+  const ageBuckets = useMemo(
+    () => computeAssetAgeBuckets(chartAssets as Asset[]),
     [chartAssets],
   );
 
-  const productTypeSlices = useMemo(
-    () => computeProductTypeSlices(chartAssets),
-    [chartAssets],
-  );
-
-  const activeFilterCount = countActiveFilters(filters);
+  const activeFilterCount = countActiveFilters(appliedFilters);
   const total = totalCount ?? tableAssets.length;
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const spaceById = useMemo(() => new Map(spaces.map((space) => [space.id, space])), [spaces]);
 
   return (
     <div className="space-y-6">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <KpiCard label="Total Assets" value={kpis.totalAssets} icon={Package} />
+        <KpiCard
+          label="Asset-Level Cost"
+          value={formatCurrency(kpis.assetLevelCost)}
+          description="Does not include lump-sum Space costs"
+        />
+        <KpiCard label="Due" value={kpis.due} icon={CalendarClock} />
+        <KpiCard label="Overdue" value={kpis.overdue} icon={AlertTriangle} />
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <LabeledBarChart
+          title="Assets by Category"
+          description="Equipment counts by category"
+          data={categoryBars}
+          valueFormatter={(v) => String(v)}
+          labelFormatter={(v) => String(v)}
+          layout="horizontal"
+        />
+        <LabeledBarChart
+          title="Assets by Manufacturer"
+          description="Top 10 manufacturers by asset count"
+          data={manufacturerBars}
+          valueFormatter={(v) => String(v)}
+          labelFormatter={(v) => String(v)}
+          layout="horizontal"
+        />
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <LabeledBarChart
+          title="Replacement Need by Category"
+          description="Future replacement cost by asset category"
+          data={replacementByCategory.map((row) => ({ name: row.name, value: row.amount }))}
+          layout="horizontal"
+        />
+        <LabeledBarChart
+          title="Lifecycle Age Distribution"
+          description="Active assets grouped by install age"
+          data={ageBuckets.map((row) => ({ name: row.name, value: row.value }))}
+          valueFormatter={(v) => String(v)}
+          labelFormatter={(v) => String(v)}
+        />
+      </div>
+
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         {serverPaged ? (
           <form className="relative w-full max-w-md">
@@ -124,7 +188,7 @@ export function AssetsDashboard({
           <div className="relative w-full max-w-md">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Search assets or Spaces..."
+              placeholder="Search assets..."
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               className="pl-9"
@@ -143,8 +207,8 @@ export function AssetsDashboard({
       </div>
 
       <ActiveFilterChips
-        filters={filters}
-        onFiltersChange={setFilters}
+        filters={appliedFilters}
+        onFiltersChange={setAppliedFilters}
         organizationOptions={organizationOptions}
       />
 
@@ -154,64 +218,65 @@ export function AssetsDashboard({
           : `Showing ${tableAssets.length} of ${assets.length} assets`}
       </p>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <CategoryPieChart
-          title="Asset Manufacturer — Top 10"
-          description="Most common manufacturers in the filtered asset inventory"
-          data={manufacturerSlices}
-        />
-        <CategoryPieChart
-          title="Asset Product Type"
-          description="Equipment categories in the filtered asset inventory"
-          data={productTypeSlices}
-        />
-      </div>
-
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Asset</TableHead>
-            <TableHead>Space</TableHead>
-            <TableHead>Serial</TableHead>
-            <TableHead>Type</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {tableAssets.length === 0 ? (
+      <div className="rounded-xl border bg-card">
+        <Table>
+          <TableHeader>
             <TableRow>
-              <TableCell colSpan={4} className="text-sm text-muted-foreground">
-                No assets match the current search.
-              </TableCell>
+              <TableHead>Asset</TableHead>
+              <TableHead>Manufacturer</TableHead>
+              <TableHead>Model</TableHead>
+              <TableHead>Category</TableHead>
+              <TableHead>Space</TableHead>
+              <TableHead>Install Date</TableHead>
+              <TableHead className="text-right">Recommended Year</TableHead>
+              <TableHead>Lifecycle</TableHead>
+              <TableHead className="text-right">Cost</TableHead>
             </TableRow>
-          ) : (
-            tableAssets.map((asset) => {
-              const space = spaceById.get(asset.spaceId);
-              return (
-                <TableRow key={`${asset.organizationId}:${asset.id}`}>
-                  <TableCell>
-                    <p className="font-medium">
+          </TableHeader>
+          <TableBody>
+            {tableAssets.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={9} className="text-sm text-muted-foreground">
+                  No assets match the current search or filters.
+                </TableCell>
+              </TableRow>
+            ) : (
+              tableAssets.map((asset) => {
+                const space = spaceById.get(asset.spaceId);
+                return (
+                  <TableRow key={`${asset.organizationId}:${asset.id}`}>
+                    <TableCell className="font-medium">
                       {asset.manufacturer} {asset.modelNumber}
-                    </p>
-                  </TableCell>
-                  <TableCell>
-                    {space ? (
-                      <Link href={`/spaces/${space.id}`} className="hover:underline">
-                        {space.name}
-                      </Link>
-                    ) : (
-                      "—"
-                    )}
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {asset.serialNumber ?? "—"}
-                  </TableCell>
-                  <TableCell className="text-sm">{asset.category || "—"}</TableCell>
-                </TableRow>
-              );
-            })
-          )}
-        </TableBody>
-      </Table>
+                    </TableCell>
+                    <TableCell>{asset.manufacturer}</TableCell>
+                    <TableCell>{asset.modelNumber}</TableCell>
+                    <TableCell>{asset.category || "—"}</TableCell>
+                    <TableCell>
+                      {space ? (
+                        <Link href={`/spaces/${space.id}`} className="hover:underline">
+                          {space.name}
+                        </Link>
+                      ) : (
+                        "—"
+                      )}
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {asset.installDate ? new Date(asset.installDate).toLocaleDateString() : "—"}
+                    </TableCell>
+                    <TableCell className="text-right">{asset.recommendedRefreshYear}</TableCell>
+                    <TableCell>
+                      <LifecycleStatusBadge status={asset.lifecycleStatus} />
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {asset.cost > 0 ? formatCurrency(asset.cost) : "—"}
+                    </TableCell>
+                  </TableRow>
+                );
+              })
+            )}
+          </TableBody>
+        </Table>
+      </div>
 
       {serverPaged && totalPages > 1 && (
         <div className="flex items-center justify-between text-sm">
@@ -236,8 +301,8 @@ export function AssetsDashboard({
       <SpaceFilters
         open={filtersOpen}
         onOpenChange={setFiltersOpen}
-        filters={filters}
-        onFiltersChange={setFilters}
+        appliedFilters={appliedFilters}
+        onApplyFilters={setAppliedFilters}
         options={filterOptions}
       />
     </div>

@@ -1,108 +1,63 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import {
   AlertTriangle,
   Building2,
   CalendarClock,
-  Clock,
+  CheckCircle2,
   DollarSign,
   Filter,
   Package,
   Search,
   TrendingUp,
 } from "lucide-react";
+import { DistributionChart } from "@/components/charts/distribution-chart";
+import { GroupedBarChart } from "@/components/charts/grouped-bar-chart";
+import { LabeledBarChart } from "@/components/charts/labeled-bar-chart";
+import { KpiCard } from "@/components/dashboard/kpi-card";
 import {
   ActiveFilterChips,
   SpaceFilters,
+  emptySpaceFilters,
+  type SpaceFiltersState,
 } from "@/components/spaces/space-filters";
 import {
-  LifecycleStatusBadge,
-  PlanningStatusBadge,
-} from "@/components/spaces/status-badges";
-import { ForecastChart } from "@/components/overview/forecast-chart";
-import { DeploymentMonthChart } from "@/components/overview/deployment-month-chart";
-import { LifecycleStatusChart } from "@/components/overview/lifecycle-status-chart";
-import { PlanningStatusChart } from "@/components/overview/planning-status-chart";
-import { computeDashboardMetrics } from "@/lib/data/dashboard-metrics";
-import {
-  computeDeploymentByMonth,
-  computeLifecycleStatusSlices,
-  computePlanningStatusSlices,
-} from "@/lib/data/chart-data";
-import {
-  computePortfolioCounts,
-  hasEmptyPortfolioCosts,
-} from "@/lib/data/portfolio-counts";
+  computeExtendedMetrics,
+  computeLifecycleDistribution,
+  computePlanningDistribution,
+  computeReplacementByYear,
+  computeSpacesByType,
+  computeTopFutureCostCategories,
+  computeYearComparison,
+} from "@/lib/data/analytics";
+import { hasEmptyPortfolioCosts } from "@/lib/data/portfolio-counts";
 import {
   buildSpaceFilterOptions,
   countActiveFilters,
-  emptySpaceFilters,
   filterSpaces,
-  type SpaceFiltersState,
 } from "@/lib/filters/space-filters";
-import type { Space } from "@/lib/types";
+import type { Asset, LifecycleStatus, Space } from "@/lib/types";
 import { formatCurrency } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 
 interface OverviewDashboardProps {
   spaces: Space[];
+  assets?: Asset[];
   organizationOptions?: { id: string; name: string }[];
 }
 
-const metricCards = [
-  {
-    key: "totalPortfolioValue" as const,
-    label: "Total Portfolio Value",
-    icon: DollarSign,
-    description: "Current cost basis across filtered Spaces",
-  },
-  {
-    key: "fiveYearForecast" as const,
-    label: "5-Year Forecast",
-    icon: TrendingUp,
-    description: "Projected replacement funding needed",
-  },
-  {
-    key: "dueThisYear" as const,
-    label: "Due This Year",
-    icon: CalendarClock,
-    description: "Spaces with refresh due in current year",
-  },
-  {
-    key: "overdue" as const,
-    label: "Overdue",
-    icon: AlertTriangle,
-    description: "Past recommended refresh year",
-  },
-  {
-    key: "deferred" as const,
-    label: "Deferred",
-    icon: Clock,
-    description: "Planned but pushed to a future year",
-  },
-];
-
 export function OverviewDashboard({
   spaces,
+  assets = [],
   organizationOptions = [],
 }: OverviewDashboardProps) {
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [filters, setFilters] = useState<SpaceFiltersState>(emptySpaceFilters);
+  const [appliedFilters, setAppliedFilters] = useState<SpaceFiltersState>(emptySpaceFilters);
 
   const filterOptions = useMemo(
     () => buildSpaceFilterOptions(spaces, organizationOptions),
@@ -110,42 +65,43 @@ export function OverviewDashboard({
   );
 
   const filteredSpaces = useMemo(
-    () => filterSpaces(spaces, search, filters),
-    [spaces, search, filters],
+    () => filterSpaces(spaces, search, appliedFilters),
+    [spaces, search, appliedFilters],
   );
 
-  const metrics = useMemo(
-    () => computeDashboardMetrics(filteredSpaces),
+  const filteredAssets = useMemo(() => {
+    const spaceIds = new Set(filteredSpaces.map((space) => space.id));
+    return assets.filter((asset) => spaceIds.has(asset.spaceId));
+  }, [assets, filteredSpaces]);
+
+  const metrics = useMemo(() => computeExtendedMetrics(filteredSpaces), [filteredSpaces]);
+  const lifecycleDistribution = useMemo(
+    () => computeLifecycleDistribution(filteredSpaces),
     [filteredSpaces],
   );
-
-  const upcomingSpaces = useMemo(
-    () =>
-      filteredSpaces
-        .filter((space) => space.lifecycleStatus === "upcoming" || space.lifecycleStatus === "due")
-        .slice(0, 5),
+  const planningDistribution = useMemo(
+    () => computePlanningDistribution(filteredSpaces),
     [filteredSpaces],
   );
-
-  const lifecycleSlices = useMemo(
-    () => computeLifecycleStatusSlices(filteredSpaces),
+  const replacementByYear = useMemo(
+    () => computeReplacementByYear(filteredSpaces, 10),
     [filteredSpaces],
   );
-
-  const planningSlices = useMemo(
-    () => computePlanningStatusSlices(filteredSpaces),
+  const recommendedVsPlanned = useMemo(
+    () => computeYearComparison(filteredSpaces, 5),
     [filteredSpaces],
   );
-
-  const counts = useMemo(() => computePortfolioCounts(filteredSpaces), [filteredSpaces]);
+  const spacesByType = useMemo(() => computeSpacesByType(filteredSpaces), [filteredSpaces]);
+  const topCategories = useMemo(
+    () => computeTopFutureCostCategories(filteredAssets, filteredSpaces),
+    [filteredAssets, filteredSpaces],
+  );
   const emptyCosts = useMemo(() => hasEmptyPortfolioCosts(filteredSpaces), [filteredSpaces]);
+  const activeFilterCount = countActiveFilters(appliedFilters);
 
-  const deploymentByMonth = useMemo(
-    () => computeDeploymentByMonth(filteredSpaces),
-    [filteredSpaces],
-  );
-
-  const activeFilterCount = countActiveFilters(filters);
+  const navigateWithLifecycle = (status: string) => {
+    setAppliedFilters({ ...emptySpaceFilters, lifecycleStatus: [status as LifecycleStatus] });
+  };
 
   return (
     <div className="space-y-6">
@@ -171,8 +127,8 @@ export function OverviewDashboard({
       </div>
 
       <ActiveFilterChips
-        filters={filters}
-        onFiltersChange={setFilters}
+        filters={appliedFilters}
+        onFiltersChange={setAppliedFilters}
         organizationOptions={organizationOptions}
       />
 
@@ -184,142 +140,99 @@ export function OverviewDashboard({
 
       {emptyCosts && (
         <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
-          These Spaces have inventory, but replacement costs are still $0. Money reports stay empty
-          until Space lump-sum costs are entered. Asset counts and types are still available.
+          These Spaces have inventory, but replacement costs are still $0. Financial metrics stay
+          empty until Space lump-sum costs are entered.
         </div>
       )}
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Spaces</CardTitle>
-            <Building2 className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{counts.spaceCount}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Buildings</CardTitle>
-            <Building2 className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{counts.buildingCount}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Rooms</CardTitle>
-            <Building2 className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{counts.roomCount}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Assets</CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{counts.assetCount}</div>
-          </CardContent>
-        </Card>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
+        <KpiCard label="Spaces" value={metrics.spaceCount} icon={Building2} href="/spaces" />
+        <KpiCard label="Assets" value={metrics.assetCount} icon={Package} href="/assets" />
+        <KpiCard
+          label="Current Portfolio Value"
+          value={formatCurrency(metrics.totalPortfolioValue)}
+          icon={DollarSign}
+        />
+        <KpiCard
+          label="5-Year Replacement Need"
+          value={formatCurrency(metrics.fiveYearNeed)}
+          icon={TrendingUp}
+          href="/forecast"
+        />
+        <KpiCard
+          label="Due This Year"
+          value={formatCurrency(metrics.dueThisYear)}
+          icon={CalendarClock}
+        />
+        <KpiCard
+          label="Overdue"
+          value={formatCurrency(metrics.overdueAmount)}
+          icon={AlertTriangle}
+          href="/spaces"
+        />
+        <KpiCard
+          label="Planned"
+          value={formatCurrency(metrics.plannedAmount)}
+          icon={CheckCircle2}
+          href="/forecast"
+        />
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-        {metricCards.map((card) => {
-          const Icon = card.icon;
-          return (
-            <Card key={card.key}>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  {card.label}
-                </CardTitle>
-                <Icon className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{formatCurrency(metrics[card.key])}</div>
-                <p className="mt-1 text-xs text-muted-foreground">{card.description}</p>
-              </CardContent>
-            </Card>
-          );
-        })}
+      <div className="grid gap-4 lg:grid-cols-2">
+        <DistributionChart
+          title="Lifecycle Distribution"
+          description="Spaces by upcoming, due, and overdue refresh timing"
+          data={lifecycleDistribution}
+          onSegmentClick={navigateWithLifecycle}
+        />
+        <LabeledBarChart
+          title="Replacement Need by Year"
+          description="Future replacement cost with visible dollar labels"
+          data={replacementByYear.map((row) => ({
+            name: String(row.year),
+            value: row.amount,
+          }))}
+          colorScheme={{ type: "years", years: replacementByYear.map((row) => row.year) }}
+          onBarClick={(name) => router.push(`/forecast?year=${name}`)}
+        />
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <LifecycleStatusChart data={lifecycleSlices} />
-        <PlanningStatusChart data={planningSlices} />
+      <div className="grid gap-4 lg:grid-cols-2">
+        <GroupedBarChart
+          title="Recommended vs Planned"
+          description="Recommended lifecycle need compared with intentionally planned work"
+          data={recommendedVsPlanned}
+        />
+        <LabeledBarChart
+          title="Portfolio by Space Type"
+          description="Distribution of Spaces across types"
+          data={spacesByType.map((row) => ({ name: row.name, value: row.value }))}
+          valueFormatter={(value) => String(value)}
+          labelFormatter={(value) => String(value)}
+          layout="horizontal"
+        />
       </div>
 
-      <ForecastChart data={metrics.forecastByYear} />
-
-      <DeploymentMonthChart
-        rows={deploymentByMonth.rows}
-        years={deploymentByMonth.years}
-      />
-
-      <Card>
-          <CardHeader>
-            <CardTitle>Upcoming Spaces</CardTitle>
-            <CardDescription>
-              Spaces with upcoming lifecycle needs matching your filters
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="p-0">
-            {upcomingSpaces.length === 0 ? (
-              <p className="p-6 text-sm text-muted-foreground">
-                No upcoming Spaces match the current filters. Adjust filters or add Spaces to see
-                portfolio data here.
-              </p>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Space</TableHead>
-                    <TableHead>Refresh</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Forecast</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {upcomingSpaces.map((space) => (
-                    <TableRow
-                      key={space.id}
-                      className="cursor-pointer"
-                      data-clickable="true"
-                      onClick={() => router.push(`/spaces/${space.id}`)}
-                    >
-                      <TableCell>
-                        <Link href={`/spaces/${space.id}`} className="font-medium hover:underline">
-                          {space.name}
-                        </Link>
-                        <p className="text-xs text-muted-foreground">{space.spaceType}</p>
-                      </TableCell>
-                      <TableCell>{space.recommendedRefreshYear}</TableCell>
-                      <TableCell>
-                        <div className="flex flex-wrap gap-1">
-                          <LifecycleStatusBadge status={space.lifecycleStatus} />
-                          <PlanningStatusBadge status={space.planningStatus} />
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right font-medium">
-                        {formatCurrency(space.forecastAmount)}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
+      <div className="grid gap-4 lg:grid-cols-2">
+        <DistributionChart
+          title="Planning Status"
+          description="Unplanned, scheduled, deferred, and completed lifecycle planning"
+          data={planningDistribution}
+          colorType="planningStatus"
+        />
+        <LabeledBarChart
+          title="Top Future Cost Categories"
+          description="Asset categories driving the largest future lifecycle costs"
+          data={topCategories.map((row) => ({ name: row.name, value: row.amount }))}
+          layout="horizontal"
+        />
+      </div>
 
       <SpaceFilters
         open={filtersOpen}
         onOpenChange={setFiltersOpen}
-        filters={filters}
-        onFiltersChange={setFilters}
+        appliedFilters={appliedFilters}
+        onApplyFilters={setAppliedFilters}
         options={filterOptions}
       />
     </div>

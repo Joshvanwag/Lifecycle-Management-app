@@ -1,6 +1,7 @@
 "use client";
 
-import { X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Search, X } from "lucide-react";
 import type { LifecycleStatus, PlanningStatus } from "@/lib/types";
 import {
   emptySpaceFilters,
@@ -8,6 +9,7 @@ import {
 } from "@/lib/filters/space-filters";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Sheet,
@@ -23,8 +25,8 @@ export { emptySpaceFilters, type SpaceFiltersState };
 interface SpaceFiltersProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  filters: SpaceFiltersState;
-  onFiltersChange: (filters: SpaceFiltersState) => void;
+  appliedFilters: SpaceFiltersState;
+  onApplyFilters: (filters: SpaceFiltersState) => void;
   options: {
     organizations: { id: string; name: string }[];
     campuses: string[];
@@ -34,59 +36,75 @@ interface SpaceFiltersProps {
   };
 }
 
-function OrganizationFilterGroup({
-  organizations,
-  selectedIds,
+function SearchableMultiSelect({
+  label,
+  values,
+  selected,
   onChange,
+  placeholder,
 }: {
-  organizations: { id: string; name: string }[];
-  selectedIds: string[];
-  onChange: (organizationIds: string[]) => void;
+  label: string;
+  values: string[];
+  selected: string[];
+  onChange: (values: string[]) => void;
+  placeholder?: string;
 }) {
-  if (organizations.length <= 1) {
-    return null;
-  }
+  const [query, setQuery] = useState("");
+  const filtered = values.filter((value) =>
+    value.toLowerCase().includes(query.trim().toLowerCase()),
+  );
+
+  const toggle = (value: string) => {
+    onChange(
+      selected.includes(value) ? selected.filter((v) => v !== value) : [...selected, value],
+    );
+  };
+
+  if (values.length === 0) return null;
 
   return (
     <div className="space-y-2">
-      <Label>Organization</Label>
-      <p className="text-xs text-muted-foreground">
-        Leave unselected to include all organizations.
-      </p>
-      <div className="flex flex-wrap gap-2">
-        {organizations.map((organization) => {
-          const isSelected = selectedIds.includes(organization.id);
-          return (
-            <button
-              key={organization.id}
-              type="button"
-              onClick={() =>
-                onChange(
-                  isSelected
-                    ? selectedIds.filter((id) => id !== organization.id)
-                    : [...selectedIds, organization.id],
-                )
-              }
-              className={`rounded-md border px-3 py-1.5 text-sm transition-colors ${
-                isSelected
-                  ? "border-primary bg-primary/10 text-primary"
-                  : "border-border bg-background hover:bg-muted"
-              }`}
-            >
-              {organization.name}
-            </button>
-          );
-        })}
+      <Label>{label}</Label>
+      {values.length > 6 && (
+        <div className="relative">
+          <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder={placeholder ?? `Search ${label.toLowerCase()}...`}
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            className="h-8 pl-8 text-sm"
+          />
+        </div>
+      )}
+      <div className="max-h-36 space-y-1 overflow-y-auto rounded-md border p-2">
+        {filtered.length === 0 ? (
+          <p className="px-1 py-2 text-xs text-muted-foreground">No matches.</p>
+        ) : (
+          filtered.map((value) => {
+            const isSelected = selected.includes(value);
+            return (
+              <button
+                key={value}
+                type="button"
+                onClick={() => toggle(value)}
+                className={`flex w-full cursor-pointer items-center rounded px-2 py-1.5 text-left text-sm transition-colors ${
+                  isSelected ? "bg-primary/10 text-primary" : "hover:bg-muted"
+                }`}
+              >
+                <span className="truncate">{value}</span>
+              </button>
+            );
+          })
+        )}
       </div>
+      {selected.length > 0 && (
+        <p className="text-xs text-muted-foreground">{selected.length} selected</p>
+      )}
     </div>
   );
 }
 
-function toggleValue<T extends string>(values: T[], value: T): T[] {
-  return values.includes(value) ? values.filter((v) => v !== value) : [...values, value];
-}
-
-function FilterChipGroup<T extends string>({
+function StatusToggleGroup<T extends string>({
   label,
   values,
   selected,
@@ -97,6 +115,12 @@ function FilterChipGroup<T extends string>({
   selected: T[];
   onChange: (values: T[]) => void;
 }) {
+  const toggle = (value: T) => {
+    onChange(
+      selected.includes(value) ? selected.filter((v) => v !== value) : [...selected, value],
+    );
+  };
+
   return (
     <div className="space-y-2">
       <Label>{label}</Label>
@@ -107,8 +131,8 @@ function FilterChipGroup<T extends string>({
             <button
               key={value}
               type="button"
-              onClick={() => onChange(toggleValue(selected, value))}
-              className={`rounded-md border px-3 py-1.5 text-sm transition-colors ${
+              onClick={() => toggle(value)}
+              className={`cursor-pointer rounded-md border px-3 py-1.5 text-sm capitalize transition-colors ${
                 isSelected
                   ? "border-primary bg-primary/10 text-primary"
                   : "border-border bg-background hover:bg-muted"
@@ -126,11 +150,28 @@ function FilterChipGroup<T extends string>({
 export function SpaceFilters({
   open,
   onOpenChange,
-  filters,
-  onFiltersChange,
+  appliedFilters,
+  onApplyFilters,
   options,
 }: SpaceFiltersProps) {
-  const activeCount = Object.values(filters).reduce((sum, arr) => sum + arr.length, 0);
+  const [draft, setDraft] = useState<SpaceFiltersState>(appliedFilters);
+
+  useEffect(() => {
+    if (open) {
+      setDraft(appliedFilters);
+    }
+  }, [open, appliedFilters]);
+
+  const activeCount = Object.values(draft).reduce((sum, arr) => sum + arr.length, 0);
+
+  const handleApply = () => {
+    onApplyFilters(draft);
+    onOpenChange(false);
+  };
+
+  const handleClear = () => {
+    setDraft(emptySpaceFilters);
+  };
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -138,63 +179,84 @@ export function SpaceFilters({
         <SheetHeader>
           <SheetTitle>Filters</SheetTitle>
           <SheetDescription>
-            Refine the Spaces list. {activeCount > 0 && `${activeCount} active.`}
+            Adjust filters, then click Apply Filters. Changes do not take effect until applied.
           </SheetDescription>
         </SheetHeader>
 
         <div className="space-y-6 overflow-y-auto px-6 py-4">
-          <OrganizationFilterGroup
-            organizations={options.organizations}
-            selectedIds={filters.organizationIds}
-            onChange={(organizationIds) => onFiltersChange({ ...filters, organizationIds })}
-          />
-          <FilterChipGroup
+          {options.organizations.length > 1 && (
+            <div className="space-y-2">
+              <Label>Organization</Label>
+              <div className="max-h-36 space-y-1 overflow-y-auto rounded-md border p-2">
+                {options.organizations.map((org) => {
+                  const isSelected = draft.organizationIds.includes(org.id);
+                  return (
+                    <button
+                      key={org.id}
+                      type="button"
+                      onClick={() =>
+                        setDraft({
+                          ...draft,
+                          organizationIds: isSelected
+                            ? draft.organizationIds.filter((id) => id !== org.id)
+                            : [...draft.organizationIds, org.id],
+                        })
+                      }
+                      className={`flex w-full cursor-pointer items-center rounded px-2 py-1.5 text-left text-sm transition-colors ${
+                        isSelected ? "bg-primary/10 text-primary" : "hover:bg-muted"
+                      }`}
+                    >
+                      {org.name}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          <SearchableMultiSelect
             label="Campus"
             values={options.campuses}
-            selected={filters.campus}
-            onChange={(campus) => onFiltersChange({ ...filters, campus })}
+            selected={draft.campus}
+            onChange={(campus) => setDraft({ ...draft, campus })}
           />
-          <FilterChipGroup
+          <SearchableMultiSelect
             label="Building"
             values={options.buildings}
-            selected={filters.building}
-            onChange={(building) => onFiltersChange({ ...filters, building })}
+            selected={draft.building}
+            onChange={(building) => setDraft({ ...draft, building })}
           />
-          <FilterChipGroup
+          <SearchableMultiSelect
             label="Space Type"
             values={options.spaceTypes}
-            selected={filters.spaceType}
-            onChange={(spaceType) => onFiltersChange({ ...filters, spaceType })}
+            selected={draft.spaceType}
+            onChange={(spaceType) => setDraft({ ...draft, spaceType })}
           />
-          <FilterChipGroup
+          <StatusToggleGroup
             label="Lifecycle Status"
             values={["upcoming", "due", "overdue"] as LifecycleStatus[]}
-            selected={filters.lifecycleStatus}
-            onChange={(lifecycleStatus) => onFiltersChange({ ...filters, lifecycleStatus })}
+            selected={draft.lifecycleStatus}
+            onChange={(lifecycleStatus) => setDraft({ ...draft, lifecycleStatus })}
           />
-          <FilterChipGroup
+          <StatusToggleGroup
             label="Planning Status"
             values={["unplanned", "scheduled", "deferred", "completed"] as PlanningStatus[]}
-            selected={filters.planningStatus}
-            onChange={(planningStatus) => onFiltersChange({ ...filters, planningStatus })}
+            selected={draft.planningStatus}
+            onChange={(planningStatus) => setDraft({ ...draft, planningStatus })}
           />
-          <FilterChipGroup
+          <SearchableMultiSelect
             label="Refresh Year"
             values={options.years}
-            selected={filters.year}
-            onChange={(year) => onFiltersChange({ ...filters, year })}
+            selected={draft.year}
+            onChange={(year) => setDraft({ ...draft, year })}
           />
         </div>
 
         <SheetFooter>
-          <Button
-            variant="outline"
-            onClick={() => onFiltersChange(emptySpaceFilters)}
-            disabled={activeCount === 0}
-          >
-            Clear all
+          <Button variant="outline" onClick={handleClear} disabled={activeCount === 0}>
+            Clear
           </Button>
-          <Button onClick={() => onOpenChange(false)}>Apply filters</Button>
+          <Button onClick={handleApply}>Apply Filters</Button>
         </SheetFooter>
       </SheetContent>
     </Sheet>
@@ -213,17 +275,32 @@ export function ActiveFilterChips({
   const organizationNames = new Map(
     organizationOptions.map((organization) => [organization.id, organization.name]),
   );
-  const chips: { key: keyof SpaceFiltersState; value: string; label: string }[] = [];
+
+  const chipLabels: Array<{ key: keyof SpaceFiltersState; value: string; label: string }> = [];
 
   (Object.keys(filters) as (keyof SpaceFiltersState)[]).forEach((key) => {
     filters[key].forEach((value) => {
-      const label =
+      const prefix =
+        key === "organizationIds"
+          ? "Organization"
+          : key === "campus"
+            ? "Campus"
+            : key === "building"
+              ? "Building"
+              : key === "spaceType"
+                ? "Type"
+                : key === "lifecycleStatus"
+                  ? "Lifecycle"
+                  : key === "planningStatus"
+                    ? "Planning"
+                    : "Year";
+      const display =
         key === "organizationIds" ? (organizationNames.get(value) ?? value) : value;
-      chips.push({ key, value, label });
+      chipLabels.push({ key, value, label: `${prefix}: ${display}` });
     });
   });
 
-  if (chips.length === 0) return null;
+  if (chipLabels.length === 0) return null;
 
   const removeChip = (key: keyof SpaceFiltersState, value: string) => {
     onFiltersChange({
@@ -234,14 +311,14 @@ export function ActiveFilterChips({
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      {chips.map((chip) => (
+      {chipLabels.map((chip) => (
         <Badge key={`${chip.key}-${chip.value}`} variant="secondary" className="gap-1 pr-1">
           <span>{chip.label}</span>
           <button
             type="button"
             onClick={() => removeChip(chip.key, chip.value)}
-            className="rounded-sm p-0.5 hover:bg-muted"
-            aria-label={`Remove ${chip.value} filter`}
+            className="cursor-pointer rounded-sm p-0.5 hover:bg-muted"
+            aria-label={`Remove ${chip.label} filter`}
           >
             <X className="h-3 w-3" />
           </button>
