@@ -98,7 +98,7 @@ export const mainNavigation: NavGroup[] = [
 export const lifecycleActions = [
   {
     title: "Add New Spaces",
-    description: "Create a new Space and optional equipment without a CSV upload.",
+    description: "Create a new Space and optional equipment without a file upload.",
     href: "/spaces/new",
   },
   {
@@ -115,6 +115,29 @@ export const lifecycleActions = [
     title: "Correct Inventory",
     description: "Fix data errors without triggering lifecycle events.",
     href: "/spaces",
+  },
+];
+
+export const importActions = [
+  {
+    title: "Add New Spaces",
+    description: "Create Spaces and equipment from a CSV or Excel file.",
+    href: "/imports/add",
+  },
+  {
+    title: "Full Refresh",
+    description: "Retire all active equipment and import the new inventory. No matching.",
+    href: "/imports/full-refresh",
+  },
+  {
+    title: "Partial Refresh",
+    description: "Select the assets being replaced, then import the new equipment.",
+    href: "/imports/partial-refresh",
+  },
+  {
+    title: "Correct Inventory",
+    description: "Fix inventory from a file without creating a refresh event.",
+    href: "/imports/correct",
   },
 ];
 

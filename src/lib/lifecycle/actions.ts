@@ -44,6 +44,9 @@ async function insertAssets(
       install_date: asset.installDate,
       cost: asset.cost,
       refresh_cycle_years: asset.refreshCycleYears,
+      serial_number: asset.serialNumber || null,
+      ip_address: asset.ipAddress || null,
+      mac_address: asset.macAddress || null,
       status: "active",
     });
     if (error) {

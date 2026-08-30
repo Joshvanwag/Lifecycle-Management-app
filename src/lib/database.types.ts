@@ -441,6 +441,36 @@ export type Database = {
         };
         Relationships: [];
       };
+      import_mappings: {
+        Row: {
+          id: string;
+          organization_id: string;
+          name: string;
+          workflow: "add" | "full_refresh" | "partial_refresh" | "correct";
+          column_map: Record<string, string>;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          name: string;
+          workflow: "add" | "full_refresh" | "partial_refresh" | "correct";
+          column_map?: Record<string, string>;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          name?: string;
+          workflow?: "add" | "full_refresh" | "partial_refresh" | "correct";
+          column_map?: Record<string, string>;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {

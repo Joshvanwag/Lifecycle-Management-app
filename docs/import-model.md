@@ -103,6 +103,8 @@ For data corrections only:
 
 Must NOT trigger refresh events or lifecycle resets.
 
+Matching uses serial number, then MAC address. Manufacturer and model are not unique IDs. Unmatched rows with equipment fields are inserted. Empty mapped cells do not overwrite existing values. Forecasts are recalculated from the corrected inventory; `commissioned_date` is not changed.
+
 ## Column Mapping
 
 System recognizes common column headings automatically. Unrecognized columns prompt user:
@@ -123,10 +125,22 @@ Source column: "EQ COST"
 
 Manufacturer/model/location assist matching but are not unique identifiers.
 
-## Phase 1 Status
+## Phase 4 Status
 
-Import functionality not yet implemented. Navigation and documentation prepared.
+User-facing import is available at `/imports`.
+
+Workflow:
+1. Choose Add New Spaces, Full Refresh, Partial Refresh, or Correct Inventory
+2. Select the Space (except Add New Spaces) and, for Partial Refresh, the assets being replaced
+3. Upload CSV or Excel (max 50 MB; all rows in the file)
+4. Inspect headers; recognized columns are mapped automatically
+5. Confirm or fix remaining columns, optionally save the mapping
+6. Process
+
+Writes use the signed-in session and RLS (`can_write_organization`). Service role is not used for in-app imports. The Asset QT CLI script above remains a development tool.
+
+Reusable mappings are stored in `import_mappings` per organization and workflow.
 
 ## Server-Side Processing
 
-Imports should be processed server-side using service role credentials (never exposed to browser). Large files processed in batches with progress feedback.
+Imports are processed in Next.js server actions. The browser keeps the file and re-sends it for preview and process; nothing is stored as a temp upload. The upload limit is 50 MB so a full university inventory can go in one sheet. Larger files should be split. Background processing for even larger jobs is still an open question.

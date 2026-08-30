@@ -5,6 +5,9 @@ export interface AssetInput {
   installDate: string;
   cost: number;
   refreshCycleYears: number;
+  serialNumber?: string;
+  ipAddress?: string;
+  macAddress?: string;
 }
 
 export function parseMoney(value: FormDataEntryValue | null): number {

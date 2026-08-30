@@ -27,6 +27,8 @@ Use Supabase for PostgreSQL, authentication, MFA, SSO, and RLS. No separate API 
 
 Imports, lifecycle updates, financial calculations, and admin functions run server-side via Next.js with service role credentials.
 
+**Superseded in part:** User-facing lifecycle and import writes use the signed-in session (ADR-026, ADR-027). Service role remains for admin and CLI tools.
+
 **Rationale:** Security requirement; never expose service role to browser.
 
 ## ADR-004: Space as Primary Lifecycle Object
@@ -235,3 +237,21 @@ Partial Refresh writes `individual_replacement` when exactly one asset is select
 Add Space, refresh, correct-inventory, and planning updates run as Next.js server actions with the user session. RLS `can_write_organization()` enforces owner/admin/member. Service role is not used to bypass RLS.
 
 **Rationale:** Tenant isolation must hold for lifecycle mutations.
+
+## ADR-027: User Imports Use the Signed-In Session
+
+**Date:** Phase 4  
+**Status:** Accepted
+
+CSV/Excel import processing runs as Next.js server actions with the user session. RLS `can_write_organization()` enforces owner/admin/member. Service role is not used to bypass RLS. The development Asset QT script remains a service-role CLI tool.
+
+**Rationale:** Same tenant rule as ADR-026. User-facing imports are lifecycle writes.
+
+## ADR-028: SheetJS for Excel Import
+
+**Date:** Phase 4  
+**Status:** Accepted
+
+Use the `xlsx` (SheetJS) package to parse `.xlsx` / `.xls` uploads. CSV is parsed without a library.
+
+**Rationale:** Import-model requires Excel. SheetJS reads workbook bytes in a Next.js server action without a separate conversion service.
