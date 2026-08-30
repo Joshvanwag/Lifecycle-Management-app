@@ -36,6 +36,7 @@
   - [x] Minimum contributor threshold (system setting)
   - [x] Secure public RPC (`get_benchmark_metrics_public`)
   - [x] Benchmarking RLS (no cross-tenant operational access)
+- [x] Benchmark tab (`/benchmark`) for your-org vs industry aggregates
 
 ## Phase 3 — Core Lifecycle (Complete)
 

@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { ChevronDown, RefreshCw, Shield } from "lucide-react";
 import { mainNavigation } from "@/config/navigation";
 import { cn } from "@/lib/utils";
@@ -15,13 +14,14 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { lifecycleActions } from "@/config/navigation";
+import { pathMatchesHref, useActivePath } from "@/components/layout/navigation-pending";
 
 interface AppSidebarProps {
   isPlatformAdmin?: boolean;
 }
 
 export function AppSidebar({ isPlatformAdmin = false }: AppSidebarProps) {
-  const pathname = usePathname();
+  const activePath = useActivePath();
 
   return (
     <aside className="flex h-full w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar">
@@ -45,16 +45,16 @@ export function AppSidebar({ isPlatformAdmin = false }: AppSidebarProps) {
             )}
             <ul className="space-y-0.5">
               {group.items.map((item) => {
-                const isActive =
-                  item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
+                const isActive = pathMatchesHref(item.href, activePath);
                 const Icon = item.icon;
 
                 return (
                   <li key={item.href}>
                     <Link
                       href={item.href}
+                      prefetch
                       className={cn(
-                        "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                        "flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                         isActive
                           ? "bg-sidebar-accent text-sidebar-accent-foreground"
                           : "text-sidebar-foreground hover:bg-sidebar-accent/70 hover:text-sidebar-accent-foreground",
@@ -78,9 +78,10 @@ export function AppSidebar({ isPlatformAdmin = false }: AppSidebarProps) {
               <li>
                 <Link
                   href="/admin"
-                  className={cn(
-                    "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                    pathname.startsWith("/admin")
+                  prefetch
+                    className={cn(
+                      "flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                      pathMatchesHref("/admin", activePath)
                       ? "bg-sidebar-accent text-sidebar-accent-foreground"
                       : "text-sidebar-foreground hover:bg-sidebar-accent/70 hover:text-sidebar-accent-foreground",
                   )}

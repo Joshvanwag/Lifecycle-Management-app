@@ -198,7 +198,7 @@ export async function listSpaces(
   organizationName = "",
 ): Promise<ListSpacesResult> {
   const page = Math.max(1, options.page ?? 1);
-  const pageSize = Math.min(100, Math.max(1, options.pageSize ?? 50));
+  const pageSize = Math.min(1000, Math.max(1, options.pageSize ?? 50));
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;
 
@@ -210,6 +210,7 @@ export async function listSpaces(
     )
     .eq("organization_id", organizationId)
     .order("name", { ascending: true })
+    .order("id", { ascending: true })
     .range(from, to);
 
   if (error) {
@@ -252,7 +253,7 @@ export async function getAllSpaces(
   let page = 1;
 
   while (true) {
-    const result = await listSpaces(client, organizationId, { page, pageSize: 100 }, organizationName);
+    const result = await listSpaces(client, organizationId, { page, pageSize: 1000 }, organizationName);
     spaces.push(...result.spaces);
     if (spaces.length >= result.totalCount) {
       break;
@@ -322,7 +323,7 @@ export async function listAssets(
   organizationName = "",
 ): Promise<ListAssetsResult> {
   const page = Math.max(1, options.page ?? 1);
-  const pageSize = Math.min(100, Math.max(1, options.pageSize ?? 50));
+  const pageSize = Math.min(1000, Math.max(1, options.pageSize ?? 50));
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;
   const search = options.search?.trim() ?? "";
@@ -333,6 +334,7 @@ export async function listAssets(
     .eq("organization_id", organizationId)
     .eq("status", "active")
     .order("manufacturer", { ascending: true })
+    .order("id", { ascending: true })
     .range(from, to);
 
   if (search) {
@@ -370,7 +372,7 @@ export async function getAllAssets(
     const result = await listAssets(
       client,
       organizationId,
-      { page, pageSize: 100 },
+      { page, pageSize: 1000 },
       organizationName,
     );
     assets.push(...result.assets);

@@ -14,7 +14,8 @@ Polished modern SaaS application inspired by Canvas, Zoho, and Zen-style enterpr
 ```
 
 - Persistent left sidebar (primary navigation)
-- Simple top bar with page title
+- Sidebar highlights the clicked item immediately; main content shows a loading indicator until the next page is ready
+- Simple top bar with organization and user controls
 - User/account controls top-right
 - Main content workspace
 
@@ -22,8 +23,8 @@ Polished modern SaaS application inspired by Canvas, Zoho, and Zen-style enterpr
 
 - Overview
 - Lifecycle: Spaces, Assets, Forecast
-- Planning: Capital Plan, Reports
-- Data: Imports
+- Planning: Capital Plan, Reports, Benchmark
+- Data: Correct Inventory, Imports
 - Settings
 
 ## Design Principles

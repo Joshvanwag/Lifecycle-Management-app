@@ -22,13 +22,14 @@ export default async function CorrectInventoryPage({
   const query = await searchParams;
   const auth = await requireAuthContext();
   const supabase = await createClient();
-  const space = await getSpaceById(supabase, auth.organization.id, id);
+  const [space, assets] = await Promise.all([
+    getSpaceById(supabase, auth.organization.id, id),
+    getAssetsBySpaceId(supabase, auth.organization.id, id),
+  ]);
 
   if (!space) {
     notFound();
   }
-
-  const assets = await getAssetsBySpaceId(supabase, auth.organization.id, id);
 
   return (
     <AuthenticatedDashboardShell title={`Correct inventory · ${space.name}`} description={space.locationLabel}>

@@ -208,7 +208,7 @@ Organization name, campus/building/floor/room names or codes, Space name, IP/MAC
 **After Phase 2 (when core lifecycle data is stable):**
 
 - Aggregation pipeline (scheduled job / server action)
-- Benchmark dashboard UI
-- Settings UI for benchmark participation toggle
+- [x] Benchmark dashboard UI (`/benchmark`) — your-org metrics now; peer columns use `get_benchmark_metrics_public()`
+- [x] Settings UI for benchmark participation toggle
 
 Space Type and Asset Category benchmarking **model** is included now; full UI may follow later.

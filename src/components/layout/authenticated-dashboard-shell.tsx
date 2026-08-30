@@ -1,31 +1,21 @@
-import { requireAuthContext } from "@/lib/auth/context";
-import { DashboardShell } from "@/components/layout/dashboard-shell";
-
 interface AuthenticatedDashboardShellProps {
   children: React.ReactNode;
   title: string;
   description?: string;
 }
 
-export async function AuthenticatedDashboardShell({
+export function AuthenticatedDashboardShell({
   children,
   title,
   description,
 }: AuthenticatedDashboardShellProps) {
-  const auth = await requireAuthContext();
-
   return (
-    <DashboardShell
-      title={title}
-      description={description}
-      userDisplayName={auth.displayName}
-      userInitials={auth.initials}
-      organizationName={auth.organization.name}
-      isPlatformAdmin={auth.isPlatformAdmin}
-      organizations={auth.organizations}
-      activeOrganizationId={auth.organization.id}
-    >
+    <div className="space-y-6">
+      <div className="min-w-0">
+        <h1 className="truncate text-lg font-semibold tracking-tight">{title}</h1>
+        {description && <p className="truncate text-sm text-muted-foreground">{description}</p>}
+      </div>
       {children}
-    </DashboardShell>
+    </div>
   );
 }

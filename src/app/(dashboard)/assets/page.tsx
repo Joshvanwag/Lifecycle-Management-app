@@ -1,8 +1,7 @@
 import { AuthenticatedDashboardShell } from "@/components/layout/authenticated-dashboard-shell";
 import { AssetsDashboard } from "@/components/assets/assets-dashboard";
 import { requireAuthContext } from "@/lib/auth/context";
-import { loadPlatformDashboardData } from "@/lib/data/platform-dashboard";
-import { getAssetChartSource, listAssets } from "@/lib/data/spaces";
+import { getAllSpaces, getAssetChartSource, listAssets } from "@/lib/data/spaces";
 import { createClient } from "@/lib/supabase/server";
 
 const PAGE_SIZE = 50;
@@ -18,24 +17,8 @@ export default async function AssetsPage({
   const page = Math.max(1, Number.parseInt(params.page ?? "1", 10) || 1);
   const search = params.q?.trim() ?? "";
 
-  if (auth.isPlatformAdmin) {
-    const { spaces, assets, organizationOptions } = await loadPlatformDashboardData(auth, supabase);
-    return (
-      <AuthenticatedDashboardShell
-        title="Assets"
-        description={`${assets.length} assets across ${organizationOptions.length} customer organizations`}
-      >
-        <AssetsDashboard
-          spaces={spaces}
-          assets={assets}
-          organizationOptions={organizationOptions}
-        />
-      </AuthenticatedDashboardShell>
-    );
-  }
-
-  const [{ spaces, organizationOptions }, paged, chartAssets] = await Promise.all([
-    loadPlatformDashboardData(auth, supabase, { includeAssets: false }),
+  const [spaces, paged, chartAssets] = await Promise.all([
+    getAllSpaces(supabase, auth.organization.id, auth.organization.name),
     listAssets(
       supabase,
       auth.organization.id,
@@ -44,6 +27,7 @@ export default async function AssetsPage({
     ),
     getAssetChartSource(supabase, auth.organization.id),
   ]);
+  const organizationOptions = [{ id: auth.organization.id, name: auth.organization.name }];
 
   return (
     <AuthenticatedDashboardShell

@@ -6,6 +6,7 @@ import {
   FileUp,
   LayoutDashboard,
   Package,
+  Scale,
   Settings,
   TrendingUp,
 } from "lucide-react";
@@ -70,6 +71,12 @@ export const mainNavigation: NavGroup[] = [
         href: "/reports",
         icon: FileBarChart,
         description: "Lifecycle and portfolio reports",
+      },
+      {
+        title: "Benchmark",
+        href: "/benchmark",
+        icon: Scale,
+        description: "Compare with anonymized industry peers",
       },
     ],
   },

@@ -7,7 +7,10 @@ import { createClient } from "@/lib/supabase/server";
 export default async function CapitalPlanPage() {
   const auth = await requireAuthContext();
   const supabase = await createClient();
-  const { spaces } = await loadPlatformDashboardData(auth, supabase, { includeAssets: false });
+  const { spaces } = await loadPlatformDashboardData(auth, supabase, {
+    includeAssets: false,
+    activeOrganizationOnly: true,
+  });
 
   return (
     <AuthenticatedDashboardShell

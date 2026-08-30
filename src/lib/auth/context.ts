@@ -3,7 +3,6 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { ACTIVE_ORGANIZATION_COOKIE } from "@/lib/auth/constants";
 import { pickDefaultActiveOrganization } from "@/lib/auth/dev-org";
-import { userHasDevOrgAccess } from "@/lib/auth/platform-admin";
 import { createClient } from "@/lib/supabase/server";
 import type { Organization, OrganizationMembership } from "@/lib/database.types";
 
@@ -55,13 +54,23 @@ export const getAuthContext = cache(async (): Promise<AuthContext | null> => {
     return null;
   }
 
-  const isPlatformAdmin = await userHasDevOrgAccess();
+  const [adminResult, membershipResult] = await Promise.all([
+    (
+      supabase as unknown as {
+        rpc: (
+          fn: "is_platform_admin",
+        ) => Promise<{ data: boolean | null; error: { message: string } | null }>;
+      }
+    ).rpc("is_platform_admin"),
+    supabase
+      .from("organization_memberships")
+      .select("id, organization_id, user_id, role, created_at")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: true }),
+  ]);
+  const isPlatformAdmin = !adminResult.error && adminResult.data === true;
 
-  const { data: membershipRows, error: membershipError } = await supabase
-    .from("organization_memberships")
-    .select("id, organization_id, user_id, role, created_at")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: true });
+  const { data: membershipRows, error: membershipError } = membershipResult;
 
   const memberships = (membershipRows ?? []) as OrganizationMembership[];
 
