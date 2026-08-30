@@ -28,7 +28,7 @@ export type ReportMetric =
   | "space-inventory"
   | "asset-inventory";
 
-export type ReportChartType = "pie" | "ranked-list" | "bar" | "grouped-bar" | "table";
+export type ReportChartType = "pie" | "ranked-list" | "bar" | "line" | "grouped-bar" | "table";
 
 export interface CustomReportDefinition {
   name: string;
@@ -58,6 +58,7 @@ export const CHART_TYPE_OPTIONS: Array<{ value: ReportChartType; label: string }
   { value: "pie", label: "Pie chart" },
   { value: "ranked-list", label: "Ranked list" },
   { value: "bar", label: "Bar chart" },
+  { value: "line", label: "Line chart" },
   { value: "grouped-bar", label: "Grouped bar chart" },
   { value: "table", label: "Table" },
 ];
@@ -74,7 +75,7 @@ export function chartTypesForMetric(metric: ReportMetric): ReportChartType[] {
     case "asset-age-buckets":
       return ["ranked-list", "bar", "table"];
     case "replacement-by-year":
-      return ["bar", "ranked-list", "table"];
+      return ["line", "bar", "ranked-list", "table"];
     case "recommended-vs-planned":
       return ["grouped-bar", "table"];
     case "space-inventory":

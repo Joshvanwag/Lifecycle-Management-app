@@ -89,7 +89,7 @@ Implemented globally in `src/app/globals.css`.
 - Repeating the same chart on different pages is acceptable when context differs (e.g. Replacement Need by Year on Overview, Forecast, Space Detail)
 - Customize colors from each chart's **⋮** options menu
 
-Shared components: `LabeledBarChart`, `GroupedBarChart`, `DistributionChart`, `ChartCard`.
+Shared components: `LabeledBarChart`, `GroupedBarChart`, `LineSeriesChart`, `RankedListChart`, `PieDistributionChart`, `DistributionChart`, `ChartCard`.
 
 ## Filtering
 

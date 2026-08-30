@@ -21,6 +21,7 @@ import {
 } from "@/lib/reports/custom-report";
 import { GroupedBarChart } from "@/components/charts/grouped-bar-chart";
 import { LabeledBarChart } from "@/components/charts/labeled-bar-chart";
+import { LineSeriesChart } from "@/components/charts/line-series-chart";
 import { PieDistributionChart } from "@/components/charts/pie-distribution-chart";
 import { RankedListChart } from "@/components/charts/ranked-list-chart";
 import { FilterToolbar } from "@/components/dashboard/filter-toolbar";
@@ -62,6 +63,8 @@ function ReportChartPreview({
   spaces: Space[];
   assets: Asset[];
 }) {
+  const [drillName, setDrillName] = useState<string | null>(null);
+
   const { filteredSpaces, filteredAssets } = useMemo(
     () => buildFilteredDataset(spaces, assets, definition.search, definition.filters),
     [spaces, assets, definition.search, definition.filters],
@@ -79,13 +82,29 @@ function ReportChartPreview({
   ]);
   const isCurrency = currencyMetrics.has(definition.metric);
 
+  const simpleData = useMemo(() => {
+    if (!drillName) return dataset.simple.map((row) => ({ name: row.name, value: row.value }));
+    return dataset.simple
+      .filter((row) => row.name === drillName)
+      .map((row) => ({ name: row.name, value: row.value }));
+  }, [dataset.simple, drillName]);
+
+  const groupedData = useMemo(() => {
+    if (!drillName) return dataset.grouped;
+    const year = Number(drillName);
+    return dataset.grouped.filter((row) => row.year === year);
+  }, [dataset.grouped, drillName]);
+
   if (definition.chartType === "table") {
     const columns = dataset.tableRows[0] ? Object.keys(dataset.tableRows[0]) : [];
+    const previewRows = dataset.tableRows.slice(0, 100);
     return (
       <Card>
         <CardHeader>
           <CardTitle>{definition.name}</CardTitle>
-          <CardDescription>{dataset.tableRows.length} rows</CardDescription>
+          <CardDescription>
+            Showing {previewRows.length} of {dataset.tableRows.length} rows
+          </CardDescription>
         </CardHeader>
         <CardContent className="p-0">
           <Table>
@@ -97,7 +116,7 @@ function ReportChartPreview({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {dataset.tableRows.slice(0, 100).map((row, index) => (
+              {previewRows.map((row, index) => (
                 <TableRow key={index}>
                   {columns.map((column) => (
                     <TableCell key={column}>{row[column]}</TableCell>
@@ -111,14 +130,24 @@ function ReportChartPreview({
     );
   }
 
+  const drillProps = {
+    selectedName: drillName,
+    drillLabel: drillName ?? undefined,
+    onReset: drillName ? () => setDrillName(null) : undefined,
+  };
+
   if (definition.chartType === "grouped-bar") {
     return (
       <GroupedBarChart
         title={definition.name}
         description="Recommended vs planned by year"
-        data={dataset.grouped}
+        data={groupedData}
         settings={settings}
         onSettingsChange={onSettingsChange}
+        onBarClick={(year) => setDrillName(String(year))}
+        selectedYear={drillName ? Number(drillName) : null}
+        drillLabel={drillProps.drillLabel}
+        onReset={drillProps.onReset}
       />
     );
   }
@@ -128,7 +157,10 @@ function ReportChartPreview({
       <PieDistributionChart
         title={definition.name}
         description="Distribution for filtered portfolio data"
-        data={dataset.simple.map((row) => ({
+        data={(drillName
+          ? dataset.simple.filter((row) => row.name === drillName)
+          : dataset.simple
+        ).map((row) => ({
           name: row.name,
           value: row.value,
           percentage: row.percentage ?? 0,
@@ -138,6 +170,10 @@ function ReportChartPreview({
         }
         settings={settings}
         onSettingsChange={onSettingsChange}
+        onSegmentClick={setDrillName}
+        selectedName={drillName}
+        drillLabel={drillProps.drillLabel}
+        onReset={drillProps.onReset}
       />
     );
   }
@@ -147,10 +183,27 @@ function ReportChartPreview({
       <RankedListChart
         title={definition.name}
         description="Ranked values for filtered portfolio data"
-        data={dataset.simple.map((row) => ({ name: row.name, value: row.value }))}
+        data={simpleData}
         valueFormatter={(value) => (isCurrency ? formatCurrency(value) : String(value))}
         settings={settings}
         onSettingsChange={onSettingsChange}
+        onItemClick={setDrillName}
+        {...drillProps}
+      />
+    );
+  }
+
+  if (definition.chartType === "line") {
+    return (
+      <LineSeriesChart
+        title={definition.name}
+        description="Trend for filtered portfolio data"
+        data={simpleData}
+        valueFormatter={(value) => (isCurrency ? formatCurrency(value) : String(value))}
+        settings={settings}
+        onSettingsChange={onSettingsChange}
+        onPointClick={setDrillName}
+        {...drillProps}
       />
     );
   }
@@ -159,7 +212,7 @@ function ReportChartPreview({
     <LabeledBarChart
       title={definition.name}
       description="Bar chart for filtered portfolio data"
-      data={dataset.simple.map((row) => ({ name: row.name, value: row.value }))}
+      data={simpleData}
       valueFormatter={(value) => (isCurrency ? formatCurrency(value) : String(value))}
       labelFormatter={(value) => (isCurrency ? formatCurrency(value) : String(value))}
       colorScheme={
@@ -172,8 +225,15 @@ function ReportChartPreview({
       }
       settings={settings}
       onSettingsChange={onSettingsChange}
+      onBarClick={setDrillName}
+      {...drillProps}
     />
   );
+}
+
+function loadSavedReport(report: SavedReport) {
+  const parsed = parseCustomReportFilters(report.filters);
+  return { ...parsed, name: report.name };
 }
 
 export function ReportsHub({ spaces, assets, savedReports }: ReportsHubProps) {
@@ -206,29 +266,78 @@ export function ReportsHub({ spaces, assets, savedReports }: ReportsHubProps) {
     return buildReportDataset(activeReport.metric, scoped.filteredSpaces, scoped.filteredAssets);
   }, [activeReport, spaces, assets]);
 
+  const applyReport = (report: CustomReportDefinition) => {
+    setActiveReport(report);
+    setActiveSettings(report.settings);
+    setSearch(report.search);
+    setAppliedFilters(report.filters);
+    setDraft(report);
+  };
+
   const createReport = () => {
     const chartType = compatibleChartTypes.includes(draft.chartType)
       ? draft.chartType
       : compatibleChartTypes[0] ?? "table";
 
-    const nextReport: CustomReportDefinition = {
+    applyReport({
       ...draft,
       chartType,
       search,
       filters: appliedFilters,
-    };
-    setActiveReport(nextReport);
-    setActiveSettings(nextReport.settings);
+    });
   };
 
   return (
     <div className="space-y-6">
+      {savedReports.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Your saved reports</CardTitle>
+            <CardDescription>Open a saved chart configuration</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {savedReports.map((report) => {
+                const parsed = loadSavedReport(report);
+                const metricLabel =
+                  REPORT_METRIC_OPTIONS.find((option) => option.value === parsed.metric)?.label ??
+                  parsed.metric;
+                return (
+                  <div
+                    key={report.id}
+                    className="flex flex-col justify-between rounded-lg border p-4"
+                  >
+                    <button
+                      type="button"
+                      className="cursor-pointer text-left"
+                      onClick={() => applyReport(parsed)}
+                    >
+                      <p className="font-medium">{report.name}</p>
+                      <p className="mt-1 text-xs text-muted-foreground">{metricLabel}</p>
+                      <p className="mt-1 text-xs capitalize text-muted-foreground">
+                        {parsed.chartType.replace("-", " ")}
+                      </p>
+                    </button>
+                    <form action={removeSavedReport} className="mt-3">
+                      <input type="hidden" name="reportId" value={report.id} />
+                      <Button type="submit" variant="ghost" size="sm" className="cursor-pointer px-0">
+                        Delete
+                      </Button>
+                    </form>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <Card>
         <CardHeader>
           <CardTitle>Build a custom report</CardTitle>
           <CardDescription>
             Filter your portfolio, choose a metric and chart type, then customize display settings
-            from the chart&apos;s settings icon.
+            from the chart&apos;s settings icon after creating the chart.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -317,6 +426,7 @@ export function ReportsHub({ spaces, assets, savedReports }: ReportsHubProps) {
       {activeReport && (
         <div className="space-y-4">
           <ReportChartPreview
+            key={`${activeReport.name}-${activeReport.metric}-${activeReport.chartType}`}
             definition={activeReport}
             settings={activeSettings}
             onSettingsChange={setActiveSettings}
@@ -338,65 +448,19 @@ export function ReportsHub({ spaces, assets, savedReports }: ReportsHubProps) {
             >
               Export Excel
             </Button>
-          </div>
-        </div>
-      )}
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Saved reports</CardTitle>
-          <CardDescription>Reuse a named report with its filters, chart type, and settings</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {activeReport && (
-            <form action={saveCustomReport} className="flex flex-wrap items-end gap-3">
+            <form action={saveCustomReport}>
               {Object.entries(
                 serializeCustomReport({ ...activeReport, settings: activeSettings }),
               ).map(([key, value]) => (
                 <input key={key} type="hidden" name={key} value={value} />
               ))}
-              <Button type="submit" className="cursor-pointer">
-                Save current report
+              <Button type="submit" variant="secondary" className="cursor-pointer">
+                Save report
               </Button>
             </form>
-          )}
-
-          {savedReports.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No saved reports yet.</p>
-          ) : (
-            <ul className="space-y-2 text-sm">
-              {savedReports.map((report) => (
-                <li
-                  key={report.id}
-                  className="flex items-center justify-between gap-3 rounded-lg border px-3 py-2"
-                >
-                  <button
-                    type="button"
-                    className="cursor-pointer text-left font-medium text-primary hover:underline"
-                    onClick={() => {
-                      const parsed = parseCustomReportFilters(report.filters);
-                      const loaded = { ...parsed, name: report.name };
-                      setActiveReport(loaded);
-                      setActiveSettings(loaded.settings);
-                      setSearch(loaded.search);
-                      setAppliedFilters(loaded.filters);
-                      setDraft(loaded);
-                    }}
-                  >
-                    {report.name}
-                  </button>
-                  <form action={removeSavedReport}>
-                    <input type="hidden" name="reportId" value={report.id} />
-                    <Button type="submit" variant="ghost" size="sm" className="cursor-pointer">
-                      Delete
-                    </Button>
-                  </form>
-                </li>
-              ))}
-            </ul>
-          )}
-        </CardContent>
-      </Card>
+          </div>
+        </div>
+      )}
 
       <SpaceFilters
         open={filtersOpen}

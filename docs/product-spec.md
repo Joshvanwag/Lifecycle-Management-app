@@ -56,20 +56,19 @@ One customer organization = one tenant. Users normally belong to one organizatio
 
 - External integrations (ERP, CMMS, ServiceNow, etc.)
 - Asset attachments / document management
-- Custom report builder
 - Full compliance certification (SOC 2, etc.) — design for future readiness
 - Detailed condition scoring
 
-## Reporting Baseline
+## Reporting
 
-Executive Overview, Forecast (including capital planning), Benchmark, and canned Reports answer:
+Executive Overview, Forecast (including capital planning), Benchmark, and **Reports** (custom chart builder) answer:
 
 - What do we own?
 - What needs replacement, when, and at what cost?
 - What is planned vs recommended?
 - How do we compare with industry peers?
 
-Initial report types: Space Capital Plan, Asset Inventory, Average Cost by Space Type, Lifecycle Status, Replacement Need by Year, Manufacturer Summary, Asset Category Summary, Planning Status.
+Reports let users filter portfolio data, name a chart, pick chart type (pie, ranked list, bar, line, grouped bar, or table), tune display settings (numbers, goal line, legend), save configurations, and export CSV/Excel.
 
 ## Navigation and Information Architecture
 

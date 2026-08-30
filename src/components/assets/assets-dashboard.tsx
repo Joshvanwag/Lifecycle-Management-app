@@ -63,6 +63,8 @@ export function AssetsDashboard({
   const [appliedFilters, setAppliedFilters] = useState<SpaceFiltersState>(emptySpaceFilters);
   const [categoryDrill, setCategoryDrill] = useState<string | null>(null);
   const [manufacturerDrill, setManufacturerDrill] = useState<string | null>(null);
+  const [replacementDrill, setReplacementDrill] = useState<string | null>(null);
+  const [ageDrill, setAgeDrill] = useState<string | null>(null);
   const serverPaged = totalCount != null;
 
   const filterOptions = useMemo(
@@ -199,15 +201,29 @@ export function AssetsDashboard({
         <RankedListChart
           title="Replacement Need by Category"
           description="Future replacement cost by asset category"
-          data={replacementByCategory.map((row) => ({ name: row.name, value: row.amount }))}
+          data={(replacementDrill
+            ? replacementByCategory.filter((row) => row.name === replacementDrill)
+            : replacementByCategory
+          ).map((row) => ({ name: row.name, value: row.amount }))}
           valueFormatter={(value) => formatCurrency(value)}
+          onItemClick={setReplacementDrill}
+          selectedName={replacementDrill}
+          drillLabel={replacementDrill ?? undefined}
+          onReset={() => setReplacementDrill(null)}
         />
         <LabeledBarChart
           title="Lifecycle Age Distribution"
           description="Active assets grouped by install age"
-          data={ageBuckets.map((row) => ({ name: row.name, value: row.value }))}
+          data={(ageDrill
+            ? ageBuckets.filter((row) => row.name === ageDrill)
+            : ageBuckets
+          ).map((row) => ({ name: row.name, value: row.value }))}
           valueFormatter={(value) => String(value)}
           labelFormatter={(value) => String(value)}
+          onBarClick={setAgeDrill}
+          selectedName={ageDrill}
+          drillLabel={ageDrill ?? undefined}
+          onReset={() => setAgeDrill(null)}
         />
       </div>
 
