@@ -12,6 +12,7 @@ import {
   YAxis,
 } from "recharts";
 import { ChartCard } from "@/components/charts/chart-card";
+import { CHART_PALETTE } from "@/lib/charts/colors";
 import { formatCompactCurrency, formatCurrency } from "@/lib/utils";
 
 interface GroupedBarChartProps {
@@ -23,8 +24,8 @@ interface GroupedBarChartProps {
 }
 
 const DEFAULT_SERIES = [
-  { key: "recommended" as const, label: "Recommended", color: "hsl(var(--chart-1))" },
-  { key: "planned" as const, label: "Planned", color: "hsl(var(--chart-2))" },
+  { key: "recommended" as const, label: "Recommended", color: CHART_PALETTE[0]! },
+  { key: "planned" as const, label: "Planned", color: CHART_PALETTE[1]! },
 ];
 
 export function GroupedBarChart({

@@ -10,6 +10,7 @@ import {
   LifecycleStatusBadge,
   PlanningStatusBadge,
 } from "@/components/spaces/status-badges";
+import { CHART_PALETTE } from "@/lib/charts/colors";
 import {
   amountInYear,
   computeExtendedMetrics,
@@ -148,7 +149,7 @@ export function ForecastPlanningDashboard({ spaces, initialYear }: ForecastPlann
           description="Recommended minus planned — positive values show unplanned need"
           data={planningGap}
           series={[
-            { key: "gap", label: "Planning Gap", color: "hsl(var(--chart-10))" },
+            { key: "gap", label: "Planning Gap", color: CHART_PALETTE[9]! },
           ]}
           onBarClick={(year) => setDrill({ level: "year", year })}
         />

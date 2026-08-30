@@ -12,6 +12,7 @@ import {
   YAxis,
 } from "recharts";
 import { ChartCard } from "@/components/charts/chart-card";
+import { CHART_PALETTE } from "@/lib/charts/colors";
 import { formatCompactCurrency, formatCurrency } from "@/lib/utils";
 
 interface LabeledBarChartProps {
@@ -91,7 +92,7 @@ export function LabeledBarChart({
                 onClick={(entry) => onBarClick?.(String(entry.name))}
               >
                 {data.map((entry, index) => (
-                  <Cell key={entry.name} fill={entry.fill ?? `hsl(var(--chart-${(index % 5) + 1}))`} />
+                  <Cell key={entry.name} fill={entry.fill ?? CHART_PALETTE[index % CHART_PALETTE.length]} />
                 ))}
                 <LabelList
                   dataKey="value"
