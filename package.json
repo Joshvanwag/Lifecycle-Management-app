@@ -11,7 +11,8 @@
     "format:check": "prettier --check .",
     "db:seed": "node scripts/seed-demo-data.mjs",
     "db:ensure-dev-org": "node scripts/ensure-dev-org.mjs",
-    "db:import-qt": "node scripts/import-asset-qt.mjs"
+    "db:import-qt": "node scripts/import-asset-qt.mjs",
+    "db:apply-space-costs": "node scripts/apply-space-costs.mjs"
   },
   "dependencies": {
     "@radix-ui/react-avatar": "^1.1.10",

@@ -149,15 +149,12 @@ export function groupRowsBySpace(rows: MappedImportRow[]): Map<string, MappedImp
   return groups;
 }
 
-export function validateColumnMap(map: ColumnMap, workflow: "add" | "full_refresh" | "partial_refresh" | "correct") {
+export function validateColumnMap(map: ColumnMap, workflow: "add" | "full_refresh" | "partial_refresh") {
   const mapped = new Set(Object.values(map).filter(Boolean));
   if (workflow === "add" && !mapped.has("space_name")) {
     throw new Error("Map a column to Space name.");
   }
-  if (
-    (workflow === "full_refresh" || workflow === "partial_refresh" || workflow === "correct") &&
-    mapped.size === 0
-  ) {
+  if ((workflow === "full_refresh" || workflow === "partial_refresh") && mapped.size === 0) {
     throw new Error("Map at least one equipment column.");
   }
 }

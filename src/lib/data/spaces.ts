@@ -7,7 +7,6 @@ import {
   toPlanningStatus,
 } from "@/lib/lifecycle/display";
 import { summarizeForecast } from "@/lib/lifecycle/engine";
-import { backfillMissingSpaceForecasts } from "@/lib/lifecycle/recompute";
 import type { AssetRow, RefreshEventRow } from "@/lib/database.types";
 import type { Asset, DashboardMetrics, RefreshEvent, Space } from "@/lib/types";
 
@@ -180,61 +179,6 @@ async function getForecastComponents(
   return map;
 }
 
-async function maybeBackfillForecasts(
-  client: Client,
-  organizationId: string,
-  rows: SpaceListRow[],
-  componentsBySpace: Map<string, ForecastComponentRow[]>,
-) {
-  const needsBackfill = rows.some((row) => {
-    const components = componentsBySpace.get(row.id) ?? [];
-    const lump = components.find((component) => component.asset_id === null);
-    const priced = components.filter((component) => component.asset_id !== null);
-    const doubleCounted =
-      Boolean(lump) &&
-      priced.length > 0 &&
-      Number(lump?.cost_basis ?? 0) >= Number(row.original_cost) - 0.01;
-    const total = components.reduce((sum, component) => sum + Number(component.forecast_amount), 0);
-    return (
-      components.length === 0 ||
-      doubleCounted ||
-      (Number(row.original_cost) > 0 && total === 0)
-    );
-  });
-
-  if (!needsBackfill) {
-    return componentsBySpace;
-  }
-
-  const { data: organization, error } = await client
-    .from("organizations")
-    .select("default_inflation_rate")
-    .eq("id", organizationId)
-    .maybeSingle();
-
-  if (error || !organization) {
-    return componentsBySpace;
-  }
-
-  try {
-    await backfillMissingSpaceForecasts(
-      client,
-      organizationId,
-      Number(
-        (organization as { default_inflation_rate: number }).default_inflation_rate,
-      ),
-    );
-  } catch {
-    return componentsBySpace;
-  }
-
-  return getForecastComponents(
-    client,
-    organizationId,
-    rows.map((row) => row.id),
-  );
-}
-
 export interface ListSpacesOptions {
   page?: number;
   pageSize?: number;
@@ -274,17 +218,11 @@ export async function listSpaces(
 
   const rows = (data ?? []) as SpaceListRow[];
   const spaceIds = rows.map((row) => row.id);
-  const [locations, assetCounts, initialComponents] = await Promise.all([
+  const [locations, assetCounts, forecastComponents] = await Promise.all([
     getSpaceLocations(client, spaceIds),
     getAssetCounts(client, organizationId, spaceIds),
     getForecastComponents(client, organizationId, spaceIds),
   ]);
-  const forecastComponents = await maybeBackfillForecasts(
-    client,
-    organizationId,
-    rows,
-    initialComponents,
-  );
 
   const spaces = rows.map((row) =>
     mapSpaceRow(
@@ -330,15 +268,12 @@ export async function getAllSpacesForOrganizations(
   organizationIds: string[],
   organizationNames: Map<string, string>,
 ): Promise<Space[]> {
-  const spaces: Space[] = [];
-
-  for (const organizationId of organizationIds) {
-    const organizationName = organizationNames.get(organizationId) ?? "Unknown";
-    const orgSpaces = await getAllSpaces(client, organizationId, organizationName);
-    spaces.push(...orgSpaces);
-  }
-
-  return spaces;
+  const groups = await Promise.all(
+    organizationIds.map((organizationId) =>
+      getAllSpaces(client, organizationId, organizationNames.get(organizationId) ?? "Unknown"),
+    ),
+  );
+  return groups.flat();
 }
 
 function mapAssetRow(row: AssetRow, organizationId: string, organizationName: string): Asset {
@@ -367,25 +302,113 @@ function mapAssetRow(row: AssetRow, organizationId: string, organizationName: st
   };
 }
 
-export async function getAllAssets(
+export interface ListAssetsOptions {
+  page?: number;
+  pageSize?: number;
+  search?: string;
+}
+
+export interface ListAssetsResult {
+  assets: Asset[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
+}
+
+export async function listAssets(
   client: Client,
   organizationId: string,
+  options: ListAssetsOptions = {},
   organizationName = "",
-): Promise<Asset[]> {
-  const { data, error } = await client
+): Promise<ListAssetsResult> {
+  const page = Math.max(1, options.page ?? 1);
+  const pageSize = Math.min(100, Math.max(1, options.pageSize ?? 50));
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+  const search = options.search?.trim() ?? "";
+
+  let query = client
     .from("assets")
-    .select("*")
+    .select("*", { count: "exact" })
     .eq("organization_id", organizationId)
     .eq("status", "active")
-    .order("manufacturer", { ascending: true });
+    .order("manufacturer", { ascending: true })
+    .range(from, to);
+
+  if (search) {
+    const pattern = `%${search.replaceAll("%", "\\%").replaceAll(",", " ")}%`;
+    query = query.or(
+      `manufacturer.ilike.${pattern},model_number.ilike.${pattern},category.ilike.${pattern},serial_number.ilike.${pattern}`,
+    );
+  }
+
+  const { data, error, count } = await query;
 
   if (error) {
     throw new Error(`Failed to load assets: ${error.message}`);
   }
 
-  return ((data ?? []) as AssetRow[]).map((row) =>
-    mapAssetRow(row, organizationId, organizationName),
-  );
+  return {
+    assets: ((data ?? []) as AssetRow[]).map((row) =>
+      mapAssetRow(row, organizationId, organizationName),
+    ),
+    totalCount: count ?? 0,
+    page,
+    pageSize,
+  };
+}
+
+export async function getAllAssets(
+  client: Client,
+  organizationId: string,
+  organizationName = "",
+): Promise<Asset[]> {
+  const assets: Asset[] = [];
+  let page = 1;
+
+  while (true) {
+    const result = await listAssets(
+      client,
+      organizationId,
+      { page, pageSize: 100 },
+      organizationName,
+    );
+    assets.push(...result.assets);
+    if (assets.length >= result.totalCount) {
+      break;
+    }
+    page += 1;
+  }
+
+  return assets;
+}
+
+export async function getAssetChartSource(
+  client: Client,
+  organizationId: string,
+): Promise<Array<{ manufacturer: string; category: string }>> {
+  const pageSize = 1000;
+  const rows: Array<{ manufacturer: string; category: string }> = [];
+  let from = 0;
+
+  for (;;) {
+    const { data, error } = await client
+      .from("assets")
+      .select("manufacturer, category")
+      .eq("organization_id", organizationId)
+      .eq("status", "active")
+      .range(from, from + pageSize - 1);
+
+    if (error) {
+      throw new Error(`Failed to load asset chart source: ${error.message}`);
+    }
+
+    rows.push(...((data ?? []) as Array<{ manufacturer: string; category: string }>));
+    if (!data || data.length < pageSize) break;
+    from += pageSize;
+  }
+
+  return rows;
 }
 
 export async function getAllAssetsForOrganizations(
@@ -393,15 +416,12 @@ export async function getAllAssetsForOrganizations(
   organizationIds: string[],
   organizationNames: Map<string, string>,
 ): Promise<Asset[]> {
-  const assets: Asset[] = [];
-
-  for (const organizationId of organizationIds) {
-    const organizationName = organizationNames.get(organizationId) ?? "Unknown";
-    const orgAssets = await getAllAssets(client, organizationId, organizationName);
-    assets.push(...orgAssets);
-  }
-
-  return assets;
+  const groups = await Promise.all(
+    organizationIds.map((organizationId) =>
+      getAllAssets(client, organizationId, organizationNames.get(organizationId) ?? "Unknown"),
+    ),
+  );
+  return groups.flat();
 }
 
 export async function getSpaceById(
@@ -427,17 +447,11 @@ export async function getSpaceById(
   }
 
   const row = data as SpaceListRow;
-  const [locations, assetCounts, initialComponents] = await Promise.all([
+  const [locations, assetCounts, forecastComponents] = await Promise.all([
     getSpaceLocations(client, [row.id]),
     getAssetCounts(client, organizationId, [row.id]),
     getForecastComponents(client, organizationId, [row.id]),
   ]);
-  const forecastComponents = await maybeBackfillForecasts(
-    client,
-    organizationId,
-    [row],
-    initialComponents,
-  );
 
   return mapSpaceRow(
     row,

@@ -10,11 +10,12 @@ export default async function OverviewPage() {
   const { spaces, organizationOptions, isAggregatedView } = await loadPlatformDashboardData(
     auth,
     supabase,
+    { includeAssets: false },
   );
 
   const description = isAggregatedView
     ? `${spaces.length} Spaces across ${organizationOptions.length} customer organizations`
-    : "Portfolio summary and lifecycle insights";
+    : `Portfolio summary for ${auth.organization.name}`;
 
   return (
     <AuthenticatedDashboardShell title="Overview" description={description}>

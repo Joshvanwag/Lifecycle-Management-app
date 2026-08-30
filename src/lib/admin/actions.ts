@@ -4,7 +4,9 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAuthContext } from "@/lib/auth/context";
 import { INDUSTRY_TYPE_CODES } from "@/lib/benchmark/constants";
+import { recordAuditEvent } from "@/lib/data/audit";
 import { createServiceRoleClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
 
 function requirePlatformAdmin(auth: Awaited<ReturnType<typeof requireAuthContext>>) {
   if (!auth.isPlatformAdmin) {
@@ -95,6 +97,15 @@ export async function createInvitation(formData: FormData) {
   if (error) {
     redirect(`${returnPath}?error=${encodeURIComponent(error.message)}`);
   }
+
+  const supabase = await createClient();
+  await recordAuditEvent(supabase, {
+    organizationId,
+    actorUserId: auth.userId,
+    action: "user_invited",
+    targetType: "invitation",
+    metadata: { email, role },
+  });
 
   revalidatePath("/settings");
   revalidatePath("/admin");

@@ -1,5 +1,7 @@
-export const IMPORT_WORKFLOWS = ["add", "full_refresh", "partial_refresh", "correct"] as const;
-export type ImportWorkflow = (typeof IMPORT_WORKFLOWS)[number];
+export const FILE_IMPORT_WORKFLOWS = ["add", "full_refresh", "partial_refresh"] as const;
+export const IMPORT_WORKFLOWS = [...FILE_IMPORT_WORKFLOWS] as const;
+export type FileImportWorkflow = (typeof FILE_IMPORT_WORKFLOWS)[number];
+export type ImportWorkflow = FileImportWorkflow;
 
 export const IMPORT_FIELD_KEYS = [
   "space_name",
@@ -116,8 +118,6 @@ export function workflowLabel(workflow: ImportWorkflow): string {
       return "Full Refresh";
     case "partial_refresh":
       return "Partial Refresh";
-    case "correct":
-      return "Correct Inventory";
   }
 }
 
@@ -129,8 +129,6 @@ export function workflowDescription(workflow: ImportWorkflow): string {
       return "Retire every active asset in the selected Space and treat the file as the new inventory. Old and new rows are not matched.";
     case "partial_refresh":
       return "Select the assets being replaced, then upload the new equipment. The rest of the Space lifecycle stays in place.";
-    case "correct":
-      return "Fix manufacturer, model, serial, network, or cost data. Matching uses serial number, then MAC. No refresh event is created.";
   }
 }
 

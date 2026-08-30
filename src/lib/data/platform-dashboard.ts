@@ -25,12 +25,17 @@ export interface PlatformDashboardData {
 export async function loadPlatformDashboardData(
   auth: AuthContext,
   supabase: Client,
+  options: { includeAssets?: boolean } = {},
 ): Promise<PlatformDashboardData> {
+  const includeAssets = options.includeAssets ?? true;
+
   if (!auth.isPlatformAdmin) {
     const organizationName = auth.organization.name;
     const [spaces, assets] = await Promise.all([
       getAllSpaces(supabase, auth.organization.id, organizationName),
-      getAllAssets(supabase, auth.organization.id, organizationName),
+      includeAssets
+        ? getAllAssets(supabase, auth.organization.id, organizationName)
+        : Promise.resolve([]),
     ]);
 
     return {
@@ -47,7 +52,9 @@ export async function loadPlatformDashboardData(
 
   const [spaces, assets] = await Promise.all([
     getAllSpacesForOrganizations(supabase, organizationIds, organizationNames),
-    getAllAssetsForOrganizations(supabase, organizationIds, organizationNames),
+    includeAssets
+      ? getAllAssetsForOrganizations(supabase, organizationIds, organizationNames)
+      : Promise.resolve([]),
   ]);
 
   return {

@@ -13,6 +13,7 @@ interface OrganizationSettingsFormProps {
   benchmarkParticipation: boolean;
   defaultRefreshCycleYears: number;
   defaultInflationRate: number;
+  floorsEnabled: boolean;
   canManage: boolean;
   saved?: boolean;
   errorMessage?: string | null;
@@ -24,6 +25,7 @@ export function OrganizationSettingsForm({
   benchmarkParticipation,
   defaultRefreshCycleYears,
   defaultInflationRate,
+  floorsEnabled,
   canManage,
   saved,
   errorMessage,
@@ -93,6 +95,25 @@ export function OrganizationSettingsForm({
 
             <div className="flex items-start gap-3 rounded-lg border p-4">
               <input
+                id="floorsEnabled"
+                name="floorsEnabled"
+                type="checkbox"
+                defaultChecked={floorsEnabled}
+                className="mt-1 h-4 w-4 cursor-pointer rounded border-input"
+              />
+              <div className="space-y-1">
+                <Label htmlFor="floorsEnabled" className="cursor-pointer">
+                  Include floors in location identity
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  Off by default. Turn on only if this organization tracks floor as part of a
+                  Space location.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3 rounded-lg border p-4">
+              <input
                 id="benchmarkParticipation"
                 name="benchmarkParticipation"
                 type="checkbox"
@@ -135,6 +156,10 @@ export function OrganizationSettingsForm({
             <div>
               <dt className="text-sm text-muted-foreground">Default inflation</dt>
               <dd className="font-medium">{(defaultInflationRate * 100).toFixed(1)}%</dd>
+            </div>
+            <div>
+              <dt className="text-sm text-muted-foreground">Floors in location identity</dt>
+              <dd className="font-medium">{floorsEnabled ? "Enabled" : "Disabled"}</dd>
             </div>
             <p className="text-sm text-muted-foreground sm:col-span-2">
               Only organization owners and admins can change these settings.

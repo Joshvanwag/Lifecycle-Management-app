@@ -128,7 +128,21 @@ Customer benchmark reads use `get_benchmark_metrics_public()` RPC.
 
 ### Import Mapping
 
-`import_mappings` stores reusable column mappings per organization and workflow (`add`, `full_refresh`, `partial_refresh`, `correct`). `column_map` is JSON keyed by source header. RLS uses `can_read_organization` / `can_write_organization`.
+`import_mappings` stores reusable column mappings per organization and file workflow (`add`, `full_refresh`, `partial_refresh`). `column_map` is JSON keyed by source header. RLS uses `can_read_organization` / `can_write_organization`.
+
+### Import Jobs
+
+`import_jobs` records completed or failed file imports (workflow, filename, counts). Members can read; writers can insert.
+
+### Admin Audit Events
+
+`admin_audit_events` records invitations, settings changes, and imports. Separate from `refresh_events`.
+
+### Saved Reports
+
+`saved_reports` stores a user-owned report key and filter JSON for the canned Reports page. RLS limits rows to the signed-in user in an organization they can read.
+
+`list_organization_members(organization_id)` returns membership email and role for callers who can read the organization.
 
 ## Relationships
 
@@ -154,6 +168,6 @@ Three valid cost scenarios per Space:
 ## Audit vs Lifecycle History
 
 - **Lifecycle/asset history:** equipment changes, refreshes, cost changes
-- **Administrative audit:** user invites, role changes, imports, settings changes
+- **Administrative audit:** user invites, role changes, imports, settings changes (`admin_audit_events`)
 
-Kept conceptually separate. Elaborate audit UI not in initial phase.
+Kept conceptually separate. Settings shows a recent activity list.

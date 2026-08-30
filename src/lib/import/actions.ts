@@ -2,13 +2,14 @@
 
 import { revalidatePath } from "next/cache";
 import { requireAuthContext } from "@/lib/auth/context";
-import { suggestColumnMap, type ImportWorkflow } from "@/lib/import/fields";
+import { recordAuditEvent } from "@/lib/data/audit";
+import { recordImportJob, type FileImportWorkflow } from "@/lib/data/import-jobs";
+import { isImportWorkflow, suggestColumnMap, type ImportWorkflow } from "@/lib/import/fields";
 import { isImportFieldKey, validateColumnMap, type ColumnMap } from "@/lib/import/map-rows";
 import { parseImportFile } from "@/lib/import/parse";
 import {
   mappedRowsFromFile,
   processAddSpacesImport,
-  processCorrectInventoryImport,
   processFullRefreshImport,
   processPartialRefreshImport,
   type ImportProcessResult,
@@ -104,7 +105,11 @@ export async function runImport(
   const auth = await requireAuthContext();
   requireWriter(auth, "/imports");
 
-  const workflow = String(formData.get("workflow") ?? "") as ImportWorkflow;
+  const workflowRaw = String(formData.get("workflow") ?? "");
+  if (!isImportWorkflow(workflowRaw)) {
+    return { error: "Unknown import action." };
+  }
+  const workflow = workflowRaw;
   const file = formData.get("file");
   const spaceId = String(formData.get("spaceId") ?? "");
   const eventDate = String(formData.get("eventDate") ?? "") || new Date().toISOString().slice(0, 10);
@@ -156,15 +161,6 @@ export async function runImport(
         retiredAssetIds,
         rows,
       });
-    } else if (workflow === "correct") {
-      if (!spaceId) return { error: "Select the Space to correct." };
-      result = await processCorrectInventoryImport(supabase, {
-        organizationId: auth.organization.id,
-        spaceId,
-        refreshCycleYears: defaults.refreshCycleYears,
-        inflationRate: defaults.inflationRate,
-        rows,
-      });
     } else {
       return { error: "Unknown import action." };
     }
@@ -177,6 +173,27 @@ export async function runImport(
       }
     }
 
+    await recordImportJob(supabase, {
+      organizationId: auth.organization.id,
+      createdBy: auth.userId,
+      workflow: workflow as FileImportWorkflow,
+      sourceFilename: file.name,
+      status: "completed",
+      result,
+    });
+    await recordAuditEvent(supabase, {
+      organizationId: auth.organization.id,
+      actorUserId: auth.userId,
+      action: "import_completed",
+      targetType: "import",
+      metadata: {
+        workflow,
+        filename: file.name,
+        spacesCreated: result.spacesCreated,
+        assetsCreated: result.assetsCreated,
+      },
+    });
+
     revalidatePath("/");
     revalidatePath("/spaces");
     revalidatePath("/imports");
@@ -186,7 +203,17 @@ export async function runImport(
 
     return { result };
   } catch (cause) {
-    return { error: cause instanceof Error ? cause.message : "Import failed." };
+    const message = cause instanceof Error ? cause.message : "Import failed.";
+    const supabase = await createClient();
+    await recordImportJob(supabase, {
+      organizationId: auth.organization.id,
+      createdBy: auth.userId,
+      workflow: workflow as FileImportWorkflow,
+      sourceFilename: file instanceof File ? file.name : "unknown",
+      status: "failed",
+      errorMessage: message,
+    });
+    return { error: message };
   }
 }
 

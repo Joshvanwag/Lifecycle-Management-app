@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAuthContext } from "@/lib/auth/context";
 import { INDUSTRY_TYPE_CODES } from "@/lib/benchmark/constants";
+import { recordAuditEvent } from "@/lib/data/audit";
 import type { Database } from "@/lib/database.types";
 import { recalculateOrganizationForecasts } from "@/lib/lifecycle/recompute";
 import { createClient } from "@/lib/supabase/server";
@@ -19,6 +20,7 @@ export async function updateOrganizationSettings(formData: FormData) {
 
   const industryType = String(formData.get("industryType") ?? "").trim();
   const benchmarkParticipation = formData.get("benchmarkParticipation") === "on";
+  const floorsEnabled = formData.get("floorsEnabled") === "on";
   const refreshCycleYears = Number(formData.get("defaultRefreshCycleYears"));
   const inflationPercent = Number(formData.get("defaultInflationPercent"));
 
@@ -39,6 +41,7 @@ export async function updateOrganizationSettings(formData: FormData) {
   const payload: OrganizationUpdate = {
     industry_type: industryType,
     benchmark_participation: benchmarkParticipation,
+    floors_enabled: floorsEnabled,
     default_refresh_cycle_years: Math.round(refreshCycleYears),
     default_inflation_rate: inflationRate,
   };
@@ -59,6 +62,18 @@ export async function updateOrganizationSettings(formData: FormData) {
   if (inflationChanged) {
     await recalculateOrganizationForecasts(supabase, auth.organization.id, inflationRate);
   }
+
+  await recordAuditEvent(supabase, {
+    organizationId: auth.organization.id,
+    actorUserId: auth.userId,
+    action: "organization_settings_updated",
+    targetType: "organization",
+    targetId: auth.organization.id,
+    metadata: {
+      inflationChanged,
+      floorsEnabled,
+    },
+  });
 
   revalidatePath("/settings");
   revalidatePath("/");

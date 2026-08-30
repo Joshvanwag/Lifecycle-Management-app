@@ -1,17 +1,15 @@
 import { AuthenticatedDashboardShell } from "@/components/layout/authenticated-dashboard-shell";
-import { ReportsHub } from "@/components/reports/reports-hub";
+import { CorrectInventorySearch } from "@/components/inventory/correct-inventory-search";
 import { requireAuthContext } from "@/lib/auth/context";
 import { loadPlatformDashboardData } from "@/lib/data/platform-dashboard";
-import { listSavedReports } from "@/lib/data/saved-reports";
 import { createClient } from "@/lib/supabase/server";
 
-export default async function ReportsPage() {
+export default async function CorrectInventoryHubPage() {
   const auth = await requireAuthContext();
   const supabase = await createClient();
-  const [{ spaces, assets }, savedReports] = await Promise.all([
-    loadPlatformDashboardData(auth, supabase, { includeAssets: true }),
-    listSavedReports(supabase, auth.organization.id, auth.userId),
-  ]);
+  const { spaces, assets } = await loadPlatformDashboardData(auth, supabase, {
+    includeAssets: true,
+  });
 
   const scopedSpaces = auth.isPlatformAdmin
     ? spaces.filter((space) => space.organizationId === auth.organization.id)
@@ -22,10 +20,10 @@ export default async function ReportsPage() {
 
   return (
     <AuthenticatedDashboardShell
-      title="Reports"
-      description={`Canned portfolio reports for ${auth.organization.name}`}
+      title="Correct Inventory"
+      description={`Search and edit inventory in ${auth.organization.name} without creating a refresh event`}
     >
-      <ReportsHub spaces={scopedSpaces} assets={scopedAssets} savedReports={savedReports} />
+      <CorrectInventorySearch spaces={scopedSpaces} assets={scopedAssets} />
     </AuthenticatedDashboardShell>
   );
 }

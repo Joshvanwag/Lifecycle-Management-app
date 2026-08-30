@@ -6,7 +6,7 @@ A multi-tenant SaaS platform for lifecycle management of technology and equipmen
 
 - **Frontend:** Next.js 15, React 19, TypeScript, Tailwind CSS, shadcn/ui
 - **Backend:** Supabase (PostgreSQL, Auth, RLS)
-- **Hosting:** AWS Amplify (planned)
+- **Hosting:** AWS Amplify (documented, not provisioned)
 
 ## Getting Started
 
@@ -51,6 +51,12 @@ Open [http://localhost:3000](http://localhost:3000).
      npm run db:import-qt -- --account "University of Utah" --replace
    ```
    CSV source: `data/Lifecycle_Management_Asset_QT.csv` (2,586 assets, 8 accounts).
+7. Apply Zoho Managed Units lump-sum Space costs (optional):
+   ```bash
+   npm run db:apply-space-costs
+   npm run db:apply-space-costs -- --dry-run
+   ```
+   CSV source: `data/Lifecycle_Managed_Units.csv`. Writes `spaces.original_cost` and recomputes lump-sum forecast rows. Does not import Zoho future cost.
 
 ### Environment Variables
 
@@ -85,7 +91,7 @@ supabase/           # Supabase config and migrations
 
 **Phase 3:** Lifecycle engine, compound-inflation forecasts, planning status, and in-app refresh actions.
 
-**Phase 4 (current):** CSV/Excel import for Add Spaces, Full Refresh, Partial Refresh, and Correct Inventory.
+**Current:** Phases 1–4 plus Forecast, Capital Plan, canned Reports, searchable Correct Inventory, import history, and Settings (members, MFA enroll, audit, floors flag). File imports are Add / Full Refresh / Partial Refresh only.
 
 ## Documentation
 

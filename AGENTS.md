@@ -50,14 +50,13 @@ These rules are mandatory project-level engineering constraints for AI agents an
 ## Imports
 
 - Any code that changes import behavior must update `/docs/import-model.md`.
-- Preserve the four primary workflows:
+- File imports are three workflows only:
   1. Add New Spaces
   2. Full Refresh
   3. Partial Refresh
-  4. Correct Inventory
+- Correct Inventory is a searchable edit UI, not a file import. It must not trigger lifecycle events.
 - Partial Refresh must require the user to explicitly select the assets being replaced.
 - Full Refresh must not try to reconcile old and new assets as duplicates.
-- Correct Inventory must not accidentally trigger lifecycle events.
 - Do not make duplicate matching the center of the workflow.
 - Import UX should minimize required manual intervention.
 

@@ -55,8 +55,6 @@ export const getAuthContext = cache(async (): Promise<AuthContext | null> => {
     return null;
   }
 
-  await supabase.rpc("accept_pending_invitations");
-
   const isPlatformAdmin = await userHasDevOrgAccess();
 
   const { data: membershipRows, error: membershipError } = await supabase

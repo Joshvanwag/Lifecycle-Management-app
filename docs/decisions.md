@@ -255,3 +255,39 @@ CSV/Excel import processing runs as Next.js server actions with the user session
 Use the `xlsx` (SheetJS) package to parse `.xlsx` / `.xls` uploads. CSV is parsed without a library.
 
 **Rationale:** Import-model requires Excel. SheetJS reads workbook bytes in a Next.js server action without a separate conversion service.
+
+## ADR-029: Correct Inventory Is Not a File Import
+
+**Date:** Product increment  
+**Status:** Accepted
+
+Correct Inventory is a searchable in-app edit of Spaces and assets. File imports are Add New Spaces, Full Refresh, and Partial Refresh only. Import history is stored in `import_jobs`.
+
+**Rationale:** Customers need to fix inventory without manufacturing a spreadsheet or triggering a lifecycle event.
+
+## ADR-030: Space Lump-Sum Costs From Managed Units
+
+**Date:** Product increment  
+**Status:** Accepted
+
+Portfolio money reports use Space `original_cost` (Zoho Managed Units Total Initial Capital Cost). Per-asset prices may stay $0. Forecast amounts are recomputed with the app inflation engine — Zoho Total Future Cost is not imported.
+
+**Rationale:** Asset QT has no cost column. Spreading Space totals onto assets would invent per-asset prices.
+
+## ADR-031: Reports Stay Canned
+
+**Date:** Product increment  
+**Status:** Accepted
+
+Reports are a fixed canned set with saved filters (`saved_reports`). No report builder. Average cost per asset is not a main report. CSV and Excel export use the existing SheetJS dependency. PDF remains an open question.
+
+**Rationale:** Matches Zoho GLOBAL information needs without a new reporting product.
+
+## ADR-032: Hosting Docs Without Provisioning Amplify
+
+**Date:** Product increment  
+**Status:** Accepted
+
+Document how the Next.js app would be hosted on AWS Amplify, but do not provision Amplify, add CI, or add monitoring tooling.
+
+**Rationale:** Deployment remains an explicit human decision. See `/docs/deployment.md`.

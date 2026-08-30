@@ -16,7 +16,7 @@
 | Styling | Tailwind CSS, shadcn/ui |
 | Backend | Supabase (PostgreSQL, Auth, MFA, SSO, RLS) |
 | Server clients | `@supabase/ssr` (cookie sessions) and `@supabase/server` (header/JWT verification) |
-| Hosting | AWS Amplify (planned, not yet configured) |
+| Hosting | AWS Amplify (documented in `/docs/deployment.md`, not provisioned) |
 | Source Control | Git, GitHub |
 
 ## Deliberately Excluded (Initial)
@@ -82,4 +82,8 @@ Complete. Lifecycle engine, compound-inflation forecasts, planning edits, and in
 
 ## Phase 4 Status
 
-Complete. CSV/Excel import for the four lifecycle workflows, auto column mapping, reusable mappings, and session-scoped writes (RLS). Forecast / Capital Plan / Reports pages remain Phase 5.
+Complete. CSV/Excel import for Add / Full Refresh / Partial Refresh, auto column mapping, reusable mappings, and session-scoped writes (RLS).
+
+## Phase 5–7 Status
+
+Forecast, Capital Plan, and canned Reports are live. Correct Inventory is searchable in-app. File import history uses `import_jobs`. Space lump-sum costs can be applied from Managed Units via `npm run db:apply-space-costs`. MFA enroll UI, members list, audit events, saved report filters, and the floors flag are in Settings. Amplify is not provisioned.
