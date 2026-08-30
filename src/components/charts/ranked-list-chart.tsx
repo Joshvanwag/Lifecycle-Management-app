@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { ChartCard } from "@/components/charts/chart-card";
 import { defaultChartSettings, type ChartDisplaySettings } from "@/lib/charts/chart-settings";
 import { CHART_PALETTE } from "@/lib/charts/colors";
-import { cn, formatCompactCurrency } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 
 interface RankedListChartProps {
   title: string;
