@@ -1,11 +1,13 @@
-import type { Space } from "@/lib/types";
+import type { Asset, Space } from "@/lib/types";
 
 export interface OwnBenchmarkMetric {
   code: string;
   name: string;
   domain: "lifecycle_health" | "financial" | "planning_maturity";
   value: number | null;
-  kind: "percentage" | "currency" | "years";
+  kind: "percentage" | "currency" | "years" | "count";
+  spaceType?: string | null;
+  assetCategory?: string | null;
 }
 
 const currentYear = () => new Date().getFullYear();
@@ -182,5 +184,153 @@ export function computeOwnBenchmarkMetrics(spaces: Space[]): OwnBenchmarkMetric[
       kind: "percentage",
       value: pct(upcomingPlanned, upcoming),
     },
+  ];
+}
+
+function computeSpaceTypeMetrics(spaces: Space[], spaceType: string): OwnBenchmarkMetric[] {
+  const filtered = spaces.filter((space) => space.spaceType === spaceType);
+  const year = currentYear();
+  const ages = filtered.map((space) => Math.max(0, year - space.commissionedYear));
+  const value = filtered.reduce((sum, space) => sum + space.originalCost, 0);
+  const overdueValue = filtered
+    .filter((space) => space.lifecycleStatus === "overdue")
+    .reduce((sum, space) => sum + space.originalCost, 0);
+  const dueValue = filtered
+    .filter((space) => space.recommendedRefreshYear === year)
+    .reduce((sum, space) => sum + space.originalCost, 0);
+  const planned = filtered.filter(
+    (space) => space.planningStatus === "scheduled" || space.planningStatus === "deferred",
+  ).length;
+  const count = filtered.length;
+
+  return [
+    {
+      code: "space_type_avg_lifecycle_years",
+      name: "Average Lifecycle by Space Type",
+      domain: "lifecycle_health",
+      kind: "years",
+      spaceType,
+      value: ages.length ? ages.reduce((sum, item) => sum + item, 0) / ages.length : null,
+    },
+    {
+      code: "space_type_median_lifecycle_years",
+      name: "Median Lifecycle by Space Type",
+      domain: "lifecycle_health",
+      kind: "years",
+      spaceType,
+      value: median(ages),
+    },
+    {
+      code: "space_type_overdue_pct",
+      name: "Overdue Percentage by Space Type",
+      domain: "lifecycle_health",
+      kind: "percentage",
+      spaceType,
+      value: pct(overdueValue, value || count),
+    },
+    {
+      code: "space_type_due_pct",
+      name: "Due Percentage by Space Type",
+      domain: "lifecycle_health",
+      kind: "percentage",
+      spaceType,
+      value: pct(dueValue, value || count),
+    },
+    {
+      code: "space_type_avg_asset_count",
+      name: "Average Asset Count by Space Type",
+      domain: "lifecycle_health",
+      kind: "count",
+      spaceType,
+      value: count
+        ? filtered.reduce((sum, space) => sum + space.assetCount, 0) / count
+        : null,
+    },
+    {
+      code: "space_type_planned_refresh_coverage_pct",
+      name: "Planned Refresh Coverage by Space Type",
+      domain: "planning_maturity",
+      kind: "percentage",
+      spaceType,
+      value: pct(planned, count),
+    },
+  ];
+}
+
+function computeAssetCategoryMetrics(assets: Asset[], category: string): OwnBenchmarkMetric[] {
+  const filtered = assets.filter((asset) => asset.category === category);
+  const year = currentYear();
+  const ages = filtered.map((asset) =>
+    Math.max(0, year - new Date(asset.installDate).getFullYear()),
+  );
+  const costs = filtered.map((asset) => asset.cost).filter((cost) => cost > 0);
+  const value = filtered.reduce((sum, asset) => sum + (asset.cost > 0 ? asset.cost : 0), 0);
+  const overdueValue = filtered
+    .filter((asset) => asset.lifecycleStatus === "overdue")
+    .reduce((sum, asset) => sum + (asset.cost > 0 ? asset.cost : 0), 0);
+  const count = filtered.length;
+
+  return [
+    {
+      code: "category_avg_lifecycle_years",
+      name: "Average Lifecycle by Asset Category",
+      domain: "lifecycle_health",
+      kind: "years",
+      assetCategory: category,
+      value: ages.length ? ages.reduce((sum, item) => sum + item, 0) / ages.length : null,
+    },
+    {
+      code: "category_median_lifecycle_years",
+      name: "Median Lifecycle by Asset Category",
+      domain: "lifecycle_health",
+      kind: "years",
+      assetCategory: category,
+      value: median(ages),
+    },
+    {
+      code: "category_avg_replacement_cost",
+      name: "Average Replacement Cost by Asset Category",
+      domain: "financial",
+      kind: "currency",
+      assetCategory: category,
+      value: costs.length ? costs.reduce((sum, cost) => sum + cost, 0) / costs.length : null,
+    },
+    {
+      code: "category_median_replacement_cost",
+      name: "Median Replacement Cost by Asset Category",
+      domain: "financial",
+      kind: "currency",
+      assetCategory: category,
+      value: median(costs),
+    },
+    {
+      code: "category_overdue_pct",
+      name: "Overdue Percentage by Asset Category",
+      domain: "lifecycle_health",
+      kind: "percentage",
+      assetCategory: category,
+      value: pct(overdueValue, value || count),
+    },
+    {
+      code: "category_forecast_cost",
+      name: "Forecast Cost by Asset Category",
+      domain: "financial",
+      kind: "currency",
+      assetCategory: category,
+      value: count ? value / count : null,
+    },
+  ];
+}
+
+export function computeOwnContextBenchmarkMetrics(
+  spaces: Space[],
+  assets: Asset[],
+): OwnBenchmarkMetric[] {
+  const spaceTypes = [...new Set(spaces.map((space) => space.spaceType))].sort();
+  const categories = [...new Set(assets.map((asset) => asset.category))].sort();
+
+  return [
+    ...spaceTypes.flatMap((spaceType) => computeSpaceTypeMetrics(spaces, spaceType)),
+    ...categories.flatMap((category) => computeAssetCategoryMetrics(assets, category)),
   ];
 }

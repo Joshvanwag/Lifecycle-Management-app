@@ -16,6 +16,7 @@ import { createClient } from "@/lib/supabase/server";
 import { formatCurrency } from "@/lib/utils";
 import { PlanningStatusForm } from "@/components/lifecycle/planning-status-form";
 import { AuthenticatedDashboardShell } from "@/components/layout/authenticated-dashboard-shell";
+import { SpaceLifecycleTimeline } from "@/components/spaces/space-lifecycle-timeline";
 import {
   LifecycleStatusBadge,
   PlanningStatusBadge,
@@ -73,6 +74,11 @@ export default async function SpaceDetailPage({
   if (!space) {
     notFound();
   }
+
+  const currentYear = new Date().getFullYear();
+  const spaceAge = Math.max(0, currentYear - space.commissionedYear);
+  const upcomingAssets = assets.filter((asset) => asset.recommendedRefreshYear >= currentYear).length;
+  const overdueAssets = assets.filter((asset) => asset.lifecycleStatus === "overdue").length;
 
   return (
     <AuthenticatedDashboardShell title={space.name} description={space.locationLabel}>
@@ -187,6 +193,45 @@ export default async function SpaceDetailPage({
           </TabsList>
 
           <TabsContent value="overview" className="space-y-4">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardDescription>Space Age</CardDescription>
+                  <CardTitle className="text-2xl">{spaceAge} years</CardTitle>
+                </CardHeader>
+              </Card>
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardDescription>Refresh Cycle</CardDescription>
+                  <CardTitle className="text-2xl">{space.refreshCycleYears} years</CardTitle>
+                </CardHeader>
+              </Card>
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardDescription>Upcoming Asset Refreshes</CardDescription>
+                  <CardTitle className="text-2xl">{upcomingAssets}</CardTitle>
+                </CardHeader>
+              </Card>
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardDescription>Overdue Assets</CardDescription>
+                  <CardTitle className="text-2xl">{overdueAssets}</CardTitle>
+                </CardHeader>
+              </Card>
+            </div>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Lifecycle Timeline</CardTitle>
+                <CardDescription>
+                  Initial deployment, refresh history, and upcoming replacement milestones
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <SpaceLifecycleTimeline space={space} assets={assets} history={history} />
+              </CardContent>
+            </Card>
+
             <Card>
               <CardHeader>
                 <CardTitle>Space Overview</CardTitle>
@@ -203,14 +248,34 @@ export default async function SpaceDetailPage({
                     <dd className="font-medium">{space.commissionedYear}</dd>
                   </div>
                   <div>
-                    <dt className="text-sm text-muted-foreground">Refresh Cycle</dt>
-                    <dd className="font-medium">{space.refreshCycleYears} years</dd>
+                    <dt className="text-sm text-muted-foreground">Lifecycle Status</dt>
+                    <dd className="mt-1">
+                      <LifecycleStatusBadge status={space.lifecycleStatus} />
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-sm text-muted-foreground">Planning Status</dt>
+                    <dd className="mt-1">
+                      <PlanningStatusBadge status={space.planningStatus} />
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-sm text-muted-foreground">Recommended Refresh</dt>
+                    <dd className="font-medium">{space.recommendedRefreshYear}</dd>
                   </div>
                   <div>
                     <dt className="text-sm text-muted-foreground">Planned Refresh</dt>
                     <dd className="font-medium">
                       {space.plannedRefreshYear ?? "Not scheduled"}
                     </dd>
+                  </div>
+                  <div>
+                    <dt className="text-sm text-muted-foreground">Current Cost</dt>
+                    <dd className="font-medium">{formatCurrency(space.originalCost)}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-sm text-muted-foreground">Forecast Amount</dt>
+                    <dd className="font-medium">{formatCurrency(space.forecastAmount)}</dd>
                   </div>
                 </dl>
                 <div className="mt-6 border-t pt-4">
@@ -247,6 +312,7 @@ export default async function SpaceDetailPage({
                         <TableHead>Category</TableHead>
                         <TableHead>Install Date</TableHead>
                         <TableHead>Refresh Year</TableHead>
+                        <TableHead>Status</TableHead>
                         <TableHead className="text-right">Cost</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -258,6 +324,9 @@ export default async function SpaceDetailPage({
                           <TableCell>{asset.category}</TableCell>
                           <TableCell>{asset.installDate}</TableCell>
                           <TableCell>{asset.recommendedRefreshYear}</TableCell>
+                          <TableCell>
+                            <LifecycleStatusBadge status={asset.lifecycleStatus} />
+                          </TableCell>
                           <TableCell className="text-right">
                             {asset.cost > 0 ? formatCurrency(asset.cost) : "—"}
                           </TableCell>
@@ -271,6 +340,18 @@ export default async function SpaceDetailPage({
           </TabsContent>
 
           <TabsContent value="lifecycle" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Lifecycle Timeline</CardTitle>
+                <CardDescription>
+                  Deployment, refresh events, and upcoming replacement milestones
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <SpaceLifecycleTimeline space={space} assets={assets} history={history} />
+              </CardContent>
+            </Card>
+
             <Card>
               <CardHeader>
                 <CardTitle>Lifecycle Schedule</CardTitle>

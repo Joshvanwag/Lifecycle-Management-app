@@ -1,9 +1,12 @@
 import { BenchmarkDashboard } from "@/components/benchmark/benchmark-dashboard";
 import { AuthenticatedDashboardShell } from "@/components/layout/authenticated-dashboard-shell";
 import { requireAuthContext } from "@/lib/auth/context";
-import { computeOwnBenchmarkMetrics } from "@/lib/benchmark/own-metrics";
+import {
+  computeOwnBenchmarkMetrics,
+  computeOwnContextBenchmarkMetrics,
+} from "@/lib/benchmark/own-metrics";
 import { listPublicBenchmarkMetrics } from "@/lib/data/benchmarks";
-import { getAllSpaces } from "@/lib/data/spaces";
+import { getAllAssets, getAllSpaces } from "@/lib/data/spaces";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function BenchmarkPage() {
@@ -11,10 +14,18 @@ export default async function BenchmarkPage() {
   const supabase = await createClient();
   const participating = auth.organization.benchmark_participation;
 
-  const [spaces, peerMetrics] = await Promise.all([
+  const [spaces, assets, peerMetrics] = await Promise.all([
     getAllSpaces(supabase, auth.organization.id, auth.organization.name),
+    getAllAssets(supabase, auth.organization.id, auth.organization.name),
     participating ? listPublicBenchmarkMetrics(supabase) : Promise.resolve([]),
   ]);
+
+  const spaceTypes = [...new Set(spaces.map((space) => space.spaceType))].sort();
+  const assetCategories = [...new Set(assets.map((asset) => asset.category))].sort();
+  const ownMetrics = [
+    ...computeOwnBenchmarkMetrics(spaces),
+    ...computeOwnContextBenchmarkMetrics(spaces, assets),
+  ];
 
   return (
     <AuthenticatedDashboardShell
@@ -24,8 +35,10 @@ export default async function BenchmarkPage() {
       <BenchmarkDashboard
         industryType={auth.organization.industry_type}
         participating={participating}
-        ownMetrics={computeOwnBenchmarkMetrics(spaces)}
+        ownMetrics={ownMetrics}
         peerMetrics={peerMetrics}
+        spaceTypes={spaceTypes}
+        assetCategories={assetCategories}
       />
     </AuthenticatedDashboardShell>
   );
