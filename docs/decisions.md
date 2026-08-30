@@ -236,7 +236,7 @@ Major UX/analytics redesign without backend rewrite:
 - Charts must show visible numeric labels (not hover-only)
 - Benchmark page uses visual percentile range cards; no contributor counts; includes Space Types and Equipment context tabs
 - Space Detail includes a visual lifecycle timeline on Overview and Lifecycle tabs
-- Reports expanded canned gallery; no custom report builder
+- Reports page is a custom report builder with saved configurations (`saved_reports` JSON)
 - Client-side analytics helpers in `src/lib/data/analytics.ts` aggregate from existing Space/Asset queries — no new database views for this pass
 
 **Rationale:** Product should feel like a lifecycle planning tool for AV/IT managers and capital planners, not a raw admin database. Existing RLS, lifecycle rules, and data model preserved.
@@ -300,7 +300,7 @@ Portfolio money reports use Space `original_cost` (Zoho Managed Units Total Init
 **Date:** Product increment  
 **Status:** Accepted
 
-Reports are a fixed canned set with saved filters (`saved_reports`). No report builder. Average cost per asset is not a main report. CSV and Excel export use the existing SheetJS dependency. PDF remains an open question.
+Reports use a custom builder backed by `saved_reports` (filter JSON, chart type, display settings). CSV and Excel export use the existing SheetJS dependency. PDF remains an open question.
 
 **Rationale:** Matches Zoho GLOBAL information needs without a new reporting product.
 

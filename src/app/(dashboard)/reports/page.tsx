@@ -19,7 +19,7 @@ export default async function ReportsPage() {
   return (
     <AuthenticatedDashboardShell
       title="Reports"
-      description={`Canned portfolio reports for ${auth.organization.name}`}
+      description={`Build custom charts and exports for ${auth.organization.name}`}
     >
       <ReportsHub spaces={spaces} assets={assets} savedReports={savedReports} />
     </AuthenticatedDashboardShell>

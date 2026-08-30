@@ -119,9 +119,15 @@ Preferred pattern:
 - Sections/tabs: Overview, Lifecycle Health, Financial, Planning, Space Types, Equipment
 - Space Type and Equipment tabs use context selectors and slice metrics within the industry cohort
 
+- KPI tiles are informational only (no navigation links); uniform 2×4 grid on analytics pages
+- Filter toolbar at top of analytics pages with prominent **Filter data** / **Edit filters** button
+- Categorical rankings use ranked list rows; lifecycle/planning distributions use pie charts
+- Vertical bar charts for time-series data; per-chart **Reset** when drilled down
+- Chart settings (numbers, goal line, legend) via settings icon on each chart card
+
 ## Reports
 
-Canned report gallery (not a custom report builder). Each report: name, description, working filters, preview, CSV/Excel export.
+Custom report builder: filter portfolio data with the same Space filter sheet, name the report, pick metric and chart type, create chart, then tune display from the chart settings icon. Saved reports persist filters, chart type, and settings. CSV/Excel export included.
 
 ## Space Detail Page
 

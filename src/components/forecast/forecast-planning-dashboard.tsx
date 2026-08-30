@@ -120,7 +120,7 @@ export function ForecastPlanningDashboard({ spaces, initialYear }: ForecastPlann
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <KpiCard label="1-Year Need" value={formatCurrency(summary.oneYearNeed)} />
         <KpiCard label="3-Year Need" value={formatCurrency(summary.threeYearNeed)} />
         <KpiCard label="5-Year Need" value={formatCurrency(summary.fiveYearNeed)} />
@@ -135,6 +135,9 @@ export function ForecastPlanningDashboard({ spaces, initialYear }: ForecastPlann
         data={replacementByYear.map((row) => ({ name: String(row.year), value: row.amount }))}
         colorScheme={{ type: "years", years: replacementByYear.map((row) => row.year) }}
         onBarClick={(name) => setDrill({ level: "year", year: Number(name) })}
+        selectedName={drill.level !== "summary" ? String(drill.year) : null}
+        drillLabel={drill.level !== "summary" ? `FY${drill.year}` : undefined}
+        onReset={() => setDrill({ level: "summary" })}
       />
 
       <div className="grid gap-4 lg:grid-cols-2">
@@ -143,6 +146,9 @@ export function ForecastPlanningDashboard({ spaces, initialYear }: ForecastPlann
           description="Planned means lifecycle work intentionally scheduled — not necessarily funded"
           data={recommendedVsPlanned}
           onBarClick={(year) => setDrill({ level: "year", year })}
+          selectedYear={drill.level !== "summary" ? drill.year : null}
+          drillLabel={drill.level !== "summary" ? `FY${drill.year}` : undefined}
+          onReset={() => setDrill({ level: "summary" })}
         />
         <GroupedBarChart
           title="Planning Gap"
@@ -152,6 +158,9 @@ export function ForecastPlanningDashboard({ spaces, initialYear }: ForecastPlann
             { key: "gap", label: "Planning Gap", color: CHART_PALETTE[9]! },
           ]}
           onBarClick={(year) => setDrill({ level: "year", year })}
+          selectedYear={drill.level !== "summary" ? drill.year : null}
+          drillLabel={drill.level !== "summary" ? `FY${drill.year}` : undefined}
+          onReset={() => setDrill({ level: "summary" })}
         />
       </div>
 
