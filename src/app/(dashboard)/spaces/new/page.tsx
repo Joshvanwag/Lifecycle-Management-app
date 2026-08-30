@@ -29,7 +29,12 @@ export default async function NewSpacePage({
           <CardHeader>
             <CardTitle>New Space</CardTitle>
             <CardDescription>
-              Location is optional. Use a Space cost when you do not have per-item pricing.
+              Location is optional. Use a Space cost when you do not have per-item pricing. To
+              create several Spaces from a file, use{" "}
+              <Link href="/imports/add" className="underline">
+                Add New Spaces import
+              </Link>
+              .
             </CardDescription>
           </CardHeader>
           <CardContent>

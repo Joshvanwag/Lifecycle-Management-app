@@ -18,7 +18,7 @@ Unresolved items requiring product or technical decisions. Do not silently decid
 ## Technical
 
 1. **Forecast materialization** — Pre-compute forecast amounts or calculate on demand?
-2. **Large import batch size** — Thresholds for background processing vs synchronous?
+2. **Large import batch size** — Thresholds for background processing vs synchronous? Phase 4 stays synchronous up to 50 MB.
 3. **Amplify SSR configuration** — Specific Next.js features supported on Amplify hosting?
 4. **Supabase project strategy** — One project per environment, or branch-based local dev only?
 5. **Session management** — Cookie-based SSR auth pattern details for Amplify deployment?

@@ -43,7 +43,12 @@ export default async function PartialRefreshPage({
           <CardHeader>
             <CardTitle>Partial refresh</CardTitle>
             <CardDescription>
-              Choose the assets being replaced. Remaining equipment is not reset.
+              Choose the assets being replaced. Remaining equipment is not reset. To upload a
+              file instead, use{" "}
+              <Link href={`/imports/partial-refresh?spaceId=${space.id}`} className="underline">
+                Partial Refresh import
+              </Link>
+              .
             </CardDescription>
           </CardHeader>
           <CardContent>

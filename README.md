@@ -83,9 +83,9 @@ supabase/           # Supabase config and migrations
 
 **Phase 2:** Supabase schema, tenant isolation, RLS, authentication, live data on Overview and Spaces pages.
 
-**Phase 3 (current):** Lifecycle engine, compound-inflation forecasts, planning status, and in-app refresh actions.
+**Phase 3:** Lifecycle engine, compound-inflation forecasts, planning status, and in-app refresh actions.
 
-**Phase 4 (next):** CSV/Excel import workflows.
+**Phase 4 (current):** CSV/Excel import for Add Spaces, Full Refresh, Partial Refresh, and Correct Inventory.
 
 ## Documentation
 

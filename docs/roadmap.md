@@ -46,15 +46,15 @@
 - [x] Planning status management
 - [x] Refresh event recording
 
-## Phase 4 — Import Workflows
+## Phase 4 — Import Workflows (Complete)
 
-- [ ] CSV/Excel upload
-- [ ] Column mapping UI
-- [ ] Add New Spaces import
-- [ ] Full Refresh workflow
-- [ ] Partial Refresh workflow
-- [ ] Correct Inventory workflow
-- [ ] Reusable import mappings
+- [x] CSV/Excel upload
+- [x] Column mapping UI
+- [x] Add New Spaces import
+- [x] Full Refresh workflow
+- [x] Partial Refresh workflow
+- [x] Correct Inventory workflow
+- [x] Reusable import mappings
 
 ## Phase 5 — Reporting & Planning
 

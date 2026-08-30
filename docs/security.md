@@ -74,6 +74,7 @@ RLS is enabled on all tenant-owned tables:
 - `assets`
 - `forecast_cost_components`
 - `refresh_events`
+- `import_mappings`
 
 ### Helper functions
 
@@ -164,7 +165,8 @@ Migrations: `supabase/migrations/20250829190000_benchmarking_foundation.sql`, `s
 Privileged operations use Next.js server components/actions with the authenticated user's session (RLS enforced) or, when required, the service role client:
 
 - Demo seed script (`npm run db:seed`) — service role only, never in browser
-- Future: bulk imports, admin functions, exports
+- User-facing CSV/Excel imports — signed-in session, RLS enforced
+- Future: admin functions, exports
 
 ## Audit Logging (Future)
 

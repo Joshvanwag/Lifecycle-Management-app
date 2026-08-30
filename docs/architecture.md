@@ -78,4 +78,8 @@ Complete. Supabase schema, RLS, auth, and live Overview/Spaces reads.
 
 ## Phase 3 Status
 
-Complete. Lifecycle engine, compound-inflation forecasts, planning edits, and in-app Add Space / Full Refresh / Partial Refresh / Correct Inventory. CSV import remains Phase 4. Forecast / Capital Plan / Reports pages remain Phase 5.
+Complete. Lifecycle engine, compound-inflation forecasts, planning edits, and in-app Add Space / Full Refresh / Partial Refresh / Correct Inventory.
+
+## Phase 4 Status
+
+Complete. CSV/Excel import for the four lifecycle workflows, auto column mapping, reusable mappings, and session-scoped writes (RLS). Forecast / Capital Plan / Reports pages remain Phase 5.

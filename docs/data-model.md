@@ -128,11 +128,11 @@ Customer benchmark reads use `get_benchmark_metrics_public()` RPC.
 
 ### Import Mapping
 
-Reusable column mappings per organization (future).
+`import_mappings` stores reusable column mappings per organization and workflow (`add`, `full_refresh`, `partial_refresh`, `correct`). `column_map` is JSON keyed by source header. RLS uses `can_read_organization` / `can_write_organization`.
 
 ## Relationships
 
-- Organization 1:N Spaces, Assets, Locations
+- Organization 1:N Spaces, Assets, Locations, import mappings
 - Space 1:N Assets (active), N:M Physical Locations
 - Space 1:N Refresh Events, Forecast Cost Components
 - Asset 1:1 Forecast Cost Component (when itemized)

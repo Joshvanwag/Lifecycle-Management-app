@@ -41,7 +41,11 @@ export default async function FullRefreshPage({
           <CardHeader>
             <CardTitle>Full refresh</CardTitle>
             <CardDescription>
-              Replace all active equipment. History is kept. This is not a CSV import.
+              Replace all active equipment. History is kept. To upload a file instead, use{" "}
+              <Link href={`/imports/full-refresh?spaceId=${space.id}`} className="underline">
+                Full Refresh import
+              </Link>
+              .
             </CardDescription>
           </CardHeader>
           <CardContent>
