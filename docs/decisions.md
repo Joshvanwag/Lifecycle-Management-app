@@ -234,7 +234,8 @@ Major UX/analytics redesign without backend rewrite:
 - Organization header: static for customers; selector for DEV team only
 - Filters use apply-on-click pattern with searchable multi-select for large sets
 - Charts must show visible numeric labels (not hover-only)
-- Benchmark page uses visual percentile range cards; no contributor counts
+- Benchmark page uses visual percentile range cards; no contributor counts; includes Space Types and Equipment context tabs
+- Space Detail includes a visual lifecycle timeline on Overview and Lifecycle tabs
 - Reports expanded canned gallery; no custom report builder
 - Client-side analytics helpers in `src/lib/data/analytics.ts` aggregate from existing Space/Asset queries — no new database views for this pass
 

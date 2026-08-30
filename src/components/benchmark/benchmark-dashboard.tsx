@@ -17,6 +17,8 @@ interface BenchmarkDashboardProps {
   participating: boolean;
   ownMetrics: OwnBenchmarkMetric[];
   peerMetrics: BenchmarkMetricPublic[];
+  spaceTypes: string[];
+  assetCategories: string[];
 }
 
 type MetricKind = "percentage" | "currency" | "years" | "count";
@@ -25,6 +27,11 @@ interface MetricDef {
   code: string;
   label: string;
   kind: MetricKind;
+}
+
+interface MetricContext {
+  spaceType?: string | null;
+  assetCategory?: string | null;
 }
 
 const LIFECYCLE_METRICS: MetricDef[] = [
@@ -53,6 +60,24 @@ const PLANNING_METRICS: MetricDef[] = [
   { code: "pct_upcoming_with_planned_replacement", label: "Upcoming Lifecycle Need With Plan %", kind: "percentage" },
 ];
 
+const SPACE_TYPE_METRICS: MetricDef[] = [
+  { code: "space_type_avg_lifecycle_years", label: "Average Lifecycle", kind: "years" },
+  { code: "space_type_median_lifecycle_years", label: "Median Lifecycle", kind: "years" },
+  { code: "space_type_overdue_pct", label: "Overdue %", kind: "percentage" },
+  { code: "space_type_due_pct", label: "Due %", kind: "percentage" },
+  { code: "space_type_avg_asset_count", label: "Average Asset Count", kind: "count" },
+  { code: "space_type_planned_refresh_coverage_pct", label: "Planned Refresh Coverage %", kind: "percentage" },
+];
+
+const EQUIPMENT_METRICS: MetricDef[] = [
+  { code: "category_avg_lifecycle_years", label: "Average Lifecycle", kind: "years" },
+  { code: "category_median_lifecycle_years", label: "Median Lifecycle", kind: "years" },
+  { code: "category_avg_replacement_cost", label: "Average Replacement Cost", kind: "currency" },
+  { code: "category_median_replacement_cost", label: "Median Replacement Cost", kind: "currency" },
+  { code: "category_overdue_pct", label: "Overdue %", kind: "percentage" },
+  { code: "category_forecast_cost", label: "Forecast Cost per Asset", kind: "currency" },
+];
+
 function formatBenchmarkValue(value: number | null, kind: MetricKind): string {
   if (value == null || !Number.isFinite(value)) return "—";
   if (kind === "percentage") return `${Math.round(value)}%`;
@@ -61,25 +86,61 @@ function formatBenchmarkValue(value: number | null, kind: MetricKind): string {
   return String(Math.round(value));
 }
 
-function findOwnValue(ownMetrics: OwnBenchmarkMetric[], code: string): number | null {
-  return ownMetrics.find((metric) => metric.code === code)?.value ?? null;
+function matchesContext(
+  row: { spaceType?: string | null; assetCategory?: string | null },
+  context?: MetricContext,
+): boolean {
+  if (context?.spaceType !== undefined) {
+    return (row.spaceType ?? null) === (context.spaceType ?? null);
+  }
+  if (context?.assetCategory !== undefined) {
+    return (row.assetCategory ?? null) === (context.assetCategory ?? null);
+  }
+  return (row.spaceType ?? null) === null && (row.assetCategory ?? null) === null;
 }
 
-function findPeerMetric(peerMetrics: BenchmarkMetricPublic[], code: string): BenchmarkMetricPublic | null {
-  return peerMetrics.find((metric) => metric.metric_code === code && !metric.space_type && !metric.asset_category) ?? null;
+function findOwnValue(
+  ownMetrics: OwnBenchmarkMetric[],
+  code: string,
+  context?: MetricContext,
+): number | null {
+  return (
+    ownMetrics.find((metric) => metric.code === code && matchesContext(metric, context))?.value ??
+    null
+  );
+}
+
+function findPeerMetric(
+  peerMetrics: BenchmarkMetricPublic[],
+  code: string,
+  context?: MetricContext,
+): BenchmarkMetricPublic | null {
+  return (
+    peerMetrics.find(
+      (metric) =>
+        metric.metric_code === code &&
+        (context?.spaceType !== undefined
+          ? metric.space_type === context.spaceType
+          : context?.assetCategory !== undefined
+            ? metric.asset_category === context.assetCategory
+            : !metric.space_type && !metric.asset_category),
+    ) ?? null
+  );
 }
 
 function BenchmarkRangeCard({
   metric,
   ownMetrics,
   peerMetrics,
+  context,
 }: {
   metric: MetricDef;
   ownMetrics: OwnBenchmarkMetric[];
   peerMetrics: BenchmarkMetricPublic[];
+  context?: MetricContext;
 }) {
-  const orgValue = findOwnValue(ownMetrics, metric.code);
-  const peer = findPeerMetric(peerMetrics, metric.code);
+  const orgValue = findOwnValue(ownMetrics, metric.code, context);
+  const peer = findPeerMetric(peerMetrics, metric.code, context);
 
   if (!peer) {
     return (
@@ -89,6 +150,12 @@ function BenchmarkRangeCard({
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">{BENCHMARK_UNAVAILABLE_MESSAGE}</p>
+          {orgValue != null && (
+            <p className="mt-3 text-sm">
+              Your organization:{" "}
+              <span className="font-semibold">{formatBenchmarkValue(orgValue, metric.kind)}</span>
+            </p>
+          )}
         </CardContent>
       </Card>
     );
@@ -147,13 +214,99 @@ function BenchmarkRangeCard({
   );
 }
 
+function ContextBenchmarkSection({
+  title,
+  description,
+  contextLabel,
+  contextOptions,
+  selectedContext,
+  onContextChange,
+  metrics,
+  ownMetrics,
+  peerMetrics,
+  contextKey,
+}: {
+  title: string;
+  description: string;
+  contextLabel: string;
+  contextOptions: string[];
+  selectedContext: string;
+  onContextChange: (value: string) => void;
+  metrics: MetricDef[];
+  ownMetrics: OwnBenchmarkMetric[];
+  peerMetrics: BenchmarkMetricPublic[];
+  contextKey: "spaceType" | "assetCategory";
+}) {
+  const context =
+    contextKey === "spaceType"
+      ? { spaceType: selectedContext }
+      : { assetCategory: selectedContext };
+
+  if (contextOptions.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>{title}</CardTitle>
+          <CardDescription>{description}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground">No {contextLabel.toLowerCase()} data in your portfolio yet.</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h3 className="text-lg font-semibold">{title}</h3>
+          <p className="text-sm text-muted-foreground">{description}</p>
+        </div>
+        <div className="w-full sm:w-64">
+          <label className="sr-only" htmlFor={`benchmark-${contextKey}`}>
+            {contextLabel}
+          </label>
+          <select
+            id={`benchmark-${contextKey}`}
+            value={selectedContext}
+            onChange={(event) => onContextChange(event.target.value)}
+            className="flex h-10 w-full cursor-pointer rounded-md border border-input bg-background px-3 py-2 text-sm"
+          >
+            {contextOptions.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+      <div className="grid gap-4 md:grid-cols-2">
+        {metrics.map((metric) => (
+          <BenchmarkRangeCard
+            key={`${selectedContext}-${metric.code}`}
+            metric={metric}
+            ownMetrics={ownMetrics}
+            peerMetrics={peerMetrics}
+            context={context}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function BenchmarkDashboard({
   industryType,
   participating,
   ownMetrics,
   peerMetrics,
+  spaceTypes,
+  assetCategories,
 }: BenchmarkDashboardProps) {
   const [tab, setTab] = useState("overview");
+  const [spaceType, setSpaceType] = useState(spaceTypes[0] ?? "");
+  const [assetCategory, setAssetCategory] = useState(assetCategories[0] ?? "");
   const industryLabel =
     INDUSTRY_TYPE_LABELS[industryType as IndustryTypeCode] ?? industryType.replace("_", " ");
 
@@ -191,9 +344,16 @@ export function BenchmarkDashboard({
 
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="flex h-auto flex-wrap gap-1">
-          {["overview", "lifecycle", "financial", "planning"].map((value) => (
-            <TabsTrigger key={value} value={value} className="cursor-pointer capitalize">
-              {value.replace("-", " ")}
+          {[
+            ["overview", "Overview"],
+            ["lifecycle", "Lifecycle Health"],
+            ["financial", "Financial"],
+            ["planning", "Planning"],
+            ["space-types", "Space Types"],
+            ["equipment", "Equipment"],
+          ].map(([value, label]) => (
+            <TabsTrigger key={value} value={value} className="cursor-pointer">
+              {label}
             </TabsTrigger>
           ))}
         </TabsList>
@@ -248,6 +408,36 @@ export function BenchmarkDashboard({
               />
             ))}
           </div>
+        </TabsContent>
+
+        <TabsContent value="space-types" className="mt-4">
+          <ContextBenchmarkSection
+            title="Space Type Benchmarks"
+            description="Compare lifecycle metrics for a specific Space Type against industry peers."
+            contextLabel="Space Type"
+            contextOptions={spaceTypes}
+            selectedContext={spaceType || spaceTypes[0] || ""}
+            onContextChange={setSpaceType}
+            metrics={SPACE_TYPE_METRICS}
+            ownMetrics={ownMetrics}
+            peerMetrics={filteredPeerMetrics}
+            contextKey="spaceType"
+          />
+        </TabsContent>
+
+        <TabsContent value="equipment" className="mt-4">
+          <ContextBenchmarkSection
+            title="Equipment Category Benchmarks"
+            description="Compare asset category metrics against industry peers within your cohort."
+            contextLabel="Asset Category"
+            contextOptions={assetCategories}
+            selectedContext={assetCategory || assetCategories[0] || ""}
+            onContextChange={setAssetCategory}
+            metrics={EQUIPMENT_METRICS}
+            ownMetrics={ownMetrics}
+            peerMetrics={filteredPeerMetrics}
+            contextKey="assetCategory"
+          />
         </TabsContent>
       </Tabs>
     </div>

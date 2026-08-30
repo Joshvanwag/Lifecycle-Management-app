@@ -116,7 +116,8 @@ Preferred pattern:
 - Visual range cards: 25th / median / 75th percentile + peer average + your organization
 - Never show contributor counts, ranks, or customer names
 - Below 5-org threshold: generic unavailable message only
-- Sections/tabs: Overview, Lifecycle Health, Financial, Planning
+- Sections/tabs: Overview, Lifecycle Health, Financial, Planning, Space Types, Equipment
+- Space Type and Equipment tabs use context selectors and slice metrics within the industry cohort
 
 ## Reports
 
@@ -126,7 +127,13 @@ Canned report gallery (not a custom report builder). Each report: name, descript
 
 Header: name, location, type, lifecycle/planning badges, recommended year, planned year, cost/forecast.
 
+Overview tab: lifecycle summary KPIs (age, refresh cycle, upcoming/overdue assets), visual lifecycle timeline, cost summary, planning form.
+
 Tabs: Overview, Assets, Lifecycle, History.
+
+Lifecycle tab: visual timeline plus asset-level schedule table.
+
+Assets tab includes lifecycle status badge and recommended refresh year.
 
 Actions: Update Lifecycles dropdown (Full Refresh, Partial Refresh, Correct Inventory).
 
