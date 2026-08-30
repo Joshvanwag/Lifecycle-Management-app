@@ -1,11 +1,11 @@
 import {
+  BarChart3,
   Building2,
-  CalendarRange,
-  ClipboardPen,
   FileBarChart,
   FileUp,
   LayoutDashboard,
   Package,
+  Plus,
   Settings,
   TrendingUp,
 } from "lucide-react";
@@ -21,6 +21,13 @@ export interface NavGroup {
   label?: string;
   items: NavItem[];
 }
+
+export const updateLifecyclesNavItem: NavItem = {
+  title: "Update Lifecycles",
+  href: "/update-lifecycles",
+  icon: Plus,
+  description: "Choose how to update your lifecycle inventory",
+};
 
 export const mainNavigation: NavGroup[] = [
   {
@@ -48,28 +55,33 @@ export const mainNavigation: NavGroup[] = [
         icon: Package,
         description: "Equipment inventory across all Spaces",
       },
-      {
-        title: "Forecast",
-        href: "/forecast",
-        icon: TrendingUp,
-        description: "Future replacement cost projections",
-      },
     ],
   },
   {
     label: "Planning",
     items: [
       {
-        title: "Capital Plan",
-        href: "/capital-plan",
-        icon: CalendarRange,
-        description: "Multi-year capital planning",
+        title: "Forecast",
+        href: "/forecast",
+        icon: TrendingUp,
+        description: "Replacement planning and capital forecasting",
+      },
+    ],
+  },
+  {
+    label: "Analytics",
+    items: [
+      {
+        title: "Benchmark",
+        href: "/benchmark",
+        icon: BarChart3,
+        description: "Compare lifecycle performance with industry peers",
       },
       {
         title: "Reports",
         href: "/reports",
         icon: FileBarChart,
-        description: "Lifecycle and portfolio reports",
+        description: "Predefined lifecycle and portfolio reports",
       },
     ],
   },
@@ -77,16 +89,10 @@ export const mainNavigation: NavGroup[] = [
     label: "Data",
     items: [
       {
-        title: "Correct Inventory",
-        href: "/inventory/correct",
-        icon: ClipboardPen,
-        description: "Search and fix inventory without a lifecycle event",
-      },
-      {
         title: "Imports",
         href: "/imports",
         icon: FileUp,
-        description: "Import Spaces and refresh inventory from a file",
+        description: "Import history and file upload operations",
       },
     ],
   },
@@ -102,28 +108,39 @@ export const mainNavigation: NavGroup[] = [
   },
 ];
 
-export const lifecycleActions = [
+export const lifecycleActionCards = [
   {
     title: "Add New Spaces",
-    description: "Create a new Space and optional equipment without a file upload.",
+    description: "Add newly deployed Spaces and equipment to the lifecycle inventory.",
     href: "/spaces/new",
+    importHref: "/imports/add",
   },
   {
     title: "Full Refresh",
-    description: "Replace all active equipment in a Space after a complete refresh.",
+    description: "Replace the active inventory for an existing Space and restart its full lifecycle.",
     href: "/spaces",
+    importHref: "/imports/full-refresh",
   },
   {
     title: "Partial Refresh",
-    description: "Select specific assets being replaced and add new equipment.",
+    description: "Select existing equipment being replaced, then add the new equipment with its own lifecycle.",
     href: "/spaces",
+    importHref: "/imports/partial-refresh",
   },
   {
     title: "Correct Inventory",
-    description: "Fix data errors without triggering lifecycle events.",
+    description: "Fix existing inventory data without creating a refresh event or resetting lifecycle history.",
     href: "/inventory/correct",
+    importHref: null,
   },
-];
+] as const;
+
+/** @deprecated Use lifecycleActionCards */
+export const lifecycleActions = lifecycleActionCards.map((action) => ({
+  title: action.title,
+  description: action.description,
+  href: action.href,
+}));
 
 export const importActions = [
   {

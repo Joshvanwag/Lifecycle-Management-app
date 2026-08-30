@@ -220,6 +220,26 @@ Space list/header lifecycle status uses the earliest recommended replacement yea
 
 **Rationale:** Planning and lifecycle are separate concepts in `/docs/lifecycle-model.md`.
 
+## ADR-033: UX Redesign — Navigation and Information Architecture
+
+**Date:** Product increment (UX redesign)  
+**Status:** Accepted
+
+Major UX/analytics redesign without backend rewrite:
+
+- Navigation reorganized: Overview, Update Lifecycles hub, Lifecycle (Spaces/Assets), Planning (Forecast), Analytics (Benchmark/Reports), Data (Imports), Settings, DEV Admin
+- **Capital Plan** merged into **Forecast**; `/capital-plan` redirects to `/forecast`
+- **Correct Inventory** removed from sidebar; accessed via Update Lifecycles hub
+- **Update Lifecycles** is a dedicated page (`/update-lifecycles`) with four distinct workflow cards
+- Organization header: static for customers; selector for DEV team only
+- Filters use apply-on-click pattern with searchable multi-select for large sets
+- Charts must show visible numeric labels (not hover-only)
+- Benchmark page uses visual percentile range cards; no contributor counts
+- Reports expanded canned gallery; no custom report builder
+- Client-side analytics helpers in `src/lib/data/analytics.ts` aggregate from existing Space/Asset queries — no new database views for this pass
+
+**Rationale:** Product should feel like a lifecycle planning tool for AV/IT managers and capital planners, not a raw admin database. Existing RLS, lifecycle rules, and data model preserved.
+
 ## ADR-025: Single-Asset Partial Refresh Is Individual Replacement
 
 **Date:** Phase 3  

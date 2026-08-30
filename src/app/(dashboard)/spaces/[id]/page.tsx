@@ -96,18 +96,42 @@ export default async function SpaceDetailPage({
               </Link>
             </Button>
 
+            <div>
+              <h2 className="text-2xl font-semibold tracking-tight">{space.name}</h2>
+              <p className="mt-1 text-sm text-muted-foreground">{space.locationLabel || "No location assigned"}</p>
+            </div>
+
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant="outline">{space.spaceType}</Badge>
               <LifecycleStatusBadge status={space.lifecycleStatus} />
               <PlanningStatusBadge status={space.planningStatus} />
             </div>
+
+            <dl className="grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2 lg:grid-cols-4">
+              <div>
+                <dt className="text-muted-foreground">Recommended Year</dt>
+                <dd className="font-medium">{space.recommendedRefreshYear}</dd>
+              </div>
+              <div>
+                <dt className="text-muted-foreground">Planned Year</dt>
+                <dd className="font-medium">{space.plannedRefreshYear ?? "—"}</dd>
+              </div>
+              <div>
+                <dt className="text-muted-foreground">Current Cost</dt>
+                <dd className="font-medium">{formatCurrency(space.originalCost)}</dd>
+              </div>
+              <div>
+                <dt className="text-muted-foreground">Forecast</dt>
+                <dd className="font-medium">{formatCurrency(space.forecastAmount)}</dd>
+              </div>
+            </dl>
           </div>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button>
                 <RefreshCw className="h-4 w-4" />
-                Update Lifecycle
+                Update Lifecycles
                 <ChevronDown className="h-4 w-4 opacity-60" />
               </Button>
             </DropdownMenuTrigger>

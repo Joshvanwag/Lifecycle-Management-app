@@ -37,17 +37,18 @@ export default async function SettingsPage({
         ? "Select a valid industry type."
         : params.error === "invalid-lifecycle-defaults"
           ? "Enter a valid refresh cycle and inflation rate."
-        : params.error
-          ? decodeURIComponent(params.error)
-          : null;
+          : params.error
+            ? decodeURIComponent(params.error)
+            : null;
 
   return (
     <AuthenticatedDashboardShell
       title="Settings"
       description={`Organization settings for ${auth.organization.name}`}
     >
-      <div className="max-w-3xl space-y-6">
+      <div className="mx-auto max-w-3xl space-y-6">
         {successMessage && <p className="text-sm text-green-700">{successMessage}</p>}
+
         <OrganizationSettingsForm
           organizationName={auth.organization.name}
           industryType={auth.organization.industry_type}
@@ -59,12 +60,14 @@ export default async function SettingsPage({
           saved={params.saved === "1"}
           errorMessage={errorMessage}
         />
+
         <MembersList members={members} />
         {canManage && <TeamInvitationForm organizationId={auth.organization.id} />}
         <MfaEnrollForm />
         <AuditEventList events={auditEvents} />
+
         <p className="text-sm text-muted-foreground">
-          Chart colors are customized from each chart&apos;s options menu.
+          Chart colors are customized from each chart&apos;s options menu on analytical pages.
         </p>
       </div>
     </AuthenticatedDashboardShell>

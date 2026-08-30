@@ -46,11 +46,15 @@ export function AppHeader({
       </div>
 
       <div className="flex items-center gap-3">
-        {isPlatformAdmin && organizations.length > 0 && activeOrganizationId && (
+        {isPlatformAdmin && organizations.length > 0 && activeOrganizationId ? (
           <OrganizationSwitcher
             organizations={organizations}
             activeOrganizationId={activeOrganizationId}
           />
+        ) : (
+          <div className="hidden max-w-[220px] truncate text-sm font-medium text-muted-foreground sm:block">
+            {organizationName}
+          </div>
         )}
 
         <Button variant="ghost" size="icon" aria-label="Notifications">
@@ -66,8 +70,7 @@ export function AppHeader({
               <div className="hidden text-left sm:block">
                 <p className="text-sm font-medium leading-none">{userDisplayName}</p>
                 <p className="text-xs text-muted-foreground">
-                  {organizationName}
-                  {isPlatformAdmin ? " · DEV team" : ""}
+                  {isPlatformAdmin ? "DEV team" : organizationName}
                 </p>
               </div>
               <ChevronDown className="h-4 w-4 opacity-60" />
