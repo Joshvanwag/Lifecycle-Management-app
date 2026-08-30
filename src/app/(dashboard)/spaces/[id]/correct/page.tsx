@@ -43,10 +43,10 @@ export default async function CorrectInventoryPage({
           <CardHeader>
             <CardTitle>Correct inventory</CardTitle>
             <CardDescription>
-              Edit Space and asset fields without creating a refresh event. To upload a file
-              instead, use{" "}
-              <Link href={`/imports/correct?spaceId=${space.id}`} className="underline">
-                Correct Inventory import
+              Edit Space and asset fields without creating a refresh event. Search across the
+              organization from{" "}
+              <Link href="/inventory/correct" className="underline">
+                Correct Inventory
               </Link>
               .
             </CardDescription>

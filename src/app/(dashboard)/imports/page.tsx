@@ -1,38 +1,39 @@
 import Link from "next/link";
 import { FileUp } from "lucide-react";
+import { ImportHistory } from "@/components/import/import-history";
 import { AuthenticatedDashboardShell } from "@/components/layout/authenticated-dashboard-shell";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { importActions } from "@/config/navigation";
+import { requireAuthContext } from "@/lib/auth/context";
+import { listImportJobs } from "@/lib/data/import-jobs";
+import { createClient } from "@/lib/supabase/server";
 
-export default function ImportsPage() {
+export default async function ImportsPage() {
+  const auth = await requireAuthContext();
+  const supabase = await createClient();
+  const jobs = await listImportJobs(supabase, auth.organization.id);
+
   return (
     <AuthenticatedDashboardShell
       title="Imports"
-      description="Upload inventory from a CSV or Excel file"
+      description={`Upload inventory for ${auth.organization.name}`}
     >
-      <div className="space-y-6">
-        <p className="max-w-2xl text-sm text-muted-foreground">
-          Choose the action that matches what you are doing. Columns are mapped automatically when
-          the heading is recognized. You can also record these actions on a Space without a file.
-        </p>
-        <div className="grid gap-4 md:grid-cols-2">
+      <div className="space-y-8">
+        <div className="flex flex-wrap gap-2">
           {importActions.map((action) => (
-            <Link key={action.href} href={action.href} className="block">
-              <Card className="h-full transition-colors hover:bg-accent/40">
-                <CardHeader>
-                  <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                    <FileUp className="h-4 w-4" />
-                  </div>
-                  <CardTitle>{action.title}</CardTitle>
-                  <CardDescription>{action.description}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <span className="text-sm font-medium text-primary">Start import</span>
-                </CardContent>
-              </Card>
-            </Link>
+            <Button key={action.href} asChild>
+              <Link href={action.href}>
+                <FileUp className="h-4 w-4" />
+                {action.title}
+              </Link>
+            </Button>
           ))}
         </div>
+        <p className="max-w-2xl text-sm text-muted-foreground">
+          File imports add Spaces or record a Full or Partial Refresh. To fix existing inventory
+          without a lifecycle event, use Correct Inventory.
+        </p>
+        <ImportHistory jobs={jobs} />
       </div>
     </AuthenticatedDashboardShell>
   );

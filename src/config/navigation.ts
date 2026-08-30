@@ -1,6 +1,7 @@
 import {
   Building2,
   CalendarRange,
+  ClipboardPen,
   FileBarChart,
   FileUp,
   LayoutDashboard,
@@ -76,10 +77,16 @@ export const mainNavigation: NavGroup[] = [
     label: "Data",
     items: [
       {
+        title: "Correct Inventory",
+        href: "/inventory/correct",
+        icon: ClipboardPen,
+        description: "Search and fix inventory without a lifecycle event",
+      },
+      {
         title: "Imports",
         href: "/imports",
         icon: FileUp,
-        description: "Import and update inventory data",
+        description: "Import Spaces and refresh inventory from a file",
       },
     ],
   },
@@ -114,7 +121,7 @@ export const lifecycleActions = [
   {
     title: "Correct Inventory",
     description: "Fix data errors without triggering lifecycle events.",
-    href: "/spaces",
+    href: "/inventory/correct",
   },
 ];
 
@@ -133,11 +140,6 @@ export const importActions = [
     title: "Partial Refresh",
     description: "Select the assets being replaced, then import the new equipment.",
     href: "/imports/partial-refresh",
-  },
-  {
-    title: "Correct Inventory",
-    description: "Fix inventory from a file without creating a refresh event.",
-    href: "/imports/correct",
   },
 ];
 

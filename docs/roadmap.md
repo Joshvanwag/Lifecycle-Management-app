@@ -58,25 +58,26 @@
 
 ## Phase 5 — Reporting & Planning
 
-- [ ] Forecast page with drill-down
-- [ ] Capital Plan
-- [ ] Reports (lifecycle overview, asset lists, summaries)
-- [ ] Dashboard with live data
-- [ ] Server-side pagination and filtering
+- [x] Forecast page with drill-down
+- [x] Capital Plan
+- [x] Reports (lifecycle overview, asset lists, summaries)
+- [x] Dashboard with live data
+- [x] Server-side pagination and filtering
 
 ## Phase 6 — Enterprise Features
 
-- [ ] MFA
-- [ ] SSO configuration
-- [ ] User management and roles
-- [ ] Audit logging
-- [ ] Export (CSV, Excel, PDF)
-- [ ] AWS Amplify deployment
+- [x] MFA enroll UI (TOTP)
+- [ ] SSO configuration (IdP not provisioned)
+- [x] User management and roles (members list + invitations)
+- [x] Audit logging
+- [x] Export (CSV, Excel)
+- [ ] PDF export
+- [ ] AWS Amplify deployment (documented only)
 
 ## Phase 7 — Scale & Polish
 
-- [ ] Performance optimization for large inventories
-- [ ] Saved reports
-- [ ] Multi-organization user support
-- [ ] Floor-level location option
+- [x] Performance optimization for large inventories (read-path backfill removed; overview no longer loads assets)
+- [x] Saved reports
+- [x] Multi-organization user support (existing membership + DEV switcher)
+- [x] Floor-level location option (org flag, default off)
 - [ ] Compliance preparation (SOC 2 readiness)

@@ -1,4 +1,4 @@
-import type { Asset, LifecycleStatus, Space } from "@/lib/types";
+import type { Asset, LifecycleStatus, PlanningStatus, Space } from "@/lib/types";
 
 const MONTH_LABELS = [
   "Jan",
@@ -28,6 +28,28 @@ export interface DeploymentMonthRow {
 export interface CategorySlice {
   name: string;
   value: number;
+}
+
+export interface PlanningStatusSlice {
+  name: PlanningStatus;
+  value: number;
+}
+
+export function computePlanningStatusSlices(spaces: Space[]): PlanningStatusSlice[] {
+  const counts: Record<PlanningStatus, number> = {
+    unplanned: 0,
+    scheduled: 0,
+    deferred: 0,
+    completed: 0,
+  };
+
+  for (const space of spaces) {
+    counts[space.planningStatus] += 1;
+  }
+
+  return (["unplanned", "scheduled", "deferred", "completed"] as const)
+    .map((name) => ({ name, value: counts[name] }))
+    .filter((slice) => slice.value > 0);
 }
 
 export function computeLifecycleStatusSlices(spaces: Space[]): LifecycleStatusSlice[] {
@@ -95,14 +117,16 @@ export function computeCategorySlices(
     .map(([name, value]) => ({ name, value }));
 }
 
-export function computeManufacturerSlices(assets: Asset[]): CategorySlice[] {
+export function computeManufacturerSlices(
+  assets: Array<Pick<Asset, "manufacturer">>,
+): CategorySlice[] {
   return computeCategorySlices(
     assets.map((asset) => ({ label: asset.manufacturer })),
     (item) => item.label,
   );
 }
 
-export function computeProductTypeSlices(assets: Asset[]): CategorySlice[] {
+export function computeProductTypeSlices(assets: Array<Pick<Asset, "category">>): CategorySlice[] {
   return computeCategorySlices(
     assets.map((asset) => ({ label: asset.category })),
     (item) => item.label,

@@ -5,10 +5,12 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import {
   AlertTriangle,
+  Building2,
   CalendarClock,
   Clock,
   DollarSign,
   Filter,
+  Package,
   Search,
   TrendingUp,
 } from "lucide-react";
@@ -23,11 +25,17 @@ import {
 import { ForecastChart } from "@/components/overview/forecast-chart";
 import { DeploymentMonthChart } from "@/components/overview/deployment-month-chart";
 import { LifecycleStatusChart } from "@/components/overview/lifecycle-status-chart";
+import { PlanningStatusChart } from "@/components/overview/planning-status-chart";
 import { computeDashboardMetrics } from "@/lib/data/dashboard-metrics";
 import {
   computeDeploymentByMonth,
   computeLifecycleStatusSlices,
+  computePlanningStatusSlices,
 } from "@/lib/data/chart-data";
+import {
+  computePortfolioCounts,
+  hasEmptyPortfolioCosts,
+} from "@/lib/data/portfolio-counts";
 import {
   buildSpaceFilterOptions,
   countActiveFilters,
@@ -124,6 +132,14 @@ export function OverviewDashboard({
     [filteredSpaces],
   );
 
+  const planningSlices = useMemo(
+    () => computePlanningStatusSlices(filteredSpaces),
+    [filteredSpaces],
+  );
+
+  const counts = useMemo(() => computePortfolioCounts(filteredSpaces), [filteredSpaces]);
+  const emptyCosts = useMemo(() => hasEmptyPortfolioCosts(filteredSpaces), [filteredSpaces]);
+
   const deploymentByMonth = useMemo(
     () => computeDeploymentByMonth(filteredSpaces),
     [filteredSpaces],
@@ -166,6 +182,52 @@ export function OverviewDashboard({
         </p>
       )}
 
+      {emptyCosts && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+          These Spaces have inventory, but replacement costs are still $0. Money reports stay empty
+          until Space lump-sum costs are entered. Asset counts and types are still available.
+        </div>
+      )}
+
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Spaces</CardTitle>
+            <Building2 className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{counts.spaceCount}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Buildings</CardTitle>
+            <Building2 className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{counts.buildingCount}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Rooms</CardTitle>
+            <Building2 className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{counts.roomCount}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Assets</CardTitle>
+            <Package className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{counts.assetCount}</div>
+          </CardContent>
+        </Card>
+      </div>
+
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         {metricCards.map((card) => {
           const Icon = card.icon;
@@ -188,8 +250,10 @@ export function OverviewDashboard({
 
       <div className="grid gap-6 lg:grid-cols-2">
         <LifecycleStatusChart data={lifecycleSlices} />
-        <ForecastChart data={metrics.forecastByYear} />
+        <PlanningStatusChart data={planningSlices} />
       </div>
+
+      <ForecastChart data={metrics.forecastByYear} />
 
       <DeploymentMonthChart
         rows={deploymentByMonth.rows}

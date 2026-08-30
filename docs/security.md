@@ -75,6 +75,9 @@ RLS is enabled on all tenant-owned tables:
 - `forecast_cost_components`
 - `refresh_events`
 - `import_mappings`
+- `import_jobs`
+- `admin_audit_events`
+- `saved_reports`
 
 ### Helper functions
 
@@ -168,13 +171,13 @@ Privileged operations use Next.js server components/actions with the authenticat
 - User-facing CSV/Excel imports — signed-in session, RLS enforced
 - Future: admin functions, exports
 
-## Audit Logging (Future)
+## Audit Logging
 
-Administrative audit events (separate from lifecycle history):
-- User invited / role changed
+Administrative audit events (separate from lifecycle history) are stored in `admin_audit_events`:
+- User invited
 - Import completed
-- Export performed
-- Lifecycle defaults changed
-- SSO settings changed
+- Organization settings changed
 
-Do not log every page view.
+Do not log every page view. MFA enrollment uses Supabase Auth TOTP on the signed-in user session. SSO is not provisioned.
+
+`list_organization_members` is `SECURITY DEFINER` and only returns rows when `can_read_organization` is true.

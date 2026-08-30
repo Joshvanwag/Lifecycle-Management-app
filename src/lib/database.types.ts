@@ -471,10 +471,130 @@ export type Database = {
         };
         Relationships: [];
       };
+      import_jobs: {
+        Row: {
+          id: string;
+          organization_id: string;
+          created_by: string | null;
+          workflow: "add" | "full_refresh" | "partial_refresh";
+          source_filename: string | null;
+          status: "completed" | "failed";
+          spaces_created: number;
+          spaces_updated: number;
+          assets_created: number;
+          assets_updated: number;
+          assets_retired: number;
+          error_message: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          created_by?: string | null;
+          workflow: "add" | "full_refresh" | "partial_refresh";
+          source_filename?: string | null;
+          status?: "completed" | "failed";
+          spaces_created?: number;
+          spaces_updated?: number;
+          assets_created?: number;
+          assets_updated?: number;
+          assets_retired?: number;
+          error_message?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          created_by?: string | null;
+          workflow?: "add" | "full_refresh" | "partial_refresh";
+          source_filename?: string | null;
+          status?: "completed" | "failed";
+          spaces_created?: number;
+          spaces_updated?: number;
+          assets_created?: number;
+          assets_updated?: number;
+          assets_retired?: number;
+          error_message?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      admin_audit_events: {
+        Row: {
+          id: string;
+          organization_id: string;
+          actor_user_id: string | null;
+          action: string;
+          target_type: string | null;
+          target_id: string | null;
+          metadata: Json;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          actor_user_id?: string | null;
+          action: string;
+          target_type?: string | null;
+          target_id?: string | null;
+          metadata?: Json;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          actor_user_id?: string | null;
+          action?: string;
+          target_type?: string | null;
+          target_id?: string | null;
+          metadata?: Json;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      saved_reports: {
+        Row: {
+          id: string;
+          organization_id: string;
+          user_id: string;
+          name: string;
+          report_key: string;
+          filters: Json;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          user_id: string;
+          name: string;
+          report_key: string;
+          filters?: Json;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          user_id?: string;
+          name?: string;
+          report_key?: string;
+          filters?: Json;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
       accept_pending_invitations: { Args: Record<PropertyKey, never>; Returns: string };
+      list_organization_members: {
+        Args: { target_organization_id: string };
+        Returns: {
+          user_id: string;
+          email: string;
+          role: "owner" | "admin" | "member" | "read_only";
+          created_at: string;
+        }[];
+      };
       can_manage_organization: {
         Args: { target_organization_id: string };
         Returns: boolean;
